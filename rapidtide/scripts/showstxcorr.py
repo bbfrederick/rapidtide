@@ -21,6 +21,7 @@ import rapidtide.workflows.showstxcorr as theworkflow
 
 
 def entrypoint():
+    """Run the `showstxcorr` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.showstxcorr)
 
 

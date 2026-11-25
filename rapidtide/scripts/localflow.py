@@ -21,6 +21,7 @@ import rapidtide.workflows.parser_funcs as pf
 
 
 def entrypoint():
+    """Run the `localflow` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.localflow)
 
 

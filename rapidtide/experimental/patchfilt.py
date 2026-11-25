@@ -24,7 +24,21 @@ import torch.nn as nn
 
 # Generate synthetic noisy pseudoperiodic signal
 def generate_signal(n_samples=1000, noise_level=0.1):
-    """Generate a noisy pseudoperiodic signal."""
+    """
+    Generate a noisy pseudoperiodic signal.
+
+    Parameters
+    ----------
+    n_samples : int, optional
+        Number of synthetic signal samples.
+    noise_level : float, optional
+        Amplitude of the noise added to the synthetic signal.
+
+    Returns
+    -------
+    numpy.ndarray
+        Synthetic signal with additive noise.
+    """
     t = np.linspace(0, 10 * np.pi, n_samples)
     # Multiple frequency components with slowly varying amplitude
     signal = np.sin(t) + 0.5 * np.sin(2.3 * t) + 0.3 * np.sin(0.5 * t) * np.cos(0.1 * t)
@@ -34,7 +48,21 @@ def generate_signal(n_samples=1000, noise_level=0.1):
 
 # Create sequences for training
 def create_sequences(data, seq_length):
-    """Create input-output pairs from time series data."""
+    """
+    Create input-output pairs from time series data.
+
+    Parameters
+    ----------
+    data : array-like
+        Input data to filter.
+    seq_length : int
+        Number of time steps per training sequence.
+
+    Returns
+    -------
+    tuple of torch.Tensor
+        Input sequences and their next-sample targets.
+    """
     X, y = [], []
     for i in range(len(data) - seq_length):
         X.append(data[i : i + seq_length])
@@ -45,6 +73,20 @@ def create_sequences(data, seq_length):
 # Define LSTM-based predictor model
 class SignalPredictor(nn.Module):
     def __init__(self, input_size=1, hidden_size=64, num_layers=2, dropout=0.2):
+        """
+        Initialize `SignalPredictor`.
+
+        Parameters
+        ----------
+        input_size : int, optional
+            Number of features per time step.
+        hidden_size : int, optional
+            Number of features in the hidden state.
+        num_layers : int, optional
+            Number of layers in the model.
+        dropout : float, optional
+            Dropout probability.
+        """
         super(SignalPredictor, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -54,6 +96,19 @@ class SignalPredictor(nn.Module):
 
     def forward(self, x):
         # x shape: (batch, seq_len, features)
+        """
+        Run a forward pass through the model.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor passed to the model.
+
+        Returns
+        -------
+        torch.Tensor
+            Model output for the input tensor.
+        """
         lstm_out, _ = self.lstm(x)
         # Take the last output
         last_out = lstm_out[:, -1, :]
@@ -63,7 +118,29 @@ class SignalPredictor(nn.Module):
 
 # Training function
 def train_model(model, X_train, y_train, epochs=100, batch_size=32, lr=0.001):
-    """Train the signal prediction model."""
+    """
+    Train the signal prediction model.
+
+    Parameters
+    ----------
+    model : object
+        Model instance or model file used by this routine.
+    X_train : array-like
+        Training input sequences.
+    y_train : array-like
+        Training targets.
+    epochs : int, optional
+        Number of training epochs.
+    batch_size : int, optional
+        Number of training examples per batch.
+    lr : float, optional
+        Optimizer learning rate.
+
+    Returns
+    -------
+    object
+        The losses.
+    """
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
@@ -92,7 +169,21 @@ def train_model(model, X_train, y_train, epochs=100, batch_size=32, lr=0.001):
 
 # Prediction function
 def predict_next_point(model, sequence):
-    """Predict the next point given a sequence."""
+    """
+    Predict the next point given a sequence.
+
+    Parameters
+    ----------
+    model : object
+        Model instance or model file used by this routine.
+    sequence : array-like
+        Recent samples used to predict the next point.
+
+    Returns
+    -------
+    float
+        Predicted value of the next sample.
+    """
     model.eval()
     with torch.no_grad():
         if len(sequence.shape) == 1:
@@ -105,7 +196,23 @@ def predict_next_point(model, sequence):
 
 # Multi-step prediction
 def predict_future(model, initial_sequence, n_steps):
-    """Predict multiple future points."""
+    """
+    Predict multiple future points.
+
+    Parameters
+    ----------
+    model : object
+        Model instance or model file used by this routine.
+    initial_sequence : array-like
+        Input samples used to seed autoregressive prediction.
+    n_steps : int
+        Number of future samples to predict.
+
+    Returns
+    -------
+    object
+        The predictions.
+    """
     model.eval()
     predictions = []
     current_seq = initial_sequence.clone()

@@ -51,7 +51,27 @@ def _waveform(t, mainamp=1.0, sideamp=0.6):
 
 
 def _makemovie(shape=(12, 12, 8), voxdim=2.0, speed=6.0, numlags=90, lagstep=0.5):
-    """A linear ramp delay field, so the truth is known everywhere."""
+    """
+    A linear ramp delay field, so the truth is known everywhere.
+
+    Parameters
+    ----------
+    shape : tuple of int, optional
+        Dimensions of the test array.
+    voxdim : float, optional
+        Value supplied as ``voxdim`` by the test case.
+    speed : float, optional
+        Value supplied as ``speed`` by the test case.
+    numlags : int, optional
+        Value supplied as ``numlags`` by the test case.
+    lagstep : float, optional
+        Value supplied as ``lagstep`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     lags = -5.0 + np.arange(numlags) * lagstep
     grids = np.indices(shape).astype(float)
     tau = grids[0] * voxdim / speed
@@ -61,7 +81,14 @@ def _makemovie(shape=(12, 12, 8), voxdim=2.0, speed=6.0, numlags=90, lagstep=0.5
 
 
 def test_findcandidatepeaks(debug=False):
-    """Both the main lobe and the sidelobe must be found, main lobe first."""
+    """
+    Both the main lobe and the sidelobe must be found, main lobe first.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     corr, lags, tau, mask, vox = _makemovie()
     cl, ca = uw.findcandidatepeaks(corr, lags, 4)
     # strongest candidate should be the true delay
@@ -76,12 +103,18 @@ def test_findcandidatepeaks(debug=False):
 
 
 def test_findcandidatepeaks_refines_peaks_off_the_sample_grid(debug=False):
-    """Parabolic refinement must beat the sample spacing.
+    """
+    Parabolic refinement must beat the sample spacing.
 
     A delay is only useful to a fraction of the lag step, so the three point
     parabolic interpolation is doing real work here, not cosmetics.  Plant peaks
     deliberately between samples and require the recovered location to be an order
     of magnitude better than rounding to the nearest sample would give.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     thelagaxis = np.linspace(-20.0, 20.0, 161)  # 0.25 s spacing
     thelagstep = float(thelagaxis[1] - thelagaxis[0])
@@ -103,11 +136,33 @@ def test_findcandidatepeaks_refines_peaks_off_the_sample_grid(debug=False):
 
 
 def test_findcandidatepeaks_orders_by_amplitude_and_pads_with_nan(debug=False):
-    """Index 0 must be what naive peak picking would choose, and unused candidate
-    slots must be NaN rather than a stale or zero delay."""
+    """
+    Index 0 must be what naive peak picking would choose, and unused candidate
+    slots must be NaN rather than a stale or zero delay.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     thelagaxis = np.linspace(-20.0, 20.0, 161)
 
     def thebump(theamp, theloc):
+        """
+        Provide the ``thebump`` test substitute.
+
+        Parameters
+        ----------
+        theamp : object
+            Value supplied as ``theamp`` by the test case.
+        theloc : object
+            Value supplied as ``theloc`` by the test case.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return theamp * np.exp(-(((thelagaxis - theloc) / 2.0) ** 2))
 
     # one voxel with three peaks in a deliberately unsorted amplitude order, and
@@ -136,9 +191,16 @@ def test_findcandidatepeaks_orders_by_amplitude_and_pads_with_nan(debug=False):
 
 
 def test_findcandidatepeaks_does_not_treat_array_ends_as_peaks(debug=False):
-    """A maximum sitting on the first or last lag sample is not a resolvable peak:
+    """
+    A maximum sitting on the first or last lag sample is not a resolvable peak:
     it has no neighbour on one side, so there is nothing to interpolate and no
-    evidence it is a local maximum at all."""
+    evidence it is a local maximum at all.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     thelagaxis = np.linspace(-20.0, 20.0, 161)
     # monotonically rising, so the only maximum is the very last sample
     thecorr = np.linspace(0.0, 1.0, 161)[None, :]
@@ -150,7 +212,14 @@ def test_findcandidatepeaks_does_not_treat_array_ends_as_peaks(debug=False):
 
 
 def test_unwrap_recovers_injected_sidelobe_errors(debug=False):
-    """Corrupt voxels so the sidelobe outranks the main lobe; unwrapping must fix them."""
+    """
+    Corrupt voxels so the sidelobe outranks the main lobe; unwrapping must fix them.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     corr, lags, tau, mask, vox = _makemovie()
     cl, ca = uw.findcandidatepeaks(corr, lags, 4)
 
@@ -176,7 +245,14 @@ def test_unwrap_recovers_injected_sidelobe_errors(debug=False):
 
 
 def test_unwrap_with_flow_prior(debug=False):
-    """The flow prior path must also run and recover the injected errors."""
+    """
+    The flow prior path must also run and recover the injected errors.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     corr, lags, tau, mask, vox = _makemovie()
     cl, ca = uw.findcandidatepeaks(corr, lags, 4)
     rng = np.random.RandomState(5)
@@ -193,12 +269,19 @@ def test_unwrap_with_flow_prior(debug=False):
 
 
 def test_icmrefine_ignores_voxels_outside_the_mask(debug=False):
-    """icmrefine forms its prior by median filtering the current solution.  Every voxel
+    """
+    Icmrefine forms its prior by median filtering the current solution.  Every voxel
     of this small mask is a surface voxel, so if the filter sees zeros outside the mask
     the prior collapses toward zero and each voxel re-snaps to the WRONG candidate.
 
     The delay here is uniform, so a smoothness prior has nothing to fix and the correct
-    answer is to change nothing at all."""
+    answer is to change nothing at all.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (7, 7, 7)
     thetruth, thedecoy = 8.0, 2.0
 
@@ -224,8 +307,15 @@ def test_icmrefine_ignores_voxels_outside_the_mask(debug=False):
 
 
 def test_icmrefine_with_one_pass_is_a_noop(debug=False):
-    """numpasses counts the region grow as pass 1, so numpasses=1 must mean no
-    refinement at all rather than one refinement."""
+    """
+    Numpasses counts the region grow as pass 1, so numpasses=1 must mean no
+    refinement at all rather than one refinement.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (6, 6, 6)
     themask = np.ones(theshape, dtype=np.uint16)
     # tau sits at 8.0, which is NOT one of the candidates, so any refinement pass at
@@ -250,8 +340,15 @@ def test_icmrefine_with_one_pass_is_a_noop(debug=False):
 
 
 def test_icmrefine_stops_early_once_nothing_changes(debug=False):
-    """The loop breaks as soon as a pass changes nothing, so a converged problem
-    must cost the same whether asked for 3 passes or 30."""
+    """
+    The loop breaks as soon as a pass changes nothing, so a converged problem
+    must cost the same whether asked for 3 passes or 30.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (6, 6, 6)
     themask = np.ones(theshape, dtype=np.uint16)
     thecandidates = np.zeros(theshape + (2,), dtype=float)
@@ -269,8 +366,15 @@ def test_icmrefine_stops_early_once_nothing_changes(debug=False):
 
 
 def test_resolvedelaymap_tolerates_voxels_with_no_candidates(debug=False):
-    """A flat similarity function offers no local maximum at all.  Such a voxel
-    cannot be assigned a delay, but it must not stall the region grow or crash it."""
+    """
+    A flat similarity function offers no local maximum at all.  Such a voxel
+    cannot be assigned a delay, but it must not stall the region grow or crash it.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (6, 6, 6)
     thelagaxis = np.linspace(-20.0, 20.0, 161)
     thecorr = np.zeros(theshape + (len(thelagaxis),))
@@ -359,7 +463,8 @@ def _makehardcase(shape=(12, 12, 8), speed=2.0, noise=0.05, numlags=90, lagstep=
 
 
 def test_resolvedelaymap_predicts_by_consensus_not_from_one_neighbour(debug=False):
-    """Each voxel is predicted from the median over ALL its assigned neighbours, not
+    """
+    Each voxel is predicted from the median over ALL its assigned neighbours, not
     from the single neighbour that happened to pop off the heap.
 
     This is the change the module docstring credits with taking new wraps from 1696
@@ -367,6 +472,11 @@ def test_resolvedelaymap_predicts_by_consensus_not_from_one_neighbour(debug=Fals
     win.  It is invisible on easy data - region growing gets those right either way -
     so it has to be measured on a case where a single wrapped neighbour really can
     carry a correct voxel off with it.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     thelags, theamps, thetau, themask, thevoxdims = _makehardcase()
     thenaivebad = int((np.abs(np.nan_to_num(thelags[..., 0]) - thetau) > 2.0).sum())
@@ -388,7 +498,8 @@ def test_resolvedelaymap_predicts_by_consensus_not_from_one_neighbour(debug=Fals
 
 
 def test_resolvedelaymap_confidence_is_the_gap_not_the_peak_height(debug=False):
-    """Growth order is set by how UNAMBIGUOUS a voxel is, not by how strong its peak
+    """
+    Growth order is set by how UNAMBIGUOUS a voxel is, not by how strong its peak
     is.  Those are different things, and confusing them inverts the whole method.
 
     A voxel with one dominant peak is trustworthy however small that peak is; a voxel
@@ -396,6 +507,11 @@ def test_resolvedelaymap_confidence_is_the_gap_not_the_peak_height(debug=False):
     block is deliberately the tallest thing in the volume while also being the most
     ambiguous, so ordering by peak height seeds the grow on the wrapped voxels and
     propagates them across the whole volume.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     theshape = (12, 12, 8)
     thenumlags = 90
@@ -437,7 +553,8 @@ def test_resolvedelaymap_confidence_is_the_gap_not_the_peak_height(debug=False):
 
 
 def test_resolvedelaymap_confidence_floor_actually_gates_the_sources(debug=False):
-    """--minconfidence must really stop low confidence voxels predicting for their
+    """
+    --minconfidence must really stop low confidence voxels predicting for their
     neighbours, which means the map it produces has to differ from the ungated one.
 
     The floor defaults to off because it does not IMPROVE anything - the module
@@ -445,6 +562,11 @@ def test_resolvedelaymap_confidence_floor_actually_gates_the_sources(debug=False
     help" is not the same as "does nothing", and the option is kept precisely so the
     finding is not re-derived.  If it silently stopped having any effect, that record
     would quietly become untestable.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     thelags, theamps, thetau, themask, thevoxdims = _makehardcase()
 
@@ -471,7 +593,8 @@ def test_resolvedelaymap_confidence_floor_actually_gates_the_sources(debug=False
 
 
 def test_resolvedelaymap_has_no_absolute_reference(debug=False):
-    """Unwrapping resolves delays RELATIVE to each other, not against any absolute
+    """
+    Unwrapping resolves delays RELATIVE to each other, not against any absolute
     truth, so a confidently wrapped majority takes the whole volume with it.
 
     This is inherent, not a defect - the same property every phase unwrapper has -
@@ -479,6 +602,11 @@ def test_resolvedelaymap_has_no_absolute_reference(debug=False):
     comes back with every delay shifted by close to one sidelobe period.  The
     algorithm's protection is confidence ordering: it only holds when the wrapped
     voxels are the ambiguous ones, which on real data is what makes them wrap.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     theshape = (8, 8, 6)
     thenumlags = 90
@@ -583,13 +711,19 @@ def _makeflatcase(
 
 
 def test_resolvefromsimfunc_matches_the_four_dimensional_path(debug=False):
-    """The flat adapter must give bit identical results to running the algorithm on
+    """
+    The flat adapter must give bit identical results to running the algorithm on
     the 4D volume.
 
     This is the whole point of resolvefromsimfunc: it exists purely to avoid
     materialising a 450 MB volume, so it is only correct if it changes nothing.  The
     reshape and scatter it does to get there are exactly where an axis ordering slip
     would hide.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     theshape = (8, 8, 6)
     thecorrflat, thelagaxis, thetruth, dummy = _makeflatcase(shape=theshape)
@@ -640,8 +774,15 @@ def test_resolvefromsimfunc_matches_the_four_dimensional_path(debug=False):
 
 
 def test_resolvefromsimfunc_leaves_unfit_voxels_untouched(debug=False):
-    """Voxels outside the fit mask have no delay worth resolving, so whatever they
-    were carrying must survive unchanged."""
+    """
+    Voxels outside the fit mask have no delay worth resolving, so whatever they
+    were carrying must survive unchanged.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 6)
     thecorrflat, thelagaxis, thetruth, dummy = _makeflatcase(shape=theshape)
     thenumvoxels = int(np.prod(theshape))
@@ -675,13 +816,19 @@ def test_resolvefromsimfunc_leaves_unfit_voxels_untouched(debug=False):
 
 
 def test_resolvefromsimfunc_keeps_unfit_voxels_out_of_the_region_grow(debug=False):
-    """Out of mask voxels must not merely be excluded from the OUTPUT, they must be
+    """
+    Out of mask voxels must not merely be excluded from the OUTPUT, they must be
     excluded from the unwrap itself.
 
     Writing the old values back over them at the end hides the difference, so this
     walls a block of good voxels in behind a shell of unfit ones carrying a wildly
     wrong delay.  If the fit mask is not honoured when the volume mask is built, the
     shell joins the region grow and drags the voxels behind it.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     theshape = (10, 10, 8)
     thenumlags, thelagstep = 90, 0.5
@@ -726,9 +873,15 @@ def test_resolvefromsimfunc_keeps_unfit_voxels_out_of_the_region_grow(debug=Fals
 
 
 def test_resolvefromsimfunc_counts_only_changes_above_the_threshold(debug=False):
-    """The reassignment count is the number of voxels that moved by more than
+    """
+    The reassignment count is the number of voxels that moved by more than
     RESOLVEDCHANGEDTHRESH.  Re-snapping to a candidate nudges nearly every voxel by
     a hair, so counting any change at all would report the whole brain every pass.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     theshape = (8, 8, 6)
     thecorrflat, thelagaxis, dummy, dummy2 = _makeflatcase(shape=theshape)
@@ -799,8 +952,15 @@ def _writecorrfile(thedir, theroot, thecorr, thelagaxis, thevoxdim=2.0):
 
 
 def test_resolvedelays_commandline_repairs_a_wrapped_map(debug=False):
-    """Smoke test of the standalone tool: it must read a corrout file, find its mask
-    by convention, repair the wraps, and write its four maps."""
+    """
+    Smoke test of the standalone tool: it must read a corrout file, find its mask
+    by convention, repair the wraps, and write its four maps.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 6)
     thenumlags, thelagstep = 90, 0.5
     thelagaxis = -5.0 + np.arange(thenumlags) * thelagstep
@@ -865,8 +1025,15 @@ def test_resolvedelays_commandline_repairs_a_wrapped_map(debug=False):
 
 
 def test_resolvedelays_derives_the_root_and_falls_back_to_a_ptp_mask(debug=False):
-    """With no mask file present the tool must synthesise one from the data rather
-    than failing, and it must still strip the corrout suffix to find its root."""
+    """
+    With no mask file present the tool must synthesise one from the data rather
+    than failing, and it must still strip the corrout suffix to find its root.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (6, 6, 5)
     thenumlags, thelagstep = 60, 0.5
     thelagaxis = -5.0 + np.arange(thenumlags) * thelagstep
@@ -909,9 +1076,15 @@ def test_resolvedelays_derives_the_root_and_falls_back_to_a_ptp_mask(debug=False
 
 
 def test_resolvedelays_strips_the_extension_when_the_name_is_unconventional(debug=False):
-    """The root is used to guess the mask filename, so it has to be derived even when
+    """
+    The root is used to guess the mask filename, so it has to be derived even when
     the input is not named XXX_desc-corrout_info.nii.gz.  Falling back to plain
     extension stripping is what lets an arbitrarily named file still find its mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     theshape = (6, 6, 5)
     thenumlags = 60
@@ -963,7 +1136,14 @@ def test_resolvedelays_strips_the_extension_when_the_name_is_unconventional(debu
 
 
 def test_get_parser_defaults_match_the_module_constants(debug=False):
-    """The help text quotes the DEFAULT_ constants, so the two must not drift apart."""
+    """
+    The help text quotes the DEFAULT_ constants, so the two must not drift apart.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theparser = uw._get_parser()
     # corrfile is validated for existence as it is parsed, so it has to be real
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as thefile:
@@ -989,6 +1169,14 @@ def test_get_parser_defaults_match_the_module_constants(debug=False):
 
 
 def test_resolvedelays(debug=False):
+    """
+    Verify resolvedelays.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     test_findcandidatepeaks(debug=debug)
     test_findcandidatepeaks_refines_peaks_off_the_sample_grid(debug=debug)
     test_findcandidatepeaks_orders_by_amplitude_and_pads_with_nan(debug=debug)

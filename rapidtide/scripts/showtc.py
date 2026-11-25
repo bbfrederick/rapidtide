@@ -21,6 +21,7 @@ import rapidtide.workflows.showtc as theworkflow
 
 
 def entrypoint():
+    """Run the `showtc` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.showtc)
 
 

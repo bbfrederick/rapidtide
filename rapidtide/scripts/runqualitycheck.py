@@ -21,6 +21,7 @@ import rapidtide.workflows.runqualitycheck as theworkflow
 
 
 def entrypoint():
+    """Run the `runqualitycheck` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.runqualitycheck)
 
 

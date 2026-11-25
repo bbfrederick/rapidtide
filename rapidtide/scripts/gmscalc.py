@@ -20,6 +20,7 @@ import rapidtide.workflows.gmscalc
 
 
 def entrypoint():
+    """Run the `gmscalc` command."""
     rapidtide.workflows.gmscalc.gmscalc_main()
 
 

@@ -13,6 +13,23 @@ import rapidtide.skinmask as skinmask
 
 
 def _fake_mediapipe(monkeypatch, category, labels=None):
+    """
+    Simulate ``mediapipe`` for the test.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    category : object
+        Value supplied as ``category`` by the test case.
+    labels : object or None, optional
+        Value supplied as ``labels`` by the test case.
+
+    Returns
+    -------
+    SimpleNamespace
+        Arguments configured for the test case.
+    """
     records = SimpleNamespace(images=[], times=[], options=[], closed=0)
     if labels is None:
         labels = ["background", "hair", "body-skin", "face-skin", "clothes", "others"]
@@ -22,16 +39,40 @@ def _fake_mediapipe(monkeypatch, category, labels=None):
 
     class Segmenter:
         def __init__(self, options):
+            """
+            Initialize the test double for ``Segmenter``.
+
+            Parameters
+            ----------
+            options : object
+                Value supplied as ``options`` by the test case.
+            """
             records.options.append(options)
             self.labels = labels
 
         def segment_for_video(self, image, timestamp_ms):
+            """
+            Set up ``segment_for_video`` for the test.
+
+            Parameters
+            ----------
+            image : object
+                Value supplied as ``image`` by the test case.
+            timestamp_ms : object
+                Value supplied as ``timestamp_ms`` by the test case.
+
+            Returns
+            -------
+            SimpleNamespace
+                Arguments configured for the test case.
+            """
             records.images.append(image.data.copy())
             records.times.append(timestamp_ms)
             mask = None if category is None else SimpleNamespace(numpy_view=lambda: category)
             return SimpleNamespace(category_mask=mask)
 
         def close(self):
+            """Set up ``close`` for the test."""
             records.closed += 1
 
     vision = SimpleNamespace(
@@ -52,6 +93,18 @@ def _fake_mediapipe(monkeypatch, category, labels=None):
 @pytest.mark.parametrize("dtype", [np.uint8, np.uint16])
 @pytest.mark.parametrize("singleton_channel", [False, True])
 def test_skin_union_and_preserved_rgb(monkeypatch, dtype, singleton_channel):
+    """
+    Verify skin union and preserved rgb.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    dtype : object
+        Value supplied as ``dtype`` by the test case.
+    singleton_channel : object
+        Value supplied as ``singleton_channel`` by the test case.
+    """
     category = np.arange(6, dtype=np.uint8).reshape(2, 3)
     if singleton_channel:
         category = category[..., None]
@@ -76,6 +129,14 @@ def test_skin_union_and_preserved_rgb(monkeypatch, dtype, singleton_channel):
 
 
 def test_skin_labels_not_hardcoded_indices(monkeypatch):
+    """
+    Verify skin labels not hardcoded indices.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     category = np.array([[0, 1, 2]], dtype=np.uint8)
     records = _fake_mediapipe(monkeypatch, category, ["face-skin", "other", "body-skin"])
     with skinmask.SkinSegmenter("model.tflite") as segmenter:
@@ -86,6 +147,14 @@ def test_skin_labels_not_hardcoded_indices(monkeypatch):
 
 
 def test_negative_source_times_preserve_model_cadence(monkeypatch):
+    """
+    Verify negative source times preserve model cadence.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     records = _fake_mediapipe(monkeypatch, np.full((2, 3), 2, dtype=np.uint8))
     times = [-1.0, -0.9, -0.8]
     rgb = np.ones((2, 3, 3), dtype=np.uint8)
@@ -95,6 +164,14 @@ def test_negative_source_times_preserve_model_cadence(monkeypatch):
 
 
 def test_model_labels_checked(monkeypatch):
+    """
+    Verify model labels checked.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     records = _fake_mediapipe(monkeypatch, None, ["background", "person"])
     with pytest.raises(ValueError, match="face-skin and body-skin"):
         skinmask.SkinSegmenter("model.tflite")
@@ -103,6 +180,16 @@ def test_model_labels_checked(monkeypatch):
 
 @pytest.mark.parametrize("category", [None, np.zeros((3, 3), dtype=np.uint8)])
 def test_bad_category_mask_fails_closed(monkeypatch, category):
+    """
+    Verify bad category mask fails closed.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    category : object
+        Value supplied as ``category`` by the test case.
+    """
     records = _fake_mediapipe(monkeypatch, category)
     with pytest.raises(ValueError, match="mask"):
         list(skinmask.skinmasked_frames([(np.ones((2, 3, 3), dtype=np.uint8), 0)], "model.tflite"))
@@ -110,9 +197,25 @@ def test_bad_category_mask_fails_closed(monkeypatch, category):
 
 
 def test_segmenter_closed_on_decode_error(monkeypatch):
+    """
+    Verify segmenter closed on decode error.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     records = _fake_mediapipe(monkeypatch, np.zeros((2, 3), dtype=np.uint8))
 
     def broken_frames():
+        """
+        Set up ``broken_frames`` for the test.
+
+        Yields
+        ------
+        tuple
+            Values supplied together for the test case.
+        """
         yield np.ones((2, 3, 3), dtype=np.uint8), 0
         raise ValueError("decode failed")
 
@@ -122,18 +225,58 @@ def test_segmenter_closed_on_decode_error(monkeypatch):
 
 
 def test_missing_dependency(monkeypatch):
+    """
+    Verify missing dependency.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     monkeypatch.setitem(sys.modules, "mediapipe", None)
     with pytest.raises(ImportError, match=r"rapidtide\[skinmask\]"):
         skinmask._mediapipe()
 
 
 def _model_download(monkeypatch, tmp_path, data=b"skin weights"):
+    """
+    Set up ``_model_download`` for the test.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    data : array-like, optional
+        Data passed to the test helper.
+
+    Returns
+    -------
+    list
+        The ``calls`` value supplied to the caller.
+    """
     _fake_mediapipe(monkeypatch, None)
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
     monkeypatch.setattr(skinmask, "MODEL_SHA256", hashlib.sha256(data).hexdigest())
     calls = []
 
     def download(url, timeout):
+        """
+        Provide the ``download`` test substitute.
+
+        Parameters
+        ----------
+        url : object
+            Value supplied as ``url`` by the test case.
+        timeout : object
+            Value supplied as ``timeout`` by the test case.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         calls.append((url, timeout))
         return BytesIO(data)
 
@@ -142,6 +285,16 @@ def _model_download(monkeypatch, tmp_path, data=b"skin weights"):
 
 
 def test_model_download_and_cache(monkeypatch, tmp_path):
+    """
+    Verify model download and cache.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    """
     calls = _model_download(monkeypatch, tmp_path)
     path, metadata = skinmask.prepare_skin_model()
     assert path.read_bytes() == b"skin weights"
@@ -158,6 +311,16 @@ def test_model_download_and_cache(monkeypatch, tmp_path):
 
 
 def test_unverified_download_not_cached(monkeypatch, tmp_path):
+    """
+    Verify unverified download not cached.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    """
     _model_download(monkeypatch, tmp_path)
     monkeypatch.setattr(skinmask, "MODEL_SHA256", "not the checksum")
     with pytest.raises(ValueError, match="Downloaded MediaPipe skin model checksum"):
@@ -167,9 +330,29 @@ def test_unverified_download_not_cached(monkeypatch, tmp_path):
 
 
 def test_failed_download_cleanup(monkeypatch, tmp_path):
+    """
+    Verify failed download cleanup.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    """
     _model_download(monkeypatch, tmp_path)
 
     def failed(*args, **kwargs):
+        """
+        Raise ``URLError`` to exercise the error path.
+
+        Parameters
+        ----------
+        *args : object
+            Arguments passed to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         raise URLError("offline")
 
     monkeypatch.setattr(skinmask, "urlopen", failed)
@@ -180,6 +363,16 @@ def test_failed_download_cleanup(monkeypatch, tmp_path):
 
 
 def test_local_model_offline(monkeypatch, tmp_path):
+    """
+    Verify local model offline.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    """
     calls = _model_download(monkeypatch, tmp_path)
     model = tmp_path / "local.tflite"
     model.write_bytes(b"local model")

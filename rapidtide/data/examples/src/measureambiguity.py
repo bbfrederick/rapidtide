@@ -62,10 +62,23 @@ SEPARATIONS = (4.0, 6.0, 8.0, 10.0)
 
 
 def toppeaks(thedata, thelagaxis):
-    """Amplitude and lag of the two strongest local maxima along the last axis.
+    """
+    Amplitude and lag of the two strongest local maxima along the last axis.
 
     Vectorised over every leading axis.  No sub-sample refinement: the separation
     threshold is several seconds, so a fraction of a lag step does not matter here.
+
+    Parameters
+    ----------
+    thedata : numpy.ndarray
+        Input samples used for the calculation.
+    thelagaxis : numpy.ndarray
+        Lag coordinates corresponding to the input data.
+
+    Returns
+    -------
+    tuple
+        Amplitudes and lags of the strongest and next strongest peaks.
     """
     theismax = np.zeros(thedata.shape, dtype=bool)
     theismax[..., 1:-1] = (thedata[..., 1:-1] > thedata[..., :-2]) & (
@@ -81,7 +94,21 @@ def toppeaks(thedata, thelagaxis):
 
 
 def measuresidelobe(theroot, srmax=15.0):
-    """rapidtide's autocorrelation sidelobe, measured independently, for comparison."""
+    """
+    Rapidtide's autocorrelation sidelobe, measured independently, for comparison.
+
+    Parameters
+    ----------
+    theroot : str
+        Root of the analysis result filenames.
+    srmax : float, optional
+        Maximum search range used to locate a sidelobe.
+
+    Returns
+    -------
+    tuple
+        Lag and amplitude of the selected sidelobe, when available.
+    """
     try:
         import pandas as pd
 
@@ -113,6 +140,21 @@ def measuresidelobe(theroot, srmax=15.0):
 
 
 def processrun(theroot, chunk=8):
+    """
+    Process a run of the lag ambiguity analysis.
+
+    Parameters
+    ----------
+    theroot : str
+        Root of the analysis result filenames.
+    chunk : int, optional
+        Size of each block used by the ambiguity analysis.
+
+    Returns
+    -------
+    dict or None
+        Summary metrics for the analysis run, when its required inputs exist.
+    """
     thecorrfile = theroot + "_desc-corrout_info.nii.gz"
     themaskfile = theroot + "_desc-corrfit_mask.nii.gz"
     if not (os.path.isfile(thecorrfile) and os.path.isfile(themaskfile)):
@@ -183,6 +225,14 @@ def processrun(theroot, chunk=8):
 
 
 def main():
+    """
+    Run the `measureambiguity` command.
+
+    Returns
+    -------
+    int
+        Exit status of the ambiguity analysis.
+    """
     theparser = argparse.ArgumentParser(
         description="Measure per-voxel delay ambiguity in rapidtide output.",
         formatter_class=argparse.RawDescriptionHelpFormatter,

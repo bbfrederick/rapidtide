@@ -28,33 +28,90 @@ from rapidtide.workflows.spatialfit import _get_parser, spatialfit
 
 
 def _capture_writenpvecs():
-    """Capture writenpvecs calls, copying data at call time."""
+    """
+    Capture writenpvecs calls, copying data at call time.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     captured = []
 
     def _side_effect(data, filename, **kwargs):
+        """
+        Record the call for assertions in the surrounding test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        filename : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured.append((np.array(data, copy=True), filename))
 
     return _side_effect, captured
 
 
 def _capture_savetonifti():
-    """Capture savetonifti calls, copying data at call time."""
+    """
+    Capture savetonifti calls, copying data at call time.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     captured = []
 
     def _side_effect(data, hdr, filename, **kwargs):
+        """
+        Record the call for assertions in the surrounding test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        hdr : object
+            Image header used by the helper.
+        filename : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured.append((np.array(data, copy=True), filename))
 
     return _side_effect, captured
 
 
 def _make_test_data(xsize=2, ysize=2, numslices=1, timepoints=3):
-    """Create consistent test data for spatialfit tests.
+    """
+    Create consistent test data for spatialfit tests.
 
     Template = [1, 2, 3, 4] (reshaped to xsize x ysize x numslices).
     Data at each timepoint = slope * template (no intercept for clean math).
     Slopes = [2.0, 3.0, 1.0] for 3 timepoints.
 
     Returns dict with all mock nifti returns and expected results.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+
+    Returns
+    -------
+    dict
+        Values supplied together for the test case.
     """
     numvoxels = xsize * ysize * numslices
 
@@ -114,7 +171,8 @@ def _make_test_data(xsize=2, ysize=2, numslices=1, timepoints=3):
 
 
 def _run_spatialfit(argv_list, readfromnifti_returns, mlregress_returns):
-    """Run spatialfit with mocked IO and return captured outputs.
+    """
+    Run spatialfit with mocked IO and return captured outputs.
 
     Parameters
     ----------
@@ -128,6 +186,7 @@ def _run_spatialfit(argv_list, readfromnifti_returns, mlregress_returns):
     Returns
     -------
     (writenpvecs_captured, savetonifti_captured)
+        Value supplied to the caller.
     """
     wnp_effect, wnp_captured = _capture_writenpvecs()
     stn_effect, stn_captured = _capture_savetonifti()
@@ -164,7 +223,14 @@ def _run_spatialfit(argv_list, readfromnifti_returns, mlregress_returns):
 
 
 def test_get_parser_returns_parser(debug=False):
-    """Test that _get_parser returns an ArgumentParser."""
+    """
+    Test that _get_parser returns an ArgumentParser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
     if debug:
@@ -172,14 +238,28 @@ def test_get_parser_returns_parser(debug=False):
 
 
 def test_get_parser_required_args(debug=False):
-    """Test that parser requires three positional arguments."""
+    """
+    Test that parser requires three positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args([])
 
 
 def test_get_parser_with_valid_args(debug=False):
-    """Test parser with valid positional arguments and default values."""
+    """
+    Test parser with valid positional arguments and default values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with patch(
         "rapidtide.workflows.parser_funcs.is_valid_file",
@@ -200,7 +280,14 @@ def test_get_parser_with_valid_args(debug=False):
 
 
 def test_get_parser_optional_flags(debug=False):
-    """Test parser with all optional flags."""
+    """
+    Test parser with all optional flags.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with patch(
         "rapidtide.workflows.parser_funcs.is_valid_file",
@@ -228,14 +315,28 @@ def test_get_parser_optional_flags(debug=False):
 
 
 def test_get_parser_order_is_int(debug=False):
-    """Test that --order requires an integer value."""
+    """
+    Test that --order requires an integer value.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args(["data.nii", "tmpl.nii", "out", "--order", "abc"])
 
 
 def test_get_parser_default_order(debug=False):
-    """Test that default order is 1."""
+    """
+    Test that default order is 1.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with patch(
         "rapidtide.workflows.parser_funcs.is_valid_file",
@@ -249,7 +350,14 @@ def test_get_parser_default_order(debug=False):
 
 
 def test_spatialfit_basic_outputs(debug=False):
-    """Test basic spatialfit run produces correct number and names of output files."""
+    """
+    Test basic spatialfit run produces correct number and names of output files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     # readfromnifti called 3 times: data, template, tmask
@@ -291,7 +399,14 @@ def test_spatialfit_basic_outputs(debug=False):
 
 
 def test_spatialfit_lincoffs_offsets_r2(debug=False):
-    """Test that lincoffs, offsets, and r2vals match mlregress returns."""
+    """
+    Test that lincoffs, offsets, and r2vals match mlregress returns.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     read_returns = [
@@ -325,7 +440,14 @@ def test_spatialfit_lincoffs_offsets_r2(debug=False):
 
 
 def test_spatialfit_fitdata(debug=False):
-    """Test that fit data = slope * template (with mask applied)."""
+    """
+    Test that fit data = slope * template (with mask applied).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     read_returns = [
@@ -363,7 +485,14 @@ def test_spatialfit_fitdata(debug=False):
 
 
 def test_spatialfit_residuals(debug=False):
-    """Test that residuals = data - fitdata."""
+    """
+    Test that residuals = data - fitdata.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     read_returns = [
@@ -398,7 +527,14 @@ def test_spatialfit_residuals(debug=False):
 
 
 def test_spatialfit_normalized(debug=False):
-    """Test that normalized = (data - offset) / slope equals the template."""
+    """
+    Test that normalized = (data - offset) / slope equals the template.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     read_returns = [
@@ -429,7 +565,14 @@ def test_spatialfit_normalized(debug=False):
 
 
 def test_spatialfit_newtemplate(debug=False):
-    """Test that newtemplate is correctly averaged across timepoints."""
+    """
+    Test that newtemplate is correctly averaged across timepoints.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     read_returns = [
@@ -460,7 +603,14 @@ def test_spatialfit_newtemplate(debug=False):
 
 
 def test_spatialfit_with_nonzero_intercepts(debug=False):
-    """Test spatialfit with non-zero intercepts to verify offset handling."""
+    """
+    Test spatialfit with non-zero intercepts to verify offset handling.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 2, 2, 1, 2
     numvoxels = xsize * ysize * numslices
 
@@ -522,7 +672,14 @@ def test_spatialfit_with_nonzero_intercepts(debug=False):
 
 
 def test_spatialfit_with_both_masks(debug=False):
-    """Test spatialfit with both data mask and template mask."""
+    """
+    Test spatialfit with both data mask and template mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     # Create a data mask that zeros out one voxel at one timepoint
@@ -560,7 +717,14 @@ def test_spatialfit_with_both_masks(debug=False):
 
 
 def test_spatialfit_output_shapes(debug=False):
-    """Test that output arrays have correct shapes."""
+    """
+    Test that output arrays have correct shapes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data(xsize=3, ysize=2, numslices=2, timepoints=4)
 
     # Need 4 mlregress returns for 4 timepoints
@@ -603,7 +767,14 @@ def test_spatialfit_output_shapes(debug=False):
 
 
 def test_spatialfit_spatial_dim_mismatch_data_template(debug=False):
-    """Test that mismatched spatial dims between data and template cause exit."""
+    """
+    Test that mismatched spatial dims between data and template cause exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     # Make template with different spatial dims
@@ -634,7 +805,14 @@ def test_spatialfit_spatial_dim_mismatch_data_template(debug=False):
 
 
 def test_spatialfit_template_timedim_not_one(debug=False):
-    """Test that template with time dimension != 1 causes exit."""
+    """
+    Test that template with time dimension != 1 causes exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     # Template with timedim = 3 instead of 1
@@ -665,7 +843,14 @@ def test_spatialfit_template_timedim_not_one(debug=False):
 
 
 def test_spatialfit_datamask_spatial_mismatch(debug=False):
-    """Test that data mask with mismatched spatial dims causes exit."""
+    """
+    Test that data mask with mismatched spatial dims causes exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     bad_dmask_dims = np.array([4, 3, 3, 1, 3, 1, 1, 1])  # different spatial dims
@@ -703,7 +888,14 @@ def test_spatialfit_datamask_spatial_mismatch(debug=False):
 
 
 def test_spatialfit_datamask_time_mismatch(debug=False):
-    """Test that data mask with mismatched time dim causes exit."""
+    """
+    Test that data mask with mismatched time dim causes exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     bad_dmask_dims = np.array([4, 2, 2, 1, 5, 1, 1, 1])  # 5 timepoints vs 3
@@ -741,7 +933,14 @@ def test_spatialfit_datamask_time_mismatch(debug=False):
 
 
 def test_spatialfit_templatemask_spatial_mismatch(debug=False):
-    """Test that template mask with mismatched spatial dims causes exit."""
+    """
+    Test that template mask with mismatched spatial dims causes exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     bad_tmask_dims = np.array([3, 3, 3, 1, 1, 1, 1, 1])  # 3x3 vs 2x2
@@ -779,7 +978,14 @@ def test_spatialfit_templatemask_spatial_mismatch(debug=False):
 
 
 def test_spatialfit_templatemask_timedim_not_one(debug=False):
-    """Test that template mask with time dim != 1 causes exit."""
+    """
+    Test that template mask with time dim != 1 causes exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     bad_tmask_dims = np.array([4, 2, 2, 1, 3, 1, 1, 1])  # timedim = 3
@@ -820,7 +1026,14 @@ def test_spatialfit_templatemask_timedim_not_one(debug=False):
 
 
 def test_spatialfit_debug_flag(debug=False):
-    """Test that debug flag doesn't cause errors."""
+    """
+    Test that debug flag doesn't cause errors.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     read_returns = [
@@ -848,7 +1061,14 @@ def test_spatialfit_debug_flag(debug=False):
 
 
 def test_spatialfit_mlregress_called_per_timepoint(debug=False):
-    """Test that mlregress is called once per timepoint."""
+    """
+    Test that mlregress is called once per timepoint.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data(timepoints=3)
 
     read_returns = [
@@ -899,7 +1119,14 @@ def test_spatialfit_mlregress_called_per_timepoint(debug=False):
 
 
 def test_spatialfit_single_timepoint(debug=False):
-    """Test spatialfit with a single timepoint (4D with t=1)."""
+    """
+    Test spatialfit with a single timepoint (4D with t=1).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 2, 2, 1, 1
     numvoxels = xsize * ysize * numslices
 
@@ -942,7 +1169,14 @@ def test_spatialfit_single_timepoint(debug=False):
 
 
 def test_spatialfit_partial_mask(debug=False):
-    """Test spatialfit with a template mask that zeros out some voxels."""
+    """
+    Test spatialfit with a template mask that zeros out some voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 2, 2, 1, 2
     numvoxels = xsize * ysize * numslices
 
@@ -993,7 +1227,14 @@ def test_spatialfit_partial_mask(debug=False):
 
 
 def test_spatialfit_no_templatemask(debug=False):
-    """Test spatialfit without a template mask (previously crashed for timepoints > 1)."""
+    """
+    Test spatialfit without a template mask (previously crashed for timepoints > 1).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     # Only 2 readfromnifti calls: data, template (no tmask)
@@ -1021,7 +1262,14 @@ def test_spatialfit_no_templatemask(debug=False):
 
 
 def test_spatialfit_output_root_path(debug=False):
-    """Test that output root path is correctly prepended to all output filenames."""
+    """
+    Test that output root path is correctly prepended to all output filenames.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     td = _make_test_data()
 
     read_returns = [
@@ -1056,7 +1304,14 @@ def test_spatialfit_output_root_path(debug=False):
 
 
 def test_spatialfit_all(debug=False):
-    """Run all spatialfit sub-tests."""
+    """
+    Run all spatialfit sub-tests.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # _get_parser tests
     test_get_parser_returns_parser(debug=debug)
     test_get_parser_required_args(debug=debug)

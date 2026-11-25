@@ -97,12 +97,6 @@ class fMRIDataset:
         derived quantities such as slice size and total number of voxels. It handles
         both 3D and 4D data arrays by checking for the presence of a fourth dimension.
 
-        Parameters
-        ----------
-        self : object
-            The instance containing the data array in `thedata` attribute.
-            The `thedata` attribute should be a numpy array with shape (xsize, ysize, numslices, [realtimepoints])
-
         Returns
         -------
         None
@@ -113,8 +107,6 @@ class fMRIDataset:
         The method assumes `thedata` is a numpy array with at least 2 dimensions.
         If the fourth dimension is not present, `realtimepoints` is set to 1.
 
-        Attributes Modified
-        -------------------
         theshape : tuple
             The shape of the data array
         xsize : int
@@ -431,10 +423,6 @@ class ProbeRegressor:
         from 0 to the length of the input vector, normalized by the input frequency,
         and adjusted by the input start time and offset.
 
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         None
@@ -461,10 +449,6 @@ class ProbeRegressor:
 
         This method generates a linearly spaced time axis based on the target period,
         start point, and number of points specified in the object's attributes.
-
-        Parameters
-        ----------
-        None
 
         Returns
         -------
@@ -758,6 +742,19 @@ class Coherer:
         )
 
     def trim(self, vector: NDArray) -> NDArray:
+        """
+        Extract the configured range from the input vector.
+
+        Parameters
+        ----------
+        vector : NDArray
+            One-dimensional input array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Slice between the configured minimum and maximum sample indices.
+        """
         return vector[self.freqmininpts : self.freqmaxinpts]
 
     def run(
@@ -768,8 +765,12 @@ class Coherer:
 
         Parameters
         ----------
-        vector : NDArray
+        thetc : NDArray
             Input vector to be trimmed.
+        trim : bool, optional
+            Retain the first half of the FFT bins.
+        alt : bool, optional
+            Select the alternate processing mode.
 
         Returns
         -------

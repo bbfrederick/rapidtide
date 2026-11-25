@@ -21,6 +21,7 @@ import rapidtide.workflows.resolvedelays as theworkflow
 
 
 def entrypoint():
+    """Run the `resolvedelays` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.resolvedelays)
 
 

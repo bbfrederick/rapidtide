@@ -26,6 +26,14 @@ from rapidtide.tests.utils import mse
 
 
 def test_simulate(displayplots=False):
+    """
+    Verify simulate.
+
+    Parameters
+    ----------
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     np.random.seed(12345)
     fmritr = 1.5
     numtrs = 260

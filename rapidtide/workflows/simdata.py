@@ -434,9 +434,8 @@ def fmrisignal(
 
     Returns
     -------
-    None
-        The function currently returns None. The actual signal is computed and returned
-        by the function body, but the return statement is not correctly implemented.
+    NDArray
+        The thesignal.
 
     Notes
     -----

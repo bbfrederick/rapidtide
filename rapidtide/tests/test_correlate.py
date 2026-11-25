@@ -25,6 +25,21 @@ import rapidtide.correlate as tide_corr
 
 
 def _make_pair(length=256, shift=5):
+    """
+    Create pair.
+
+    Parameters
+    ----------
+    length : int, optional
+        Value supplied as ``length`` by the test case.
+    shift : int, optional
+        Value supplied as ``shift`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     rng = np.random.RandomState(42)
     x = rng.randn(length).astype(np.float64)
     y = np.roll(x, shift)
@@ -32,6 +47,14 @@ def _make_pair(length=256, shift=5):
 
 
 def check_autocorrelation_no_peaks(debug=False):
+    """
+    Check autocorrelation no peaks.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("check_autocorrelation_no_peaks")
     corrscale = np.linspace(-2.0, 2.0, 101)
@@ -43,6 +66,14 @@ def check_autocorrelation_no_peaks(debug=False):
 
 
 def check_autocorrelation_detects_sidelobe(debug=False):
+    """
+    Check autocorrelation detects sidelobe.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("check_autocorrelation_detects_sidelobe")
     corrscale = np.linspace(-3.0, 3.0, 121)
@@ -66,6 +97,14 @@ def check_autocorrelation_detects_sidelobe(debug=False):
 
 
 def shorttermcorr_1d_basic(debug=False):
+    """
+    Check shorttermcorr 1D basic in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("shorttermcorr_1d_basic")
     x, y = _make_pair(length=300, shift=0)
@@ -77,6 +116,14 @@ def shorttermcorr_1d_basic(debug=False):
 
 
 def shorttermcorr_2d_basic(debug=False):
+    """
+    Check shorttermcorr 2D basic in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("shorttermcorr_2d_basic")
     x, y = _make_pair(length=320, shift=3)
@@ -89,6 +136,14 @@ def shorttermcorr_2d_basic(debug=False):
 
 
 def calc_mi_basic(debug=False):
+    """
+    Check calc mi basic in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("calc_mi_basic")
     rng = np.random.RandomState(1)
@@ -99,6 +154,14 @@ def calc_mi_basic(debug=False):
 
 
 def mutual_info_functions(debug=False):
+    """
+    Check mutual info functions in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("mutual_info_functions")
     rng = np.random.RandomState(2)
@@ -114,6 +177,14 @@ def mutual_info_functions(debug=False):
 
 
 def proc_mi_histogram(debug=False):
+    """
+    Check proc mi histogram in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("proc_mi_histogram")
     jh = np.ones((20, 20), dtype=np.float64)
@@ -124,6 +195,14 @@ def proc_mi_histogram(debug=False):
 
 
 def cross_mutual_info_paths(debug=False):
+    """
+    Check cross mutual info paths in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("cross_mutual_info_paths")
     x, y = _make_pair(length=256, shift=2)
@@ -143,6 +222,14 @@ def cross_mutual_info_paths(debug=False):
 
 
 def mutual_info_to_r_and_delays(debug=False):
+    """
+    Check mutual info to r and delays in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("mutual_info_to_r_and_delays")
     r = tide_corr.mutual_info_to_r(0.5, d=1)
@@ -161,6 +248,14 @@ def mutual_info_to_r_and_delays(debug=False):
 
 
 def aliased_and_samplerate_routines(debug=False):
+    """
+    Check aliased and samplerate routines in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("aliased_and_samplerate_routines")
     # Use longer signals to satisfy internal resampling filter padding requirements.
@@ -192,6 +287,14 @@ def aliased_and_samplerate_routines(debug=False):
 
 
 def stfft_prime_and_fastcorr(debug=False):
+    """
+    Check stfft prime and fastcorr in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("stfft_prime_and_fastcorr")
     x, y = _make_pair(length=128, shift=2)
@@ -218,6 +321,14 @@ def stfft_prime_and_fastcorr(debug=False):
 
 
 def centered_convolve_and_gcc(debug=False):
+    """
+    Check centered convolve and gcc in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("centered_convolve_and_gcc")
     arr = np.arange(24).reshape(4, 6)
@@ -252,6 +363,14 @@ def centered_convolve_and_gcc(debug=False):
 
 
 def aligntcwithref_basic(debug=False):
+    """
+    Check aligntcwithref basic in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("aligntcwithref_basic")
     fs = 10.0
@@ -268,6 +387,14 @@ def aligntcwithref_basic(debug=False):
 
 
 def test_correlate(debug=False):
+    """
+    Verify correlate.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     check_autocorrelation_no_peaks(debug=debug)
     check_autocorrelation_detects_sidelobe(debug=debug)
     shorttermcorr_1d_basic(debug=debug)

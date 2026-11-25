@@ -353,9 +353,8 @@ def getMI(
 
     Returns
     -------
-    None
-        The function returns the result of `tide_corr.mutual_info_2d`, which is
-        not explicitly returned here but is the core output of the function.
+    float
+        Mutual information for the two input signals.
 
     Notes
     -----

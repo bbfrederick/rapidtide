@@ -30,6 +30,14 @@ else:
 
 
 def getdecoratorvars():
+    """
+    Return the configuration flags used to select decorator implementations.
+
+    Returns
+    -------
+    tuple of bool
+        Flags that disable Numba or aggressive compilation, respectively.
+    """
     return donotusenumba, donotbeaggressive
 
 
@@ -65,6 +73,19 @@ def conditionaljit() -> Callable:
     """
 
     def resdec(f):
+        """
+        Apply Numba JIT compilation when permitted by the decorator settings.
+
+        Parameters
+        ----------
+        f : callable
+            Function to decorate.
+
+        Returns
+        -------
+        callable
+            Compiled function when enabled, or the original callable.
+        """
         if donotusenumba:
             return f
         return jit(f, nopython=True)
@@ -84,6 +105,19 @@ def conditionaljit2() -> Callable:
     """
 
     def resdec(f):
+        """
+        Apply Numba JIT compilation when permitted by the decorator settings.
+
+        Parameters
+        ----------
+        f : callable
+            Function to decorate.
+
+        Returns
+        -------
+        callable
+            Compiled function when enabled, or the original callable.
+        """
         if donotusenumba or donotbeaggressive:
             return f
         return jit(f, nopython=True)

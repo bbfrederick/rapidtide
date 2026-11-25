@@ -48,6 +48,20 @@ def _get_parser() -> argparse.ArgumentParser:
         """Expand user- and relative-paths"""
 
         def __call__(self, parser, namespace, values, option_string=None):
+            """
+            Apply the custom command-line argument action.
+
+            Parameters
+            ----------
+            parser : argparse.ArgumentParser
+                Parser that invoked this action.
+            namespace : argparse.Namespace
+                Namespace receiving the parsed value.
+            values : object
+                Values supplied to the operation.
+            option_string : str or None, optional
+                Option spelling used on the command line.
+            """
             if values == "":
                 setattr(namespace, self.dest, "__EMPTY__")
             else:
@@ -618,10 +632,6 @@ def fingerprint(
 def entrypoint() -> None:
     """
     Parse the command line and run the fingerprint workflow.
-
-    Returns
-    -------
-    None
 
     Raises
     ------

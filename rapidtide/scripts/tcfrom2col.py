@@ -21,6 +21,7 @@ import rapidtide.workflows.tcfrom2col as theworkflow
 
 
 def entrypoint():
+    """Run the `tcfrom2col` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.tcfrom2col)
 
 

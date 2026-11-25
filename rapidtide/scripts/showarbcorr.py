@@ -21,6 +21,7 @@ import rapidtide.workflows.showarbcorr as theworkflow
 
 
 def entrypoint():
+    """Run the `showarbcorr` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.showarbcorr)
 
 

@@ -1078,10 +1078,6 @@ def delayflow(args: argparse.Namespace) -> None:
     args : argparse.Namespace
         The parsed command line arguments, as produced by _get_parser().
 
-    Returns
-    -------
-    None
-
     Raises
     ------
     ValueError
@@ -1467,10 +1463,6 @@ def main() -> None:
 
     Parses the command line and runs the workflow, printing the help text before
     reraising if parsing fails.
-
-    Returns
-    -------
-    None
 
     Raises
     ------

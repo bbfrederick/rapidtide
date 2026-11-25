@@ -31,6 +31,19 @@ from rapidtide.workflows.resampletc import _get_parser, resampletc
 
 
 def _make_default_args(**overrides):
+    """
+    Create default args.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         inputfile="input.txt",
         outputfile="output.txt",
@@ -49,6 +62,14 @@ def _make_default_args(**overrides):
 
 
 def parser_basic(debug=False):
+    """
+    Check that the command-line parser initializes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -57,6 +78,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
+    """
+    Check that the parser requires the mandatory arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -65,7 +94,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
-    """Parse with all required args and verify defaults for optional flags."""
+    """
+    Parse with all required args and verify defaults for optional flags.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     # addreqinputtextfile validates files exist, so use a temp file
@@ -82,6 +118,14 @@ def parser_defaults(debug=False):
 
 
 def parser_nodisplay_flag(debug=False):
+    """
+    Check that the parser accepts ``--nodisplay``.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_nodisplay_flag")
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -93,6 +137,14 @@ def parser_nodisplay_flag(debug=False):
 
 
 def parser_noantialias_flag(debug=False):
+    """
+    Check that the parser accepts ``--noantialias``.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_noantialias_flag")
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -104,6 +156,14 @@ def parser_noantialias_flag(debug=False):
 
 
 def parser_all_flags(debug=False):
+    """
+    Parse a command line with all optional flags enabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_all_flags")
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -117,7 +177,14 @@ def parser_all_flags(debug=False):
 
 
 def parser_samplerate_is_float(debug=False):
-    """Verify sample rates are parsed as floats."""
+    """
+    Verify sample rates are parsed as floats.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_samplerate_is_float")
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -135,7 +202,14 @@ def parser_samplerate_is_float(debug=False):
 
 
 def resampletc_basic(debug=False):
-    """Test basic downsampling flow: read, resample, write."""
+    """
+    Test basic downsampling flow: read, resample, write.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resampletc_basic")
 
@@ -147,9 +221,49 @@ def resampletc_basic(debug=False):
     captured = {}
 
     def _mock_readvectors(filepath, onecol=True, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (insamplerate, 0.0, None, inputdata, None, "text")
 
     def _mock_arbresample(data, init_freq, final_freq, decimate=False, antialias=True, **kwargs):
+        """
+        Simulate ``arbresample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        init_freq : float
+            Input sampling rate in Hz.
+        final_freq : float
+            Output sampling rate in Hz.
+        decimate : bool, optional
+            Allow decimation when changing sampling rates.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            The ``resampled`` value supplied to the caller.
+        """
         captured["init_freq"] = init_freq
         captured["final_freq"] = final_freq
         captured["antialias"] = antialias
@@ -158,6 +272,16 @@ def resampletc_basic(debug=False):
         return resampled
 
     def _mock_writevec(data, outfile):
+        """
+        Simulate ``writevec`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        outfile : object
+            Value supplied as ``outfile`` by the test case.
+        """
         captured["written_data"] = data.copy()
         captured["outfile"] = outfile
 
@@ -188,7 +312,14 @@ def resampletc_basic(debug=False):
 
 
 def resampletc_antialias_off(debug=False):
-    """Test that antialias=False is forwarded to arbresample."""
+    """
+    Test that antialias=False is forwarded to arbresample.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resampletc_antialias_off")
 
@@ -196,9 +327,49 @@ def resampletc_antialias_off(debug=False):
     captured = {}
 
     def _mock_readvectors(filepath, onecol=True, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (None, None, None, inputdata, None, "text")
 
     def _mock_arbresample(data, init_freq, final_freq, decimate=False, antialias=True, **kwargs):
+        """
+        Simulate ``arbresample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        init_freq : float
+            Input sampling rate in Hz.
+        final_freq : float
+            Output sampling rate in Hz.
+        decimate : bool, optional
+            Allow decimation when changing sampling rates.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         captured["antialias"] = antialias
         return np.ones(25)
 
@@ -221,7 +392,14 @@ def resampletc_antialias_off(debug=False):
 
 
 def resampletc_samplerate_mismatch_warning(debug=False):
-    """When file samplerate differs from args.insamplerate, a warning is printed."""
+    """
+    When file samplerate differs from args.insamplerate, a warning is printed.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resampletc_samplerate_mismatch_warning")
 
@@ -230,9 +408,49 @@ def resampletc_samplerate_mismatch_warning(debug=False):
     args_samplerate = 10.0
 
     def _mock_readvectors(filepath, onecol=True, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (file_samplerate, 0.0, None, inputdata, None, "text")
 
     def _mock_arbresample(data, init_freq, final_freq, decimate=False, antialias=True, **kwargs):
+        """
+        Simulate ``arbresample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        init_freq : float
+            Input sampling rate in Hz.
+        final_freq : float
+            Output sampling rate in Hz.
+        decimate : bool, optional
+            Allow decimation when changing sampling rates.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.ones(25)
 
     args = _make_default_args(insamplerate=args_samplerate)
@@ -258,7 +476,14 @@ def resampletc_samplerate_mismatch_warning(debug=False):
 
 
 def resampletc_samplerate_match_no_warning(debug=False):
-    """When file samplerate matches args.insamplerate, no warning is printed."""
+    """
+    When file samplerate matches args.insamplerate, no warning is printed.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resampletc_samplerate_match_no_warning")
 
@@ -266,9 +491,49 @@ def resampletc_samplerate_match_no_warning(debug=False):
     samplerate = 10.0
 
     def _mock_readvectors(filepath, onecol=True, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (samplerate, 0.0, None, inputdata, None, "text")
 
     def _mock_arbresample(data, init_freq, final_freq, decimate=False, antialias=True, **kwargs):
+        """
+        Simulate ``arbresample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        init_freq : float
+            Input sampling rate in Hz.
+        final_freq : float
+            Output sampling rate in Hz.
+        decimate : bool, optional
+            Allow decimation when changing sampling rates.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.ones(25)
 
     args = _make_default_args(insamplerate=samplerate)
@@ -293,16 +558,63 @@ def resampletc_samplerate_match_no_warning(debug=False):
 
 
 def resampletc_none_samplerate_no_warning(debug=False):
-    """When file returns samplerate=None, no warning is printed."""
+    """
+    When file returns samplerate=None, no warning is printed.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resampletc_none_samplerate_no_warning")
 
     inputdata = np.ones(50)
 
     def _mock_readvectors(filepath, onecol=True, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (None, 0.0, None, inputdata, None, "text")
 
     def _mock_arbresample(data, init_freq, final_freq, decimate=False, antialias=True, **kwargs):
+        """
+        Simulate ``arbresample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        init_freq : float
+            Input sampling rate in Hz.
+        final_freq : float
+            Output sampling rate in Hz.
+        decimate : bool, optional
+            Allow decimation when changing sampling rates.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.ones(25)
 
     args = _make_default_args()
@@ -326,16 +638,63 @@ def resampletc_none_samplerate_no_warning(debug=False):
 
 
 def resampletc_none_starttime_defaults_to_zero(debug=False):
-    """When file returns starttime=None, it defaults to 0.0."""
+    """
+    When file returns starttime=None, it defaults to 0.0.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resampletc_none_starttime_defaults_to_zero")
 
     inputdata = np.arange(10, dtype=float)
 
     def _mock_readvectors(filepath, onecol=True, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (None, None, None, inputdata, None, "text")
 
     def _mock_arbresample(data, init_freq, final_freq, decimate=False, antialias=True, **kwargs):
+        """
+        Simulate ``arbresample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        init_freq : float
+            Input sampling rate in Hz.
+        final_freq : float
+            Output sampling rate in Hz.
+        decimate : bool, optional
+            Allow decimation when changing sampling rates.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.arange(5, dtype=float)
 
     args = _make_default_args()
@@ -356,7 +715,14 @@ def resampletc_none_starttime_defaults_to_zero(debug=False):
 
 
 def resampletc_display_calls_plot(debug=False):
-    """When display=True, matplotlib plot and show are called."""
+    """
+    When display=True, matplotlib plot and show are called.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resampletc_display_calls_plot")
 
@@ -364,9 +730,49 @@ def resampletc_display_calls_plot(debug=False):
     outputdata = np.ones(10)
 
     def _mock_readvectors(filepath, onecol=True, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (None, 0.0, None, inputdata, None, "text")
 
     def _mock_arbresample(data, init_freq, final_freq, decimate=False, antialias=True, **kwargs):
+        """
+        Simulate ``arbresample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        init_freq : float
+            Input sampling rate in Hz.
+        final_freq : float
+            Output sampling rate in Hz.
+        decimate : bool, optional
+            Allow decimation when changing sampling rates.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            The ``outputdata`` value supplied to the caller.
+        """
         return outputdata
 
     args = _make_default_args(display=True)
@@ -393,7 +799,14 @@ def resampletc_display_calls_plot(debug=False):
 
 
 def resampletc_no_display_skips_plot(debug=False):
-    """When display=False, matplotlib plot is not called."""
+    """
+    When display=False, matplotlib plot is not called.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resampletc_no_display_skips_plot")
 
@@ -401,9 +814,49 @@ def resampletc_no_display_skips_plot(debug=False):
     outputdata = np.ones(10)
 
     def _mock_readvectors(filepath, onecol=True, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (None, 0.0, None, inputdata, None, "text")
 
     def _mock_arbresample(data, init_freq, final_freq, decimate=False, antialias=True, **kwargs):
+        """
+        Simulate ``arbresample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        init_freq : float
+            Input sampling rate in Hz.
+        final_freq : float
+            Output sampling rate in Hz.
+        decimate : bool, optional
+            Allow decimation when changing sampling rates.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            The ``outputdata`` value supplied to the caller.
+        """
         return outputdata
 
     args = _make_default_args(display=False)
@@ -428,7 +881,14 @@ def resampletc_no_display_skips_plot(debug=False):
 
 
 def resampletc_output_truncation(debug=False):
-    """When out_t is shorter than outputdata, outputdata is truncated."""
+    """
+    When out_t is shorter than outputdata, outputdata is truncated.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resampletc_output_truncation")
 
@@ -445,12 +905,62 @@ def resampletc_output_truncation(debug=False):
     captured = {}
 
     def _mock_readvectors(filepath, onecol=True, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (None, 0.0, None, inputdata, None, "text")
 
     def _mock_arbresample(data, init_freq, final_freq, decimate=False, antialias=True, **kwargs):
+        """
+        Simulate ``arbresample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        init_freq : float
+            Input sampling rate in Hz.
+        final_freq : float
+            Output sampling rate in Hz.
+        decimate : bool, optional
+            Allow decimation when changing sampling rates.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            The ``outputdata`` value supplied to the caller.
+        """
         return outputdata
 
     def _mock_writevec(data, outfile):
+        """
+        Simulate ``writevec`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        outfile : object
+            Value supplied as ``outfile`` by the test case.
+        """
         captured["written_data"] = data.copy()
 
     args = _make_default_args()
@@ -475,7 +985,14 @@ def resampletc_output_truncation(debug=False):
 
 
 def resampletc_inputfile_passed_to_reader(debug=False):
-    """Verify the input filename is forwarded to readvectorsfromtextfile."""
+    """
+    Verify the input filename is forwarded to readvectorsfromtextfile.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resampletc_inputfile_passed_to_reader")
 
@@ -483,11 +1000,51 @@ def resampletc_inputfile_passed_to_reader(debug=False):
     captured = {}
 
     def _mock_readvectors(filepath, onecol=True, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         captured["filepath"] = filepath
         captured["onecol"] = onecol
         return (None, 0.0, None, inputdata, None, "text")
 
     def _mock_arbresample(data, init_freq, final_freq, decimate=False, antialias=True, **kwargs):
+        """
+        Simulate ``arbresample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        init_freq : float
+            Input sampling rate in Hz.
+        final_freq : float
+            Output sampling rate in Hz.
+        decimate : bool, optional
+            Allow decimation when changing sampling rates.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.ones(10)
 
     args = _make_default_args(inputfile="my_special_input.txt")
@@ -510,7 +1067,14 @@ def resampletc_inputfile_passed_to_reader(debug=False):
 
 
 def resampletc_upsample(debug=False):
-    """Test upsampling (outsamplerate > insamplerate)."""
+    """
+    Test upsampling (outsamplerate > insamplerate).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resampletc_upsample")
 
@@ -522,14 +1086,64 @@ def resampletc_upsample(debug=False):
     captured = {}
 
     def _mock_readvectors(filepath, onecol=True, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (None, 0.0, None, inputdata, None, "text")
 
     def _mock_arbresample(data, init_freq, final_freq, decimate=False, antialias=True, **kwargs):
+        """
+        Simulate ``arbresample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        init_freq : float
+            Input sampling rate in Hz.
+        final_freq : float
+            Output sampling rate in Hz.
+        decimate : bool, optional
+            Allow decimation when changing sampling rates.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            The ``resampled`` value supplied to the caller.
+        """
         captured["init_freq"] = init_freq
         captured["final_freq"] = final_freq
         return resampled
 
     def _mock_writevec(data, outfile):
+        """
+        Simulate ``writevec`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        outfile : object
+            Value supplied as ``outfile`` by the test case.
+        """
         captured["written_len"] = len(data)
 
     args = _make_default_args(insamplerate=insamplerate, outsamplerate=outsamplerate)
@@ -556,7 +1170,14 @@ def resampletc_upsample(debug=False):
 
 
 def resampletc_nonzero_starttime(debug=False):
-    """Test that a non-zero starttime from the file is used for in_t."""
+    """
+    Test that a non-zero starttime from the file is used for in_t.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resampletc_nonzero_starttime")
 
@@ -569,12 +1190,62 @@ def resampletc_nonzero_starttime(debug=False):
     captured = {}
 
     def _mock_readvectors(filepath, onecol=True, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (None, instarttime, None, inputdata, None, "text")
 
     def _mock_arbresample(data, init_freq, final_freq, decimate=False, antialias=True, **kwargs):
+        """
+        Simulate ``arbresample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        init_freq : float
+            Input sampling rate in Hz.
+        final_freq : float
+            Output sampling rate in Hz.
+        decimate : bool, optional
+            Allow decimation when changing sampling rates.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            The ``resampled`` value supplied to the caller.
+        """
         return resampled
 
     def _mock_writevec(data, outfile):
+        """
+        Simulate ``writevec`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        outfile : object
+            Value supplied as ``outfile`` by the test case.
+        """
         captured["written_data"] = data.copy()
 
     args = _make_default_args(insamplerate=insamplerate, outsamplerate=outsamplerate)
@@ -606,6 +1277,14 @@ def resampletc_nonzero_starttime(debug=False):
 
 def test_resampletc(debug=False):
     # Parser tests
+    """
+    Verify resampletc.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_defaults(debug=debug)

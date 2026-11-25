@@ -422,14 +422,14 @@ def updateFileMenu() -> None:
     subject is displayed with a checkmark indicator for the currently selected
     subject (`whichsubject`).
 
-    Parameters
-    ----------
-    None
-
     Returns
     -------
     None
         This function does not return any value.
+
+    See Also
+    --------
+    selectDataset : Function called when a subject menu item is triggered
 
     Notes
     -----
@@ -448,10 +448,6 @@ def updateFileMenu() -> None:
     --------
     >>> updateFileMenu()
     # Updates the file menu with current subjects and their selection status
-
-    See Also
-    --------
-    selectDataset : Function called when a subject menu item is triggered
     """
     global thesubjects, whichsubject
     global fileMenu, sel_open
@@ -492,10 +488,6 @@ def datasetPicker() -> None:
     This function opens a Qt file dialog to select a lag time file in BIDS format,
     extracts the data file root path, adds the dataset to the global dataset list,
     selects the newly added dataset, and updates the file menu.
-
-    Parameters
-    ----------
-    None
 
     Returns
     -------
@@ -1103,23 +1095,14 @@ class xyztlocation(QtWidgets.QWidget):
         UI elements reflect the correct current values and valid ranges for time
         positioning and coordinate display.
 
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the method, which should have the
-            following attributes:
-            - TPosSpinBox: QSpinBox for time position
-            - TCoordSpinBox: QSpinBox for time coordinate
-            - TimeSlider: QSlider for time positioning
-            - tpos: Current time position value
-            - tcoord: Current time coordinate value
-            - tdim: Total time dimension
-            - tr2real: Method to convert time coordinates to real values
-
         Returns
         -------
         None
             This method does not return any value.
+
+        See Also
+        --------
+        emit : Emits the updatedT signal after updating UI elements
 
         Notes
         -----
@@ -1131,10 +1114,6 @@ class xyztlocation(QtWidgets.QWidget):
         --------
         >>> updateTValues()
         # Updates all T-related UI elements with current time values and ranges
-
-        See Also
-        --------
-        emit : Emits the updatedT signal after updating UI elements
         """
         # print('resetting T spinbox values')
         if self.TPosSpinBox is not None:
@@ -1195,9 +1174,8 @@ class xyztlocation(QtWidgets.QWidget):
 
         Returns
         -------
-        None
-            This method returns the result of the calculation: `self.toffset + self.tr * tpos`
-            but does not explicitly return a value in the function body.
+        float
+            Time in seconds, including the instance time offset.
 
         Notes
         -----
@@ -1213,36 +1191,21 @@ class xyztlocation(QtWidgets.QWidget):
 
     def real2vox(self, xcoord: Any, ycoord: Any, zcoord: Any) -> Tuple[int, int, int]:
         """
-        Convert real coordinates to voxel coordinates using inverse affine transformation.
-
-        This function transforms continuous real-world coordinates into discrete voxel coordinates
-        by applying the inverse affine transformation matrix. The result is rounded to the nearest
-        integer values to obtain valid voxel indices.
+        Convert world coordinates and time to the nearest voxel and timepoint indices.
 
         Parameters
         ----------
-        xcoord : Any
-            X-coordinate in real-world space
-        ycoord : Any
-            Y-coordinate in real-world space
-        zcoord : Any
-            Z-coordinate in real-world space
+        xcoord : float
+            World-space x coordinate.
+        ycoord : float
+            World-space y coordinate.
+        zcoord : float
+            World-space z coordinate.
 
         Returns
         -------
         tuple of int
-            Tuple containing (x, y, z) voxel coordinates as integers
-
-        Notes
-        -----
-        The transformation uses the inverse affine matrix stored in ``self.invaffine``.
-        Coordinates are rounded to the nearest integer using ``np.round``.
-
-        Examples
-        --------
-        >>> voxel_coords = img.real2vox(10.7, 15.2, 20.8)
-        >>> print(voxel_coords)
-        (11, 15, 21)
+            Nearest x, y, z, and timepoint indices.
         """
         x, y, z = apply_affine(self.invaffine, [xcoord, ycoord, zcoord])
         return int(np.round(x, 0)), int(np.round(y, 0)), int(np.round(z, 0))
@@ -1266,9 +1229,8 @@ class xyztlocation(QtWidgets.QWidget):
 
         Returns
         -------
-        None
-            The function returns the result of apply_affine function which contains
-            the real-world coordinates corresponding to the input voxel coordinates
+        numpy.ndarray
+            World-space coordinates of the input voxel.
 
         Notes
         -----
@@ -1786,10 +1748,6 @@ class xyztlocation(QtWidgets.QWidget):
         beginning when the end is reached. It also updates the temporal values and
         optionally prints debug information based on verbosity level.
 
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         None
@@ -1846,10 +1804,6 @@ class xyztlocation(QtWidgets.QWidget):
         This method initiates movie playback by setting the movie running flag to True,
         updating the button text to "Stop Movie" if the button exists, and starting
         the movie timer with the specified frame time.
-
-        Parameters
-        ----------
-        None
 
         Returns
         -------
@@ -2010,10 +1964,6 @@ def getMinDispLimit() -> None:
     focused map in the overlays dictionary. It then calls updateDispLimits() to refresh
     the display limits.
 
-    Parameters
-    ----------
-    None
-
     Returns
     -------
     None
@@ -2046,10 +1996,6 @@ def getMaxDispLimit() -> None:
     currently focused map in the overlays dictionary. It then calls the
     updateDispLimits function to refresh the display settings.
 
-    Parameters
-    ----------
-    None
-
     Returns
     -------
     None
@@ -2080,10 +2026,6 @@ def updateDispLimits() -> None:
     based on the current dataset's focus map values. It sets the range, single
     step size, and current values for both the minimum and maximum display
     spin boxes, then triggers an UI update.
-
-    Parameters
-    ----------
-    None
 
     Returns
     -------
@@ -2184,10 +2126,6 @@ def updateSimilarityFunc() -> None:
     It handles both correlation and mutual information similarity metrics, and displays
     fitting results or failure reasons accordingly.
 
-    Parameters
-    ----------
-    None
-
     Returns
     -------
     None
@@ -2279,14 +2217,14 @@ def updateHistogram() -> None:
     This function plots the histogram data for the currently focused dataset,
     adds statistical reference lines, and updates the display limits.
 
-    Parameters
-    ----------
-    None
-
     Returns
     -------
     None
         This function does not return any value.
+
+    See Also
+    --------
+    updateDispLimits : Function called after histogram update to refresh display
 
     Notes
     -----
@@ -2304,10 +2242,6 @@ def updateHistogram() -> None:
     --------
     >>> updateHistogram()
     # Updates the histogram display with current dataset data
-
-    See Also
-    --------
-    updateDispLimits : Function called after histogram update to refresh display
     """
     global hist_ax, overlays, currentdataset
     hist_ax.plot(
@@ -2479,6 +2413,11 @@ def updateRegressor() -> None:
     label with kurtosis statistics and a rectangle highlighting the calculation
     limits defined in the dataset.
 
+    See Also
+    --------
+    currentdataset : The dataset object containing regressor information.
+    regressor_ax : The PyQtGraph axis used for plotting.
+
     Notes
     -----
     The function modifies global variables: `regressor_ax`, `liveplots`, and
@@ -2490,11 +2429,6 @@ def updateRegressor() -> None:
     Assuming `currentdataset` is properly initialized and contains regressor data,
     calling this function will update the plot on `regressor_ax` with the current
     regressor's data and statistics.
-
-    See Also
-    --------
-    currentdataset : The dataset object containing regressor information.
-    regressor_ax : The PyQtGraph axis used for plotting.
     """
     global regressor_ax, liveplots, currentdataset
     focusregressor = currentdataset.focusregressor
@@ -2544,10 +2478,6 @@ def updateRegressorSpectrum() -> None:
     x-axis range based on the samplerate, and adjusts the y-axis range to fit the
     data with a 25% padding. A rectangle is added to highlight the filter limits
     of the regressor.
-
-    Parameters
-    ----------
-    None
 
     Returns
     -------
@@ -2780,29 +2710,10 @@ def updateAveragingMode() -> None:
     then performs necessary calculations and updates. It also manages the focus map path
     based on the current averaging mode setting.
 
-    Notes
-    -----
-    This function modifies global variables including:
-    - averagingmode
-    - focusmap
-    - atlasaveragingdone
-    - overlays
-    - currentdataset
-
-    Parameters
-    ----------
-    None
-
     Returns
     -------
     None
         This function does not return any value but modifies global state.
-
-    Examples
-    --------
-    >>> updateAveragingMode()
-    in updateAveragingMode
-    averaging mode set to  None
 
     See Also
     --------
@@ -2812,6 +2723,21 @@ def updateAveragingMode() -> None:
     resetDispLimits : Reset display limits
     resetDispSmart : Reset display smart settings
     updateUI : Update user interface components
+
+    Notes
+    -----
+    This function modifies global variables including:
+    - averagingmode
+    - focusmap
+    - atlasaveragingdone
+    - overlays
+    - currentdataset
+
+    Examples
+    --------
+    >>> updateAveragingMode()
+    in updateAveragingMode
+    averaging mode set to  None
     """
     global averagingmode, focusmap
     global atlasaveragingdone
@@ -3482,16 +3408,16 @@ def setAtlasMask() -> None:
     It updates the UI to reflect that a valid mask has been applied and applies the atlas mask
     data to all functional maps in the overlays dictionary.
 
-    Notes
-    -----
-    This function modifies global variables: overlays, loadedfuncmaps, ui, and currentdataset.
-    The function calls updateUI after applying the mask to refresh the visualization.
-
     See Also
     --------
     updateUI : Updates the user interface after mask application.
     overlays : Global dictionary containing all loaded map objects.
     currentdataset : Global object containing current dataset information.
+
+    Notes
+    -----
+    This function modifies global variables: overlays, loadedfuncmaps, ui, and currentdataset.
+    The function calls updateUI after applying the mask to refresh the visualization.
 
     Examples
     --------
@@ -3659,10 +3585,6 @@ def updateLUT() -> None:
     it also saves the current image adjustment state. The function triggers a UI update
     to reflect the changes in the orthographic images.
 
-    Parameters
-    ----------
-    None
-
     Returns
     -------
     None
@@ -3765,14 +3687,14 @@ def updateTFromControls() -> None:
     with the current location's time position, then updates various UI components
     including orthoimages, similarity functions, and focus values.
 
+    See Also
+    --------
+    updateUI : Function called to refresh UI components after time position update.
+
     Notes
     -----
     This function modifies global variables `mainwin` and `currentloc`.
     The time position update does not emit a signal to prevent recursive updates.
-
-    See Also
-    --------
-    updateUI : Function called to refresh UI components after time position update.
 
     Examples
     --------
@@ -3796,10 +3718,6 @@ def updateXYZFromControls() -> None:
     This function synchronizes the global current location coordinates with the main
     window's position display and triggers updates to various UI elements including
     orthographic images, similarity functions, and focus values.
-
-    Parameters
-    ----------
-    None
 
     Returns
     -------

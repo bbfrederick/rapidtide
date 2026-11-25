@@ -24,6 +24,14 @@ from rapidtide.tests.utils import mse
 
 
 def phase_test(debug=False):
+    """
+    Check phase test in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("phase_test")
     z = np.array([1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j], dtype=np.complex128)
@@ -35,6 +43,14 @@ def phase_test(debug=False):
 
 
 def polarfft_test(debug=False):
+    """
+    Check polarfft test in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("polarfft_test")
     vec_even = np.sin(np.linspace(0, 6 * np.pi, 100, endpoint=False))
@@ -47,6 +63,14 @@ def polarfft_test(debug=False):
 
 
 def cepstrum_tests(debug=False):
+    """
+    Check cepstrum tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("cepstrum_tests")
     x = 1.0 + np.random.RandomState(123).rand(256)
@@ -58,6 +82,14 @@ def cepstrum_tests(debug=False):
 
 
 def deriv_and_factor_tests(debug=False):
+    """
+    Check deriv and factor tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("deriv_and_factor_tests")
     y = np.array([1.0, 2.0, 4.0, 7.0, 11.0])
@@ -70,6 +102,14 @@ def deriv_and_factor_tests(debug=False):
 
 
 def normalize_family_tests(debug=False):
+    """
+    Check normalize family tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("normalize_family_tests")
     v = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
@@ -118,6 +158,14 @@ def normalize_family_tests(debug=False):
 
 
 def imagevariance_test(debug=False):
+    """
+    Check imagevariance test in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("imagevariance_test")
     data = np.vstack([np.linspace(1.0, 2.0, 100), np.linspace(2.0, 3.0, 100)])
@@ -127,6 +175,21 @@ def imagevariance_test(debug=False):
 
     class DummyFilter:
         def apply(self, Fs, x):
+            """
+            Set up ``apply`` for the test.
+
+            Parameters
+            ----------
+            Fs : object
+                Value supplied as ``Fs`` by the test case.
+            x : object
+                Value supplied as ``x`` by the test case.
+
+            Returns
+            -------
+            object
+                Value returned to the caller in this test case.
+            """
             return 2.0 * x
 
     out_with_filter = tide_math.imagevariance(data, DummyFilter(), samplefreq=1.0, meannorm=False)
@@ -135,6 +198,14 @@ def imagevariance_test(debug=False):
 
 
 def corrnormalize_test(debug=False):
+    """
+    Check corrnormalize test in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrnormalize_test")
     x = np.random.RandomState(4).randn(256)
@@ -146,6 +217,14 @@ def corrnormalize_test(debug=False):
 
 
 def noiseamp_test(debug=False):
+    """
+    Check noiseamp test in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("noiseamp_test")
     x = np.random.RandomState(5).randn(500)
@@ -161,6 +240,14 @@ def noiseamp_test(debug=False):
 
 
 def rms_and_envelope_tests(debug=False):
+    """
+    Check rms and envelope tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("rms_and_envelope_tests")
     xaxis = np.linspace(0.0, 1.0, num=500, endpoint=False)
@@ -177,6 +264,14 @@ def rms_and_envelope_tests(debug=False):
 
 
 def phasemod_and_trendfilt_tests(debug=False):
+    """
+    Check phasemod and trendfilt tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("phasemod_and_trendfilt_tests")
     phase = np.array([0.0, np.pi / 2, np.pi, 3 * np.pi / 2, 2 * np.pi])
@@ -198,6 +293,14 @@ def phasemod_and_trendfilt_tests(debug=False):
 
 
 def complexpca_tests(debug=False):
+    """
+    Check complexpca tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("complexpca_tests")
     rng = np.random.RandomState(6)
@@ -216,6 +319,16 @@ def complexpca_tests(debug=False):
 
 
 def test_miscmath(debug=False, displayplots=False):
+    """
+    Verify miscmath.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     np.random.seed(12345)
     phase_test(debug=debug)
     polarfft_test(debug=debug)

@@ -12,16 +12,39 @@ import numpy as np
 
 
 def is_zarr(filename: str) -> bool:
-    """Recognize a local Zarr group without importing optional dependencies."""
+    """
+    Recognize a local Zarr group without importing optional dependencies.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the input or output file.
+
+    Returns
+    -------
+    bool
+        Whether the path is a directory with Zarr metadata.
+    """
     path = Path(filename)
     return path.is_dir() and any((path / marker).is_file() for marker in (".zgroup", "zarr.json"))
 
 
 def open_blood_zarr(filename: str):
-    """Open and validate a uniformly sampled videotoblood store without loading blood data.
+    """
+    Open and validate a uniformly sampled videotoblood store without loading blood data.
 
     Returns the group, timestamps, validity mask, and sampling interval. Timing
     is validated against the actual timestamps, independently of metadata flags.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the input or output file.
+
+    Returns
+    -------
+    tuple
+        Opened group, sample times, validity mask, and sample interval.
     """
     try:
         import zarr
@@ -66,7 +89,23 @@ def open_blood_zarr(filename: str):
 
 
 def blood_header(shape: tuple, step: float, start: float):
-    """Make a NIfTI-2 metadata adapter with unit pixel spacing and time in seconds."""
+    """
+    Make a NIfTI-2 metadata adapter with unit pixel spacing and time in seconds.
+
+    Parameters
+    ----------
+    shape : tuple
+        Array dimensions in the order expected by the routine.
+    step : float
+        Spacing between samples on the final axis.
+    start : float
+        Starting index of the block or coordinate axis.
+
+    Returns
+    -------
+    object
+        The header.
+    """
     height, width, frames = shape
     header = nib.Nifti2Header()
     header.set_data_shape((width, height, 1, frames))
@@ -77,12 +116,40 @@ def blood_header(shape: tuple, step: float, start: float):
 
 
 def save_map(filename: str, data: np.ndarray, header, metadata: dict, sample_axis: str = "time"):
-    """Write an analysis map in native (y, x[, sample]) geometry to a Zarr group."""
+    """
+    Write an analysis map in native (y, x[, sample]) geometry to a Zarr group.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the input or output file.
+    data : np.ndarray
+        Input data to filter.
+    header : object
+        Image header supplying spatial and temporal metadata.
+    metadata : dict
+        Rapidtide metadata to embed in the TIFF header.
+    sample_axis : str, optional
+        Name of the optional sample dimension.
+    """
     import zarr
 
     # Zarr attributes use standard JSON, unlike NumPy arrays and scalars produced
     # by the analysis. Normalize nested metadata just as for JSON sidecars.
     def numpy_json(value):
+        """
+        Convert NumPy arrays and scalars to JSON-compatible values.
+
+        Parameters
+        ----------
+        value : numpy.ndarray or numpy.generic
+            NumPy value to convert.
+
+        Returns
+        -------
+        list or scalar
+            Python representation of the NumPy value.
+        """
         if isinstance(value, np.ndarray):
             return value.tolist()
         if isinstance(value, np.generic):

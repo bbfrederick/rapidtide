@@ -94,7 +94,7 @@ def readfromcifti(
     inputfile: str, debug: bool = False
 ) -> Tuple[Any, Any, NDArray, Any, NDArray, NDArray, Optional[float]]:
     """
-    Open a cifti file and read in the various important parts
+    Open a cifti file and read in the various important parts.
 
     Parameters
     ----------
@@ -105,12 +105,20 @@ def readfromcifti(
 
     Returns
     -------
-    nim : nifti image structure
-    nim_data : array-like
-    nim_hdr : nifti header
-    thedims : int array
-    thesizes : float array
-
+    cifti : nibabel.Cifti2Image
+        Loaded CIFTI image.
+    cifti_hdr : nibabel.cifti2.Cifti2Header
+        Header describing the CIFTI axes.
+    nifti_data : numpy.ndarray
+        Transposed image data as single-precision floats.
+    nifti_hdr : nibabel.Nifti2Header
+        Embedded NIfTI header.
+    thedims : numpy.ndarray
+        Copy of the NIfTI dimension fields.
+    thesizes : numpy.ndarray
+        Copy of the NIfTI pixel dimension fields.
+    timestep : float or None
+        Time between samples when a time axis is present.
     """
     if os.path.isfile(inputfile):
         inputfilename = inputfile
@@ -341,7 +349,7 @@ def savetonifti(
     thearray: NDArray, theheader: Any, thename: str, nifti2: bool = False, debug: bool = False
 ) -> None:
     """
-    Save a data array out to a nifti file
+    Save a data array out to a nifti file.
 
     Parameters
     ----------
@@ -358,10 +366,6 @@ def savetonifti(
         back out preserves the format without having to set this.  Default is False.
     debug : bool, optional
         Enable debug output. Default is False
-
-    Returns
-    -------
-    None
 
     Raises
     ------
@@ -2971,6 +2975,10 @@ def writebidstsv(
     None
         This function does not return any value.
 
+    See Also
+    --------
+    readbidstsv : Read BIDS physiological or stimulation data from TSV and JSON files.
+
     Notes
     -----
     - BIDS-compliant TSV files require:
@@ -2989,10 +2997,6 @@ def writebidstsv(
     >>> # Writes:
     >>> #   sub-01_task-rest_physio.tsv.gz
     >>> #   sub-01_task-rest_physio.json
-
-    See Also
-    --------
-    readbidstsv : Read BIDS physiological or stimulation data from TSV and JSON files.
     """
     if debug:
         print("entering writebidstsv:")
@@ -3325,13 +3329,13 @@ def readbidstsv(
         The root name of the TSV and accompanying JSON file (without extension).
     colspec : str, optional
         A comma-separated list of column names to return. If None, all columns are returned.
-    debug : bool, optional
-        If True, print additional debugging information. Default is False.
     warn : bool, optional
         If True, print warnings for missing metadata fields. Default is True.
     neednotexist : bool, optional
         If True, return None values instead of raising an exception if files do not exist.
         Default is False.
+    debug : bool, optional
+        If True, print additional debugging information. Default is False.
 
     Returns
     -------
@@ -3542,12 +3546,12 @@ def readcolfrombidstsv(
     ----------
     inputfilename : str
         Path to the input BIDS TSV file (can be .tsv or .tsv.gz)
-    columnname : str, optional
-        Name of the column to extract. If specified, ``columnnum`` is ignored.
-        Default is None.
     columnnum : int, optional
         Index of the column to extract (0-based). Ignored if ``columnname`` is specified.
         Default is 0.
+    columnname : str, optional
+        Name of the column to extract. If specified, ``columnnum`` is ignored.
+        Default is None.
     neednotexist : bool, optional
         If True, the function will not raise an error if the file does not exist.
         Default is False.
@@ -4010,11 +4014,11 @@ def readvecs(
     numskip : int, optional
         Number of lines to skip at the beginning of the file. If 0, the function
         attempts to auto-detect if the first line contains headers. Default is 0.
-    thedtype : type, optional
-        The data type to convert the read values to. Default is float.
     debug : bool, optional
         If True, print debug information including input parameters and processing
         details. Default is False.
+    thedtype : type, optional
+        The data type to convert the read values to. Default is float.
 
     Returns
     -------
@@ -4135,12 +4139,12 @@ def readtc(
     inputfilename : str
         Path to the input file to read. Can be a BIDS TSV file (`.tsv`) or a generic
         text file with multiple columns.
-    colname : str or None, optional
-        Column name to read from a BIDS TSV file. Required if the file is a BIDS TSV
-        and `colnum` is not specified. Default is None.
     colnum : int or None, optional
         Column number to read from a BIDS TSV file or a generic multi-column file.
         Required for generic files when `colname` is not specified. Default is None.
+    colname : str or None, optional
+        Column name to read from a BIDS TSV file. Required if the file is a BIDS TSV
+        and `colnum` is not specified. Default is None.
     debug : bool, optional
         Enable debug output to print intermediate information. Default is False.
 

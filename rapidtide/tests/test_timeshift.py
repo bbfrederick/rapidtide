@@ -26,6 +26,14 @@ from rapidtide.tests.utils import mse
 
 
 def test_timeshift(debug=False):
+    """
+    Verify timeshift.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     tr = 1.0
     padtime = 300.0
     testlen = 1000

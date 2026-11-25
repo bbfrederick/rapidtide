@@ -25,7 +25,14 @@ from rapidtide.wiener import _procOneVoxelWiener, wienerpass
 
 
 def test_procOneVoxelWiener_basic(debug=False):
-    """Test basic Wiener processing with a known linear relationship."""
+    """
+    Test basic Wiener processing with a known linear relationship.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     n = 100
     lagtc = rng.randn(n)
@@ -53,7 +60,14 @@ def test_procOneVoxelWiener_basic(debug=False):
 
 
 def test_procOneVoxelWiener_voxel_index(debug=False):
-    """Test that voxel index is passed through correctly."""
+    """
+    Test that voxel index is passed through correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     lagtc = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     inittc = np.array([2.0, 4.0, 6.0, 8.0, 10.0])
 
@@ -65,7 +79,14 @@ def test_procOneVoxelWiener_voxel_index(debug=False):
 
 
 def test_procOneVoxelWiener_float32(debug=False):
-    """Test that output arrays respect rt_floattype."""
+    """
+    Test that output arrays respect rt_floattype.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     lagtc = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     inittc = np.array([2.0, 4.0, 6.0, 8.0, 10.0])
 
@@ -80,7 +101,14 @@ def test_procOneVoxelWiener_float32(debug=False):
 
 
 def test_procOneVoxelWiener_float64(debug=False):
-    """Test float64 output type."""
+    """
+    Test float64 output type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     lagtc = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     inittc = np.array([3.0, 6.0, 9.0, 12.0, 15.0])
 
@@ -95,7 +123,14 @@ def test_procOneVoxelWiener_float64(debug=False):
 
 
 def test_procOneVoxelWiener_uncorrelated(debug=False):
-    """Test with uncorrelated signals — R2 should be low."""
+    """
+    Test with uncorrelated signals — R2 should be low.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     n = 200
     lagtc = rng.randn(n)
@@ -111,7 +146,14 @@ def test_procOneVoxelWiener_uncorrelated(debug=False):
 
 
 def test_procOneVoxelWiener_perfect_fit(debug=False):
-    """Test with perfectly correlated signals (no noise)."""
+    """
+    Test with perfectly correlated signals (no noise).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     lagtc = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
     inittc = 3.0 * lagtc + 1.0
 
@@ -129,7 +171,14 @@ def test_procOneVoxelWiener_perfect_fit(debug=False):
 
 
 def test_procOneVoxelWiener_ratio(debug=False):
-    """Test that ratio = slope / intercept."""
+    """
+    Test that ratio = slope / intercept.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     lagtc = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
     inittc = 2.0 * lagtc + 4.0
 
@@ -146,7 +195,14 @@ def test_procOneVoxelWiener_ratio(debug=False):
 
 
 def test_procOneVoxelWiener_residual_orthogonal(debug=False):
-    """Test that the residual is approximately orthogonal to the lagtc for well-conditioned data."""
+    """
+    Test that the residual is approximately orthogonal to the lagtc for well-conditioned data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     n = 500
     lagtc = rng.randn(n)
@@ -167,7 +223,14 @@ def test_procOneVoxelWiener_residual_orthogonal(debug=False):
 
 
 def test_wienerpass_singleproc(debug=False):
-    """Test wienerpass with single processor (exercises the else branch)."""
+    """
+    Test wienerpass with single processor (exercises the else branch).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 5
     ntimepoints = 50
@@ -214,7 +277,14 @@ def test_wienerpass_singleproc(debug=False):
 
 
 def test_wienerpass_multiproc(debug=False):
-    """Test wienerpass with multiple processors (exercises the else branch)."""
+    """
+    Test wienerpass with multiple processors (exercises the else branch).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 5
     ntimepoints = 50
@@ -261,7 +331,14 @@ def test_wienerpass_multiproc(debug=False):
 
 
 def test_wienerpass_threshold_mask(debug=False):
-    """Test that voxels below threshval are skipped."""
+    """
+    Test that voxels below threshval are skipped.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 6
     ntimepoints = 50
@@ -312,7 +389,14 @@ def test_wienerpass_threshold_mask(debug=False):
 
 
 def test_wienerpass_consistency_with_procOneVoxelWiener(debug=False):
-    """Verify wienerpass single-proc results match direct _procOneVoxelWiener calls."""
+    """
+    Verify wienerpass single-proc results match direct _procOneVoxelWiener calls.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 3
     ntimepoints = 60
@@ -362,6 +446,14 @@ def test_wienerpass_consistency_with_procOneVoxelWiener(debug=False):
 
 
 def test_wiener(debug=False):
+    """
+    Verify wiener.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     test_procOneVoxelWiener_basic(debug=debug)
     test_procOneVoxelWiener_voxel_index(debug=debug)
     test_procOneVoxelWiener_float32(debug=debug)

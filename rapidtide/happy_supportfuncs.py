@@ -437,7 +437,14 @@ class CardiacExtractionResult:
     slicenorms: NDArray
 
     def __iter__(self):
-        """Support tuple unpacking for backward compatibility."""
+        """
+        Support tuple unpacking for backward compatibility.
+
+        Returns
+        -------
+        iterator
+            Iterator over the result fields in legacy unpacking order.
+        """
         return iter(
             (
                 self.hirescardtc,

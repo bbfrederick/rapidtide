@@ -24,6 +24,14 @@ import rapidtide.stats as tide_stats
 
 
 def distribution_and_significance_tests(debug=False):
+    """
+    Check distribution and significance tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("distribution_and_significance_tests")
 
@@ -114,6 +122,14 @@ def distribution_and_significance_tests(debug=False):
 
 
 def correlation_transform_tests(debug=False):
+    """
+    Check correlation transform tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("correlation_transform_tests")
 
@@ -150,6 +166,14 @@ def correlation_transform_tests(debug=False):
 
 
 def timeseries_stats_tests(debug=False):
+    """
+    Check timeseries stats tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("timeseries_stats_tests")
 
@@ -189,6 +213,14 @@ def timeseries_stats_tests(debug=False):
 
 
 def histogram_and_mask_tests(debug=False):
+    """
+    Check histogram and mask tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histogram_and_mask_tests")
 
@@ -324,10 +356,17 @@ def histogram_and_mask_tests(debug=False):
 
 
 def summarizevoxels_tests(debug=False):
-    """summarizevoxels dispatches on a method name, and each branch has to mean what
+    """
+    Summarizevoxels dispatches on a method name, and each branch has to mean what
     it says.  A dispatch table is exactly the kind of thing that silently degrades to
     "always the mean" if a branch is mistyped, so pin every method against an
-    independently computed answer."""
+    independently computed answer.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("summarizevoxels_tests")
 
@@ -403,8 +442,15 @@ def summarizevoxels_tests(debug=False):
 
 
 def regionstats_tests(debug=False):
-    """regionstats crosses the fit mask with each tissue mask and summarizes four ways.
-    The masks are optional, so the shape of the returned dict is part of its contract."""
+    """
+    Regionstats crosses the fit mask with each tissue mask and summarizes four ways.
+    The masks are optional, so the shape of the returned dict is part of its contract.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("regionstats_tests")
 
@@ -460,10 +506,17 @@ def regionstats_tests(debug=False):
 
 
 def pdf_fit_tests(debug=False):
-    """fitgausspdf and fitjsbpdf both fit a distribution to a histogram and hand back
+    """
+    Fitgausspdf and fitjsbpdf both fit a distribution to a histogram and hand back
     their parameters with the zero bin tacked on the end.  The zero bin is special:
     rapidtide's null distributions have a spike at R=0 from failed fits, and --nozero
-    is what says to ignore it."""
+    is what says to ignore it.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("pdf_fit_tests")
 
@@ -510,9 +563,16 @@ def pdf_fit_tests(debug=False):
 
 
 def reporting_path_tests(debug=False):
-    """The debug and displayplots branches are reporting, not arithmetic, but they run
+    """
+    The debug and displayplots branches are reporting, not arithmetic, but they run
     inside the fitting routines and a stale f-string in one of them takes a whole
-    analysis down.  Exercise them with the plotting stubbed out."""
+    analysis down.  Exercise them with the plotting stubbed out.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("reporting_path_tests")
 
@@ -578,11 +638,17 @@ def reporting_path_tests(debug=False):
 
 
 def makehistogram_binsize_tests(debug=False):
-    """makehistogram can be asked for a bin WIDTH instead of a bin count.
+    """
+    Makehistogram can be asked for a bin WIDTH instead of a bin count.
 
     np.linspace counts bin edges and demands an integer, so passing the float
     (range / binsize + 1) straight through used to raise TypeError for every caller.
     No internal caller passes binsize, which is why it went unnoticed.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("makehistogram_binsize_tests")
@@ -605,8 +671,15 @@ def makehistogram_binsize_tests(debug=False):
 
 
 def makeandsavehistogram_tests(debug=False):
-    """makeandsavehistogram writes the histogram to disk and optionally folds its peak
-    properties into a dict for the runoptions.  Both outputs matter downstream."""
+    """
+    Makeandsavehistogram writes the histogram to disk and optionally folds its peak
+    properties into a dict for the runoptions.  Both outputs matter downstream.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makeandsavehistogram_tests")
 
@@ -651,6 +724,16 @@ def makeandsavehistogram_tests(debug=False):
 
 
 def test_stats(debug=False, displayplots=False):
+    """
+    Verify stats.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     np.random.seed(12345)
     distribution_and_significance_tests(debug=debug)
     correlation_transform_tests(debug=debug)

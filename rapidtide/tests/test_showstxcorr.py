@@ -29,7 +29,8 @@ from rapidtide.workflows.showstxcorr import _get_parser, printthresholds, showst
 
 
 def _make_test_timecourses(samplerate=10.0, duration=200.0, delay=0.5, noise=3.0):
-    """Create two synthetic broadband timecourses with a known delay relationship.
+    """
+    Create two synthetic broadband timecourses with a known delay relationship.
 
     Uses a sum of many sinusoids at different LFO frequencies with random phases
     to produce broadband signals whose cross-correlation has a single dominant
@@ -40,6 +41,22 @@ def _make_test_timecourses(samplerate=10.0, duration=200.0, delay=0.5, noise=3.0
     filtering, the cross-correlation peak stays below 1.0. If the peak reaches
     ~1.0, the Gaussian fit overshoots slightly above 1.0 and findmaxlag_gauss
     rejects the fit.
+
+    Parameters
+    ----------
+    samplerate : float, optional
+        Sampling rate in Hz.
+    duration : float, optional
+        Value supplied as ``duration`` by the test case.
+    delay : float, optional
+        Time shift applied to the test signal in seconds.
+    noise : float, optional
+        Value supplied as ``noise`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     npoints = int(samplerate * duration)
     t = np.arange(npoints) / samplerate
@@ -65,7 +82,19 @@ def _make_test_timecourses(samplerate=10.0, duration=200.0, delay=0.5, noise=3.0
 
 
 def _make_default_args(outfilename="/tmp/test_showstxcorr_out"):
-    """Create a default args Namespace with all required attributes."""
+    """
+    Create a default args Namespace with all required attributes.
+
+    Parameters
+    ----------
+    outfilename : str, optional
+        Value supplied as ``outfilename`` by the test case.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     args = argparse.Namespace(
         infilename1="dummy_in1.txt",
         infilename2="dummy_in2.txt",
@@ -105,7 +134,23 @@ def _make_default_args(outfilename="/tmp/test_showstxcorr_out"):
 
 
 def _run_showstxcorr(signal1, signal2, args):
-    """Helper to run showstxcorr with mocked IO. Returns dict with saved outputs."""
+    """
+    Helper to run showstxcorr with mocked IO. Returns dict with saved outputs.
+
+    Parameters
+    ----------
+    signal1 : object
+        Value supplied as ``signal1`` by the test case.
+    signal2 : object
+        Value supplied as ``signal2`` by the test case.
+    args : object
+        Arguments passed to the test helper.
+
+    Returns
+    -------
+    dict
+        The ``saved`` value supplied to the caller.
+    """
     saved = {
         "text": {},
         "nifti": {},
@@ -113,19 +158,77 @@ def _run_showstxcorr(signal1, signal2, args):
     }
 
     def mock_readvec(fname, **kwargs):
+        """
+        Simulate ``readvec`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if "in1" in fname:
             return signal1.copy()
         return signal2.copy()
 
     def mock_writenpvecs(data, fname, **kwargs):
+        """
+        Simulate ``writenpvecs`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         saved["text"][fname] = np.array(data).copy()
 
     def mock_savetonifti(data, hdr, fname, **kwargs):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        hdr : object
+            Image header used by the helper.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         saved["nifti"][fname] = np.array(data).copy()
 
     original_to_csv = pd.DataFrame.to_csv
 
     def mock_to_csv(self, path_or_buf=None, *a, **kw):
+        """
+        Simulate ``to_csv`` for the test.
+
+        Parameters
+        ----------
+        path_or_buf : object or None, optional
+            Value supplied as ``path_or_buf`` by the test case.
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if path_or_buf is not None and isinstance(path_or_buf, str):
             saved["csv"].append(path_or_buf)
         return original_to_csv(self, path_or_buf, *a, **kw) if path_or_buf is None else None
@@ -145,7 +248,14 @@ def _run_showstxcorr(signal1, signal2, args):
 
 
 def parser_basic(debug=False):
-    """Test that parser creates successfully."""
+    """
+    Test that parser creates successfully.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -154,7 +264,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
-    """Test parser has required positional arguments."""
+    """
+    Test parser has required positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -165,7 +282,16 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(parse_with_temp_inputs, debug=False):
-    """Test default values for optional arguments."""
+    """
+    Test default values for optional arguments.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     args = parse_with_temp_inputs(_get_parser(), include_output=True)
@@ -186,7 +312,16 @@ def parser_defaults(parse_with_temp_inputs, debug=False):
 
 
 def parser_samplerate(parse_with_temp_inputs, debug=False):
-    """Test --samplerate option."""
+    """
+    Test --samplerate option.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_samplerate")
     args = parse_with_temp_inputs(_get_parser(), ["--samplerate", "25.0"], include_output=True)
@@ -194,7 +329,16 @@ def parser_samplerate(parse_with_temp_inputs, debug=False):
 
 
 def parser_sampletime(parse_with_temp_inputs, debug=False):
-    """Test --sampletime option (inverts to samplerate)."""
+    """
+    Test --sampletime option (inverts to samplerate).
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_sampletime")
     args = parse_with_temp_inputs(_get_parser(), ["--sampletime", "0.5"], include_output=True)
@@ -202,7 +346,16 @@ def parser_sampletime(parse_with_temp_inputs, debug=False):
 
 
 def parser_boolean_flags(parse_with_temp_inputs, debug=False):
-    """Test boolean flag options."""
+    """
+    Test boolean flag options.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_boolean_flags")
     args = parse_with_temp_inputs(
@@ -217,7 +370,16 @@ def parser_boolean_flags(parse_with_temp_inputs, debug=False):
 
 
 def parser_corr_options(parse_with_temp_inputs, debug=False):
-    """Test correlation-related options."""
+    """
+    Test correlation-related options.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_corr_options")
     args = parse_with_temp_inputs(
@@ -244,7 +406,16 @@ def parser_corr_options(parse_with_temp_inputs, debug=False):
 
 
 def parser_samplerate_sampletime_mutual_exclusion(parse_with_temp_inputs, debug=False):
-    """Test that --samplerate and --sampletime are mutually exclusive."""
+    """
+    Test that --samplerate and --sampletime are mutually exclusive.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_samplerate_sampletime_mutual_exclusion")
     with pytest.raises(SystemExit):
@@ -259,7 +430,16 @@ def parser_samplerate_sampletime_mutual_exclusion(parse_with_temp_inputs, debug=
 
 
 def printthresholds_basic(capture_stdout, debug=False):
-    """Test printthresholds outputs correct format."""
+    """
+    Test printthresholds outputs correct format.
+
+    Parameters
+    ----------
+    capture_stdout : callable
+        Run a callable and capture its standard output.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("printthresholds_basic")
     pcts = [0.5, 0.3, 0.1]
@@ -273,7 +453,16 @@ def printthresholds_basic(capture_stdout, debug=False):
 
 
 def printthresholds_empty(capture_stdout, debug=False):
-    """Test printthresholds with empty lists."""
+    """
+    Test printthresholds with empty lists.
+
+    Parameters
+    ----------
+    capture_stdout : callable
+        Run a callable and capture its standard output.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("printthresholds_empty")
     output = capture_stdout(printthresholds, [], [], "Empty:")
@@ -281,7 +470,16 @@ def printthresholds_empty(capture_stdout, debug=False):
 
 
 def printthresholds_single(capture_stdout, debug=False):
-    """Test printthresholds with a single threshold."""
+    """
+    Test printthresholds with a single threshold.
+
+    Parameters
+    ----------
+    capture_stdout : callable
+        Run a callable and capture its standard output.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("printthresholds_single")
     output = capture_stdout(printthresholds, [0.42], [0.95], "Single:")
@@ -293,7 +491,14 @@ def printthresholds_single(capture_stdout, debug=False):
 
 
 def showstxcorr_auto_samplerate_exit(debug=False):
-    """Test that samplerate='auto' causes exit."""
+    """
+    Test that samplerate='auto' causes exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showstxcorr_auto_samplerate_exit")
     args = _make_default_args()
@@ -304,7 +509,14 @@ def showstxcorr_auto_samplerate_exit(debug=False):
 
 
 def showstxcorr_basic(debug=False):
-    """Test basic showstxcorr workflow produces output files."""
+    """
+    Test basic showstxcorr workflow produces output files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showstxcorr_basic")
     signal1, signal2 = _make_test_timecourses(samplerate=10.0, duration=200.0)
@@ -324,7 +536,14 @@ def showstxcorr_basic(debug=False):
 
 
 def showstxcorr_matrixoutput(debug=False):
-    """Test matrixoutput showstxcorr workflow produces output files."""
+    """
+    Test matrixoutput showstxcorr workflow produces output files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showstxcorr_matrixoutput")
     signal1, signal2 = _make_test_timecourses(samplerate=10.0, duration=200.0)
@@ -356,7 +575,14 @@ def showstxcorr_matrixoutput(debug=False):
 
 
 def showstxcorr_output_lengths(debug=False):
-    """Test that output arrays have consistent lengths."""
+    """
+    Test that output arrays have consistent lengths.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showstxcorr_output_lengths")
     signal1, signal2 = _make_test_timecourses(samplerate=10.0, duration=200.0)
@@ -379,7 +605,14 @@ def showstxcorr_output_lengths(debug=False):
 
 
 def showstxcorr_correlated_signals(debug=False):
-    """Test that correlated signals produce high correlation values."""
+    """
+    Test that correlated signals produce high correlation values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showstxcorr_correlated_signals")
     signal1, signal2 = _make_test_timecourses(
@@ -407,7 +640,14 @@ def showstxcorr_correlated_signals(debug=False):
 
 
 def showstxcorr_invert(debug=False):
-    """Test that --invert negates the second signal and flips correlation sign."""
+    """
+    Test that --invert negates the second signal and flips correlation sign.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showstxcorr_invert")
     signal1, signal2 = _make_test_timecourses(
@@ -436,7 +676,14 @@ def showstxcorr_invert(debug=False):
 
 
 def showstxcorr_zero_delay(debug=False):
-    """Test showstxcorr with zero delay between signals."""
+    """
+    Test showstxcorr with zero delay between signals.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showstxcorr_zero_delay")
     signal1, signal2 = _make_test_timecourses(
@@ -462,7 +709,14 @@ def showstxcorr_zero_delay(debug=False):
 
 
 def showstxcorr_starttime_duration(debug=False):
-    """Test starttime and duration trim the data correctly."""
+    """
+    Test starttime and duration trim the data correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showstxcorr_starttime_duration")
     signal1, signal2 = _make_test_timecourses(samplerate=10.0, duration=200.0)
@@ -493,7 +747,14 @@ def showstxcorr_starttime_duration(debug=False):
 
 
 def showstxcorr_timewarped_output(debug=False):
-    """Test that timewarped output has same length as hiresdelayvals."""
+    """
+    Test that timewarped output has same length as hiresdelayvals.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showstxcorr_timewarped_output")
     signal1, signal2 = _make_test_timecourses(
@@ -515,7 +776,14 @@ def showstxcorr_timewarped_output(debug=False):
 
 
 def showstxcorr_custom_corrweighting(debug=False):
-    """Test showstxcorr with phat correlation weighting."""
+    """
+    Test showstxcorr with phat correlation weighting.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showstxcorr_custom_corrweighting")
     signal1, signal2 = _make_test_timecourses(samplerate=10.0, duration=200.0)
@@ -531,7 +799,14 @@ def showstxcorr_custom_corrweighting(debug=False):
 
 
 def showstxcorr_detrendorder_zero(debug=False):
-    """Test showstxcorr with detrending disabled."""
+    """
+    Test showstxcorr with detrending disabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showstxcorr_detrendorder_zero")
     signal1, signal2 = _make_test_timecourses(samplerate=10.0, duration=200.0)
@@ -546,7 +821,14 @@ def showstxcorr_detrendorder_zero(debug=False):
 
 
 def showstxcorr_high_corrthresh(debug=False):
-    """Test showstxcorr with very high corrthresh (may result in no valid points)."""
+    """
+    Test showstxcorr with very high corrthresh (may result in no valid points).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showstxcorr_high_corrthresh")
     rng = np.random.RandomState(99)
@@ -609,18 +891,48 @@ WORKFLOW_CASES = [
 @pytest.mark.parametrize("case_func", PARSER_CASES, ids=lambda func: func.__name__)
 @pytest.mark.unit
 def test_showstxcorr_parser_cases(case_runner, case_func):
+    """
+    Verify showstxcorr parser cases.
+
+    Parameters
+    ----------
+    case_runner : callable
+        Run the selected test case with the test fixtures.
+    case_func : callable
+        Test case to execute.
+    """
     case_runner(case_func)
 
 
 @pytest.mark.parametrize("case_func", PRINTTHRESHOLD_CASES, ids=lambda func: func.__name__)
 @pytest.mark.unit
 def test_showstxcorr_printthreshold_cases(case_runner, case_func):
+    """
+    Verify showstxcorr printthreshold cases.
+
+    Parameters
+    ----------
+    case_runner : callable
+        Run the selected test case with the test fixtures.
+    case_func : callable
+        Test case to execute.
+    """
     case_runner(case_func)
 
 
 @pytest.mark.parametrize("case_func", WORKFLOW_CASES, ids=lambda func: func.__name__)
 @pytest.mark.slow
 def test_showstxcorr_workflow_cases(case_runner, case_func):
+    """
+    Verify showstxcorr workflow cases.
+
+    Parameters
+    ----------
+    case_runner : callable
+        Run the selected test case with the test fixtures.
+    case_func : callable
+        Test case to execute.
+    """
     case_runner(case_func)
 
 

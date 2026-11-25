@@ -42,7 +42,19 @@ from rapidtide.patchmatch import (
 
 
 def _make_affine(voxsize=2.0):
-    """Create a simple diagonal affine matrix."""
+    """
+    Create a simple diagonal affine matrix.
+
+    Parameters
+    ----------
+    voxsize : float, optional
+        Value supplied as ``voxsize`` by the test case.
+
+    Returns
+    -------
+    object
+        The ``affine`` value supplied to the caller.
+    """
     affine = np.eye(4)
     affine[0, 0] = voxsize
     affine[1, 1] = voxsize
@@ -51,11 +63,42 @@ def _make_affine(voxsize=2.0):
 
 
 def _make_sizes(voxsize=2.0):
+    """
+    Create sizes.
+
+    Parameters
+    ----------
+    voxsize : float, optional
+        Value supplied as ``voxsize`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     return (1.0, voxsize, voxsize, voxsize, 1.0, 1.0, 1.0, 1.0)
 
 
 def _make_sphere_image(shape=(20, 20, 20), center=None, radius=5, value=100.0):
-    """Create a 3D image with a bright sphere and dark background."""
+    """
+    Create a 3D image with a bright sphere and dark background.
+
+    Parameters
+    ----------
+    shape : tuple of int, optional
+        Dimensions of the test array.
+    center : object or None, optional
+        Value supplied as ``center`` by the test case.
+    radius : int, optional
+        Value supplied as ``radius`` by the test case.
+    value : float, optional
+        Value supplied as ``value`` by the test case.
+
+    Returns
+    -------
+    numpy.ndarray
+        Output values supplied to the caller.
+    """
     if center is None:
         center = tuple(s // 2 for s in shape)
     data = np.zeros(shape, dtype=np.float32)
@@ -70,6 +113,14 @@ def _make_sphere_image(shape=(20, 20, 20), center=None, radius=5, value=100.0):
 
 def test_clamp(debug=False):
     # Within range
+    """
+    Verify clamp.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     assert clamp(0, 10, 5) == 5
     # Below range
     assert clamp(0, 10, -3) == 0
@@ -91,6 +142,14 @@ def test_clamp(debug=False):
 
 def test_interpolate_masked_voxels(debug=False):
     # Create a simple 3D gradient
+    """
+    Verify interpolate masked voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.zeros((5, 5, 5), dtype=np.float64)
     for i in range(5):
         data[i, :, :] = float(i)
@@ -111,6 +170,14 @@ def test_interpolate_masked_voxels(debug=False):
 
 
 def test_interpolate_masked_voxels_shape_mismatch(debug=False):
+    """
+    Verify interpolate masked voxels shape mismatch.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.zeros((5, 5, 5))
     mask = np.zeros((3, 3, 3), dtype=bool)
     with pytest.raises(ValueError, match="same shape"):
@@ -121,6 +188,14 @@ def test_interpolate_masked_voxels_shape_mismatch(debug=False):
 
 
 def test_interpolate_masked_voxels_nearest(debug=False):
+    """
+    Verify interpolate masked voxels nearest.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.ones((5, 5, 5), dtype=np.float64) * 7.0
     mask = np.zeros((5, 5, 5), dtype=bool)
     mask[2, 2, 2] = True
@@ -133,6 +208,14 @@ def test_interpolate_masked_voxels_nearest(debug=False):
 
 def test_interpolate_masked_voxels_extrapolation(debug=False):
     # Mask a corner — linear interpolation may not reach it, so extrapolation kicks in
+    """
+    Verify interpolate masked voxels extrapolation.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.ones((5, 5, 5), dtype=np.float64) * 3.0
     mask = np.zeros((5, 5, 5), dtype=bool)
     mask[0, 0, 0] = True
@@ -151,6 +234,14 @@ def test_interpolate_masked_voxels_extrapolation(debug=False):
 
 
 def test_get_bounding_box(debug=False):
+    """
+    Verify get bounding box.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mask = np.zeros((10, 10, 10), dtype=int)
     mask[3:7, 3:7, 3:7] = 1
 
@@ -163,6 +254,14 @@ def test_get_bounding_box(debug=False):
 
 
 def test_get_bounding_box_with_buffer(debug=False):
+    """
+    Verify get bounding box with buffer.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mask = np.zeros((10, 10, 10), dtype=int)
     mask[3:7, 3:7, 3:7] = 1
 
@@ -176,6 +275,14 @@ def test_get_bounding_box_with_buffer(debug=False):
 
 
 def test_get_bounding_box_buffer_clamped(debug=False):
+    """
+    Verify get bounding box buffer clamped.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mask = np.zeros((10, 10, 10), dtype=int)
     mask[0:3, 0:3, 0:3] = 1
 
@@ -190,6 +297,14 @@ def test_get_bounding_box_buffer_clamped(debug=False):
 
 
 def test_get_bounding_box_not_3d(debug=False):
+    """
+    Verify get bounding box not 3D.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mask = np.zeros((10, 10), dtype=int)
     with pytest.raises(ValueError, match="3D"):
         get_bounding_box(mask, 1)
@@ -203,6 +318,14 @@ def test_get_bounding_box_not_3d(debug=False):
 
 def test_flood3d(debug=False):
     # Create image with a 'wall' that blocks flood fill
+    """
+    Verify flood3d.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     image = np.zeros((5, 5, 3), dtype=int)
     # Fill connected region from (0,0) — all zeros become newvalue
     result = flood3d(image, 7)
@@ -214,6 +337,14 @@ def test_flood3d(debug=False):
 
 def test_flood3d_with_wall(debug=False):
     # Create image with a wall separating two regions
+    """
+    Verify flood3d with wall.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     image = np.zeros((5, 5, 1), dtype=int)
     image[2, :, 0] = 1  # horizontal wall
     result = flood3d(image, 9)
@@ -232,6 +363,14 @@ def test_flood3d_with_wall(debug=False):
 def test_invertedflood3d(debug=False):
     # For an all-zeros image, flood3d fills everything with newvalue
     # invertedflood3D = image + newvalue - flood3d(image, newvalue) = 0 + nv - nv = 0
+    """
+    Verify invertedflood3d.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     image = np.zeros((5, 5, 3), dtype=int)
     result = invertedflood3D(image, 1)
     assert np.all(result == 0)
@@ -242,6 +381,14 @@ def test_invertedflood3d(debug=False):
 
 def test_invertedflood3d_enclosed_region(debug=False):
     # Create enclosed region: wall around center
+    """
+    Verify invertedflood3d enclosed region.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     image = np.zeros((7, 7, 1), dtype=int)
     # Create a ring wall
     image[2, 2:5, 0] = 1
@@ -264,6 +411,14 @@ def test_invertedflood3d_enclosed_region(debug=False):
 
 
 def test_growregion(debug=False):
+    """
+    Verify growregion.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     image = np.zeros((5, 5, 5), dtype=int)
     image[1:4, 1:4, 1:4] = 1  # 3x3x3 = 27 voxel cluster
     separated = np.zeros_like(image)
@@ -277,6 +432,14 @@ def test_growregion(debug=False):
 
 
 def test_growregion_single_voxel(debug=False):
+    """
+    Verify growregion single voxel.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     image = np.zeros((5, 5, 5), dtype=int)
     image[2, 2, 2] = 1
     separated = np.zeros_like(image)
@@ -288,6 +451,14 @@ def test_growregion_single_voxel(debug=False):
 
 
 def test_separateclusters(debug=False):
+    """
+    Verify separateclusters.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     image = np.zeros((10, 10, 5), dtype=int)
     # Two separate clusters
     image[1:3, 1:3, 1:3] = 1  # cluster 1: 8 voxels
@@ -303,6 +474,14 @@ def test_separateclusters(debug=False):
 
 
 def test_separateclusters_with_sizethresh(debug=False):
+    """
+    Verify separateclusters with sizethresh.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     image = np.zeros((10, 10, 5), dtype=int)
     image[1:3, 1:3, 1:3] = 1  # 8 voxels
     image[6:9, 6:9, 1:4] = 1  # 27 voxels
@@ -321,6 +500,14 @@ def test_separateclusters_with_sizethresh(debug=False):
 
 def test_dehaze(debug=False):
     # Create bimodal data: background near 0, signal near 100
+    """
+    Verify dehaze.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     data = np.concatenate([rng.normal(5, 2, 5000), rng.normal(100, 10, 5000)]).astype(np.float32)
 
@@ -335,6 +522,14 @@ def test_dehaze(debug=False):
 
 
 def test_dehaze_level_clamping(debug=False):
+    """
+    Verify dehaze level clamping.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     data = np.concatenate([rng.normal(5, 2, 5000), rng.normal(100, 10, 5000)]).astype(np.float32)
 
@@ -353,6 +548,14 @@ def test_dehaze_level_clamping(debug=False):
 
 
 def test_smooth_array_basic(debug=False):
+    """
+    Verify smooth array basic.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.zeros((10, 10, 10), dtype=np.float32)
     data[5, 5, 5] = 100.0
     affine = _make_affine(2.0)
@@ -370,6 +573,14 @@ def test_smooth_array_basic(debug=False):
 
 
 def test_smooth_array_fwhm_zero(debug=False):
+    """
+    Verify smooth array fwhm zero.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.ones((5, 5, 5), dtype=np.float32) * 3.0
     affine = _make_affine()
 
@@ -383,6 +594,14 @@ def test_smooth_array_fwhm_zero(debug=False):
 
 
 def test_smooth_array_fwhm_none(debug=False):
+    """
+    Verify smooth array fwhm none.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.ones((5, 5, 5), dtype=np.float32) * 3.0
     affine = _make_affine()
 
@@ -394,6 +613,14 @@ def test_smooth_array_fwhm_none(debug=False):
 
 
 def test_smooth_array_ensure_finite(debug=False):
+    """
+    Verify smooth array ensure finite.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.ones((5, 5, 5), dtype=np.float32)
     data[2, 2, 2] = np.nan
     affine = _make_affine()
@@ -407,6 +634,14 @@ def test_smooth_array_ensure_finite(debug=False):
 
 
 def test_smooth_array_integer_input(debug=False):
+    """
+    Verify smooth array integer input.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.ones((5, 5, 5), dtype=np.int32) * 5
     affine = _make_affine()
 
@@ -418,6 +653,14 @@ def test_smooth_array_integer_input(debug=False):
 
 
 def test_smooth_array_int64_input(debug=False):
+    """
+    Verify smooth array int64 input.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.ones((5, 5, 5), dtype=np.int64) * 5
     affine = _make_affine()
 
@@ -429,6 +672,14 @@ def test_smooth_array_int64_input(debug=False):
 
 
 def test_smooth_array_copy(debug=False):
+    """
+    Verify smooth array copy.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.ones((5, 5, 5), dtype=np.float32) * 3.0
     affine = _make_affine()
 
@@ -445,6 +696,14 @@ def test_smooth_array_copy(debug=False):
 
 def test_binary_zero_crossing(debug=False):
     # Create data with positive region surrounded by negative
+    """
+    Verify binary zero crossing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.ones((10, 10, 10), dtype=np.float64) * -1.0
     data[3:7, 3:7, 3:7] = 1.0
 
@@ -462,6 +721,14 @@ def test_binary_zero_crossing(debug=False):
 
 
 def test_binary_zero_crossing_all_positive(debug=False):
+    """
+    Verify binary zero crossing all positive.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.ones((5, 5, 5), dtype=np.float64)
     result = binary_zero_crossing(data)
     # All positive: EDT of all-1 mask → edges at boundary of volume
@@ -475,6 +742,14 @@ def test_binary_zero_crossing_all_positive(debug=False):
 
 
 def test_difference_of_gaussian(debug=False):
+    """
+    Verify difference of gaussian.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = _make_sphere_image(shape=(20, 20, 20), radius=5, value=100.0)
     affine = _make_affine(2.0)
 
@@ -489,6 +764,14 @@ def test_difference_of_gaussian(debug=False):
 
 
 def test_difference_of_gaussian_no_ratioopt(debug=False):
+    """
+    Verify difference of gaussian no ratioopt.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = _make_sphere_image()
     affine = _make_affine(2.0)
 
@@ -504,6 +787,14 @@ def test_difference_of_gaussian_no_ratioopt(debug=False):
 
 
 def test_calc_DoG(debug=False):
+    """
+    Verify calc DoG.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = _make_sphere_image(shape=(20, 20, 20), radius=5, value=100.0)
     affine = _make_affine(2.0)
     sizes = _make_sizes(2.0)
@@ -522,6 +813,14 @@ def test_calc_DoG(debug=False):
 
 def test_getclusters(debug=False):
     # Create image with a bright blob — should produce at least one cluster
+    """
+    Verify getclusters.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = _make_sphere_image(shape=(20, 20, 20), radius=5, value=100.0)
     affine = _make_affine(2.0)
     sizes = _make_sizes(2.0)
@@ -541,6 +840,14 @@ def test_getclusters(debug=False):
 
 def test_interppatch(debug=False):
     # Create image data with known values and a labeled region
+    """
+    Verify interppatch.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     img_data = np.ones((10, 10, 10), dtype=np.float64) * 5.0
     # Set some variation
     img_data[3:7, 3:7, 3:7] = 10.0
@@ -562,6 +869,14 @@ def test_interppatch(debug=False):
 
 
 def test_interppatch_no_regions(debug=False):
+    """
+    Verify interppatch no regions.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     img_data = np.ones((5, 5, 5), dtype=np.float64) * 3.0
     separated = np.zeros((5, 5, 5), dtype=int)  # no labeled regions
 
@@ -577,6 +892,14 @@ def test_interppatch_no_regions(debug=False):
 
 
 def test_patchmatch(debug=False):
+    """
+    Verify patchmatch.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     test_clamp(debug=debug)
     test_interpolate_masked_voxels(debug=debug)
     test_interpolate_masked_voxels_shape_mismatch(debug=debug)

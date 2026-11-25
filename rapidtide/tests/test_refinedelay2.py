@@ -48,6 +48,40 @@ def eval_refinedelay(
     debug=False,
 ):
     # set input and output directories
+    """
+    Evaluate refinedelay.
+
+    Parameters
+    ----------
+    sampletime : float, optional
+        Time between samples in seconds.
+    tclengthinsecs : float, optional
+        Value supplied as ``tclengthinsecs`` by the test case.
+    mindelay : object, optional
+        Value supplied as ``mindelay`` by the test case.
+    maxdelay : float, optional
+        Value supplied as ``maxdelay`` by the test case.
+    lagpad : float, optional
+        Value supplied as ``lagpad`` by the test case.
+    numpoints : int, optional
+        Value supplied as ``numpoints`` by the test case.
+    smoothpts : int, optional
+        Value supplied as ``smoothpts`` by the test case.
+    nativespaceshape : tuple, optional
+        Value supplied as ``nativespaceshape`` by the test case.
+    displayplots : bool, optional
+        Display plots from the test.
+    padtime : float, optional
+        Value supplied as ``padtime`` by the test case.
+    noiselevel : float, optional
+        Value supplied as ``noiselevel`` by the test case.
+    outputsuffix : str, optional
+        Value supplied as ``outputsuffix`` by the test case.
+    local : bool, optional
+        Use the local mode of the test harness.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     exampleroot = get_examples_path(local)
     testtemproot = get_test_temp_path(local)
 
@@ -218,6 +252,18 @@ def eval_refinedelay(
 
 
 def test_refinedelay(displayplots=False, local=False, debug=False):
+    """
+    Verify refinedelay.
+
+    Parameters
+    ----------
+    displayplots : bool, optional
+        Display plots from the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     for noiselevel in np.linspace(0.0, 0.5, num=5, endpoint=True):
         eval_refinedelay(
             sampletime=0.72,

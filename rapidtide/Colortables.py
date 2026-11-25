@@ -158,6 +158,11 @@ def gen_flame_state() -> dict:
         - Gradient color stops and their corresponding RGB values
         - Other gradient properties as defined in pyqtgraph's GradientEditorItem
 
+    See Also
+    --------
+    pyqtgraph.graphicsItems.GradientEditorItem.Gradients :
+        The source of built-in gradients in pyqtgraph
+
     Notes
     -----
     The function relies on pyqtgraph's built-in gradients collection. The "flame" gradient
@@ -169,11 +174,6 @@ def gen_flame_state() -> dict:
     >>> flame_gradient = gen_flame_state()
     >>> print(flame_gradient['name'])
     'flame'
-
-    See Also
-    --------
-    pyqtgraph.graphicsItems.GradientEditorItem.Gradients :
-        The source of built-in gradients in pyqtgraph
     """
     from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 

@@ -38,7 +38,19 @@ from rapidtide.workflows.showxy import (
 
 
 def _make_default_args(**overrides):
-    """Create a default args Namespace for showxy."""
+    """
+    Create a default args Namespace for showxy.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         textfilenames=["data1.txt"],
         thexlabel=None,
@@ -64,9 +76,22 @@ def _make_default_args(**overrides):
 
 
 def _make_xy_data(nfiles=1, npoints=50):
-    """Create synthetic xy data arrays for testing.
+    """
+    Create synthetic xy data arrays for testing.
 
     Returns a dict mapping filenames to 2-row numpy arrays (x, y).
+
+    Parameters
+    ----------
+    nfiles : int, optional
+        Value supplied as ``nfiles`` by the test case.
+    npoints : int, optional
+        Value supplied as ``npoints`` by the test case.
+
+    Returns
+    -------
+    dict
+        Output values supplied to the caller.
     """
     rng = np.random.RandomState(42)
     data = {}
@@ -78,7 +103,8 @@ def _make_xy_data(nfiles=1, npoints=50):
 
 
 def _run_showxy_with_mocks(args, file_data):
-    """Run showxy with mocked I/O and matplotlib.
+    """
+    Run showxy with mocked I/O and matplotlib.
 
     Parameters
     ----------
@@ -87,7 +113,10 @@ def _run_showxy_with_mocks(args, file_data):
     file_data : dict
         Mapping from filename to 2-row numpy arrays.
 
-    Returns a dict with captured matplotlib calls.
+    Returns
+    -------
+    dict
+        The ``captured`` value supplied to the caller.
     """
     captured = {
         "plot_calls": [],
@@ -106,47 +135,192 @@ def _run_showxy_with_mocks(args, file_data):
     }
 
     def mock_readvecs(fname, **kwargs):
+        """
+        Simulate ``readvecs`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if fname in file_data:
             return file_data[fname].copy()
         raise FileNotFoundError(f"No mock data for {fname}")
 
     def mock_plot(*a, **kw):
+        """
+        Simulate ``plot`` for the test.
+
+        Parameters
+        ----------
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["plot_calls"].append((a, kw))
 
     def mock_scatter(*a, **kw):
+        """
+        Simulate ``scatter`` for the test.
+
+        Parameters
+        ----------
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["scatter_calls"].append((a, kw))
 
     def mock_bar(*a, **kw):
+        """
+        Simulate ``bar`` for the test.
+
+        Parameters
+        ----------
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["bar_calls"].append((a, kw))
 
     def mock_savefig(*a, **kw):
+        """
+        Simulate ``savefig`` for the test.
+
+        Parameters
+        ----------
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["savefig_calls"].append((a, kw))
 
     def mock_show(*a, **kw):
+        """
+        Simulate ``show`` for the test.
+
+        Parameters
+        ----------
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["show_calls"] += 1
 
     def mock_title(*a, **kw):
+        """
+        Simulate ``title`` for the test.
+
+        Parameters
+        ----------
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["title_calls"].append((a, kw))
 
     def mock_xlabel(*a, **kw):
+        """
+        Simulate ``xlabel`` for the test.
+
+        Parameters
+        ----------
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["xlabel_calls"].append((a, kw))
 
     def mock_ylabel(*a, **kw):
+        """
+        Simulate ``ylabel`` for the test.
+
+        Parameters
+        ----------
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["ylabel_calls"].append((a, kw))
 
     def mock_legend(*a, **kw):
+        """
+        Simulate ``legend`` for the test.
+
+        Parameters
+        ----------
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["legend_calls"].append((a, kw))
 
     def mock_xlim(*a, **kw):
+        """
+        Simulate ``xlim`` for the test.
+
+        Parameters
+        ----------
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["xlim_calls"].append((a, kw))
 
     def mock_ylim(*a, **kw):
+        """
+        Simulate ``ylim`` for the test.
+
+        Parameters
+        ----------
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["ylim_calls"].append((a, kw))
 
     def mock_axhline(*a, **kw):
+        """
+        Simulate ``axhline`` for the test.
+
+        Parameters
+        ----------
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["axhline_calls"].append((a, kw))
 
     def mock_annotate(*a, **kw):
+        """
+        Simulate ``annotate`` for the test.
+
+        Parameters
+        ----------
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["annotate_calls"].append((a, kw))
 
     with (
@@ -174,7 +348,14 @@ def _run_showxy_with_mocks(args, file_data):
 
 
 def parser_basic(debug=False):
-    """Test that _get_parser returns a valid parser."""
+    """
+    Test that _get_parser returns a valid parser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
     assert parser.prog == "showxy"
@@ -184,7 +365,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
-    """Test that parser requires at least one textfilename."""
+    """
+    Test that parser requires at least one textfilename.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args([])
@@ -194,7 +382,14 @@ def parser_required_args(debug=False):
 
 
 def parser_single_file(debug=False):
-    """Test parser with a single file."""
+    """
+    Test parser with a single file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data.txt"])
     assert args.textfilenames == ["data.txt"]
@@ -204,7 +399,14 @@ def parser_single_file(debug=False):
 
 
 def parser_multiple_files(debug=False):
-    """Test parser with multiple files."""
+    """
+    Test parser with multiple files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data1.txt", "data2.txt", "data3.txt"])
     assert args.textfilenames == ["data1.txt", "data2.txt", "data3.txt"]
@@ -214,7 +416,14 @@ def parser_multiple_files(debug=False):
 
 
 def parser_defaults(debug=False):
-    """Test default values from the parser."""
+    """
+    Test default values from the parser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data.txt"])
 
@@ -241,7 +450,14 @@ def parser_defaults(debug=False):
 
 
 def parser_xlabel_ylabel(debug=False):
-    """Test --xlabel and --ylabel options."""
+    """
+    Test --xlabel and --ylabel options.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data.txt", "--xlabel", "Time", "--ylabel", "Value"])
     assert args.thexlabel == "Time"
@@ -252,7 +468,14 @@ def parser_xlabel_ylabel(debug=False):
 
 
 def parser_xrange_yrange(debug=False):
-    """Test --xrange and --yrange options."""
+    """
+    Test --xrange and --yrange options.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data.txt", "--xrange", "0", "10", "--yrange", "-5", "5"])
     assert args.xrange == [0.0, 10.0]
@@ -263,7 +486,14 @@ def parser_xrange_yrange(debug=False):
 
 
 def parser_title(debug=False):
-    """Test --title option."""
+    """
+    Test --title option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data.txt", "--title", "My Plot"])
     assert args.thetitle == "My Plot"
@@ -273,7 +503,14 @@ def parser_title(debug=False):
 
 
 def parser_outputfile(debug=False):
-    """Test --outputfile option."""
+    """
+    Test --outputfile option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data.txt", "--outputfile", "out.png"])
     assert args.outputfile == "out.png"
@@ -283,7 +520,14 @@ def parser_outputfile(debug=False):
 
 
 def parser_fontscalefac(debug=False):
-    """Test --fontscalefac option."""
+    """
+    Test --fontscalefac option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data.txt", "--fontscalefac", "2.5"])
     assert np.isclose(args.fontscalefac, 2.5)
@@ -293,7 +537,14 @@ def parser_fontscalefac(debug=False):
 
 
 def parser_saveres(debug=False):
-    """Test --saveres option."""
+    """
+    Test --saveres option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data.txt", "--saveres", "300"])
     assert args.saveres == 300
@@ -303,7 +554,14 @@ def parser_saveres(debug=False):
 
 
 def parser_legends(debug=False):
-    """Test --legends option."""
+    """
+    Test --legends option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data.txt", "--legends", "A,B,C"])
     assert args.legends == "A,B,C"
@@ -313,7 +571,14 @@ def parser_legends(debug=False):
 
 
 def parser_legendloc(debug=False):
-    """Test --legendloc option."""
+    """
+    Test --legendloc option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data.txt", "--legendloc", "5"])
     assert args.legendloc == 5
@@ -323,7 +588,14 @@ def parser_legendloc(debug=False):
 
 
 def parser_colors(debug=False):
-    """Test --colors option."""
+    """
+    Test --colors option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data.txt", "--colors", "red,blue,green"])
     assert args.colors == "red,blue,green"
@@ -333,7 +605,14 @@ def parser_colors(debug=False):
 
 
 def parser_boolean_flags(debug=False):
-    """Test all boolean flags."""
+    """
+    Test all boolean flags.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(
         [
@@ -361,7 +640,14 @@ def parser_boolean_flags(debug=False):
 
 
 def stringtorange_basic(debug=False):
-    """Test stringtorange with valid input."""
+    """
+    Test stringtorange with valid input.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     result = stringtorange("1.5,10.0")
     assert result == (1.5, 10.0)
 
@@ -370,7 +656,14 @@ def stringtorange_basic(debug=False):
 
 
 def stringtorange_negative(debug=False):
-    """Test stringtorange with negative values."""
+    """
+    Test stringtorange with negative values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     result = stringtorange("-5.0,5.0")
     assert result == (-5.0, 5.0)
 
@@ -379,7 +672,14 @@ def stringtorange_negative(debug=False):
 
 
 def stringtorange_zero(debug=False):
-    """Test stringtorange with zero values."""
+    """
+    Test stringtorange with zero values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     result = stringtorange("0,0")
     assert result == (0.0, 0.0)
 
@@ -388,7 +688,14 @@ def stringtorange_zero(debug=False):
 
 
 def stringtorange_integers(debug=False):
-    """Test stringtorange with integer string values."""
+    """
+    Test stringtorange with integer string values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     result = stringtorange("3,7")
     assert result == (3.0, 7.0)
 
@@ -397,7 +704,14 @@ def stringtorange_integers(debug=False):
 
 
 def stringtorange_scientific(debug=False):
-    """Test stringtorange with scientific notation."""
+    """
+    Test stringtorange with scientific notation.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     result = stringtorange("1e-3,1e3")
     assert result == (0.001, 1000.0)
 
@@ -406,7 +720,14 @@ def stringtorange_scientific(debug=False):
 
 
 def stringtorange_too_few(debug=False):
-    """Test stringtorange exits with only one value."""
+    """
+    Test stringtorange exits with only one value.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with pytest.raises(SystemExit):
         stringtorange("1.5")
 
@@ -415,7 +736,14 @@ def stringtorange_too_few(debug=False):
 
 
 def stringtorange_too_many(debug=False):
-    """Test stringtorange exits with more than two values."""
+    """
+    Test stringtorange exits with more than two values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with pytest.raises(SystemExit):
         stringtorange("1.0,2.0,3.0")
 
@@ -424,7 +752,14 @@ def stringtorange_too_many(debug=False):
 
 
 def stringtorange_invalid_first(debug=False):
-    """Test stringtorange exits with non-numeric first value."""
+    """
+    Test stringtorange exits with non-numeric first value.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with pytest.raises(SystemExit):
         stringtorange("abc,10.0")
 
@@ -433,7 +768,14 @@ def stringtorange_invalid_first(debug=False):
 
 
 def stringtorange_invalid_second(debug=False):
-    """Test stringtorange exits with non-numeric second value."""
+    """
+    Test stringtorange exits with non-numeric second value.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with pytest.raises(SystemExit):
         stringtorange("1.0,xyz")
 
@@ -442,7 +784,14 @@ def stringtorange_invalid_second(debug=False):
 
 
 def stringtorange_empty(debug=False):
-    """Test stringtorange exits with empty string."""
+    """
+    Test stringtorange exits with empty string.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with pytest.raises(SystemExit):
         stringtorange("")
 
@@ -454,7 +803,14 @@ def stringtorange_empty(debug=False):
 
 
 def bland_altman_basic(debug=False):
-    """Test bland_altman_plot runs with basic inputs."""
+    """
+    Test bland_altman_plot runs with basic inputs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     data2 = np.array([1.1, 2.2, 2.8, 4.1, 4.9])
 
@@ -480,7 +836,14 @@ def bland_altman_basic(debug=False):
 
 
 def bland_altman_usex(debug=False):
-    """Test bland_altman_plot with usex=True."""
+    """
+    Test bland_altman_plot with usex=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     data2 = np.array([1.5, 2.5, 3.5, 4.5, 5.5])
 
@@ -504,7 +867,14 @@ def bland_altman_usex(debug=False):
 
 
 def bland_altman_default_mean_axis(debug=False):
-    """Test bland_altman_plot uses (Y+X)/2 when usex=False."""
+    """
+    Test bland_altman_plot uses (Y+X)/2 when usex=False.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     data2 = np.array([1.5, 2.5, 3.5, 4.5, 5.5])
 
@@ -527,7 +897,14 @@ def bland_altman_default_mean_axis(debug=False):
 
 
 def bland_altman_identifier(debug=False):
-    """Test bland_altman_plot prints identifier."""
+    """
+    Test bland_altman_plot prints identifier.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0])
     data2 = np.array([1.0, 2.0, 3.0])
 
@@ -550,7 +927,14 @@ def bland_altman_identifier(debug=False):
 
 
 def bland_altman_no_identifier(debug=False):
-    """Test bland_altman_plot without identifier."""
+    """
+    Test bland_altman_plot without identifier.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0])
     data2 = np.array([1.0, 2.0, 3.0])
 
@@ -573,7 +957,14 @@ def bland_altman_no_identifier(debug=False):
 
 
 def bland_altman_annotate(debug=False):
-    """Test bland_altman_plot calls annotate when doannotate=True."""
+    """
+    Test bland_altman_plot calls annotate when doannotate=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     data2 = np.array([1.1, 1.9, 3.1, 3.9, 5.1])
 
@@ -592,7 +983,14 @@ def bland_altman_annotate(debug=False):
 
 
 def bland_altman_no_annotate(debug=False):
-    """Test bland_altman_plot skips annotate when doannotate=False."""
+    """
+    Test bland_altman_plot skips annotate when doannotate=False.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     data2 = np.array([1.1, 1.9, 3.1, 3.9, 5.1])
 
@@ -611,7 +1009,14 @@ def bland_altman_no_annotate(debug=False):
 
 
 def bland_altman_axhlines(debug=False):
-    """Test bland_altman_plot draws three horizontal lines (mean, mean+2sd, mean-2sd)."""
+    """
+    Test bland_altman_plot draws three horizontal lines (mean, mean+2sd, mean-2sd).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     data2 = np.array([1.5, 2.5, 3.5, 4.5, 5.5])
 
@@ -630,7 +1035,14 @@ def bland_altman_axhlines(debug=False):
 
 
 def bland_altman_xrange_yrange(debug=False):
-    """Test bland_altman_plot applies xrange and yrange."""
+    """
+    Test bland_altman_plot applies xrange and yrange.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0])
     data2 = np.array([1.0, 2.0, 3.0])
 
@@ -650,7 +1062,14 @@ def bland_altman_xrange_yrange(debug=False):
 
 
 def bland_altman_no_range(debug=False):
-    """Test bland_altman_plot does not set xlim/ylim when ranges are None."""
+    """
+    Test bland_altman_plot does not set xlim/ylim when ranges are None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0])
     data2 = np.array([1.0, 2.0, 3.0])
 
@@ -670,7 +1089,14 @@ def bland_altman_no_range(debug=False):
 
 
 def bland_altman_statistics(debug=False):
-    """Test bland_altman_plot computes correct statistics for known data."""
+    """
+    Test bland_altman_plot computes correct statistics for known data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     data2 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])  # identical data
 
@@ -696,7 +1122,14 @@ def bland_altman_statistics(debug=False):
 
 
 def bland_altman_fontscalefac(debug=False):
-    """Test bland_altman_plot passes fontscalefac to annotate."""
+    """
+    Test bland_altman_plot passes fontscalefac to annotate.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0])
     data2 = np.array([1.5, 2.5, 3.5])
 
@@ -720,7 +1153,14 @@ def bland_altman_fontscalefac(debug=False):
 
 
 def showxy_basic_line_plot(debug=False):
-    """Test showxy with basic line plot (default mode)."""
+    """
+    Test showxy with basic line plot (default mode).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(textfilenames=["data1.txt"])
 
@@ -735,7 +1175,14 @@ def showxy_basic_line_plot(debug=False):
 
 
 def showxy_multiple_files(debug=False):
-    """Test showxy with multiple input files."""
+    """
+    Test showxy with multiple input files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=3)
     args = _make_default_args(
         textfilenames=["data1.txt", "data2.txt", "data3.txt"],
@@ -750,7 +1197,14 @@ def showxy_multiple_files(debug=False):
 
 
 def showxy_save_to_file(debug=False):
-    """Test showxy saves to file instead of showing."""
+    """
+    Test showxy saves to file instead of showing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(
         textfilenames=["data1.txt"],
@@ -771,7 +1225,14 @@ def showxy_save_to_file(debug=False):
 
 
 def showxy_with_title(debug=False):
-    """Test showxy sets title when provided."""
+    """
+    Test showxy sets title when provided.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(
         textfilenames=["data1.txt"],
@@ -788,7 +1249,14 @@ def showxy_with_title(debug=False):
 
 
 def showxy_no_title(debug=False):
-    """Test showxy does not set title when None."""
+    """
+    Test showxy does not set title when None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(textfilenames=["data1.txt"], thetitle=None)
 
@@ -801,7 +1269,14 @@ def showxy_no_title(debug=False):
 
 
 def showxy_with_labels(debug=False):
-    """Test showxy sets axis labels when provided."""
+    """
+    Test showxy sets axis labels when provided.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(
         textfilenames=["data1.txt"],
@@ -821,7 +1296,14 @@ def showxy_with_labels(debug=False):
 
 
 def showxy_no_labels(debug=False):
-    """Test showxy does not set labels when None."""
+    """
+    Test showxy does not set labels when None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(textfilenames=["data1.txt"])
 
@@ -835,7 +1317,14 @@ def showxy_no_labels(debug=False):
 
 
 def showxy_with_legends(debug=False):
-    """Test showxy sets legend when provided."""
+    """
+    Test showxy sets legend when provided.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=2)
     args = _make_default_args(
         textfilenames=["data1.txt", "data2.txt"],
@@ -856,7 +1345,14 @@ def showxy_with_legends(debug=False):
 
 
 def showxy_no_legends(debug=False):
-    """Test showxy does not set legend when None."""
+    """
+    Test showxy does not set legend when None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(textfilenames=["data1.txt"], legends=None)
 
@@ -869,7 +1365,14 @@ def showxy_no_legends(debug=False):
 
 
 def showxy_custom_colors(debug=False):
-    """Test showxy uses specified colors."""
+    """
+    Test showxy uses specified colors.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=2)
     args = _make_default_args(
         textfilenames=["data1.txt", "data2.txt"],
@@ -887,7 +1390,14 @@ def showxy_custom_colors(debug=False):
 
 
 def showxy_color_cycling(debug=False):
-    """Test showxy cycles colors when fewer colors than files."""
+    """
+    Test showxy cycles colors when fewer colors than files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=3)
     args = _make_default_args(
         textfilenames=["data1.txt", "data2.txt", "data3.txt"],
@@ -906,7 +1416,14 @@ def showxy_color_cycling(debug=False):
 
 
 def showxy_default_colormap(debug=False):
-    """Test showxy uses nipy_spectral colormap when no colors specified."""
+    """
+    Test showxy uses nipy_spectral colormap when no colors specified.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=2)
     args = _make_default_args(
         textfilenames=["data1.txt", "data2.txt"],
@@ -926,7 +1443,14 @@ def showxy_default_colormap(debug=False):
 
 
 def showxy_usepoints(debug=False):
-    """Test showxy uses scatter-style points with usepoints=True."""
+    """
+    Test showxy uses scatter-style points with usepoints=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(textfilenames=["data1.txt"], usepoints=True)
 
@@ -942,7 +1466,14 @@ def showxy_usepoints(debug=False):
 
 
 def showxy_dobars(debug=False):
-    """Test showxy creates bar plots with dobars=True."""
+    """
+    Test showxy creates bar plots with dobars=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(textfilenames=["data1.txt"], dobars=True)
 
@@ -956,7 +1487,14 @@ def showxy_dobars(debug=False):
 
 
 def showxy_blandaltman(debug=False):
-    """Test showxy creates Bland-Altman plot with blandaltman=True."""
+    """
+    Test showxy creates Bland-Altman plot with blandaltman=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(textfilenames=["data1.txt"], blandaltman=True)
 
@@ -975,7 +1513,14 @@ def showxy_blandaltman(debug=False):
 
 
 def showxy_blandaltman_noannotate(debug=False):
-    """Test showxy Bland-Altman with doannotate=False."""
+    """
+    Test showxy Bland-Altman with doannotate=False.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(
         textfilenames=["data1.txt"],
@@ -992,7 +1537,14 @@ def showxy_blandaltman_noannotate(debug=False):
 
 
 def showxy_blandaltman_usex(debug=False):
-    """Test showxy Bland-Altman with usex=True."""
+    """
+    Test showxy Bland-Altman with usex=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(
         textfilenames=["data1.txt"],
@@ -1009,7 +1561,14 @@ def showxy_blandaltman_usex(debug=False):
 
 
 def showxy_xrange_yrange(debug=False):
-    """Test showxy applies xrange and yrange to line plots."""
+    """
+    Test showxy applies xrange and yrange to line plots.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(
         textfilenames=["data1.txt"],
@@ -1027,7 +1586,14 @@ def showxy_xrange_yrange(debug=False):
 
 
 def showxy_bars_xrange_yrange(debug=False):
-    """Test showxy applies xrange and yrange to bar plots."""
+    """
+    Test showxy applies xrange and yrange to bar plots.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(
         textfilenames=["data1.txt"],
@@ -1046,7 +1612,14 @@ def showxy_bars_xrange_yrange(debug=False):
 
 
 def showxy_debug_output(debug=False):
-    """Test showxy prints debug info when debug=True."""
+    """
+    Test showxy prints debug info when debug=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(textfilenames=["data1.txt"], debug=True)
 
@@ -1062,7 +1635,14 @@ def showxy_debug_output(debug=False):
 
 
 def showxy_fontscalefac_title(debug=False):
-    """Test showxy applies fontscalefac to title."""
+    """
+    Test showxy applies fontscalefac to title.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(
         textfilenames=["data1.txt"],
@@ -1081,7 +1661,14 @@ def showxy_fontscalefac_title(debug=False):
 
 
 def showxy_fontscalefac_labels(debug=False):
-    """Test showxy applies fontscalefac to axis labels."""
+    """
+    Test showxy applies fontscalefac to axis labels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     file_data = _make_xy_data(nfiles=1)
     args = _make_default_args(
         textfilenames=["data1.txt"],
@@ -1106,6 +1693,14 @@ def showxy_fontscalefac_labels(debug=False):
 
 def test_showxy(debug=False):
     # parser tests
+    """
+    Verify showxy.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_single_file(debug=debug)

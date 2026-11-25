@@ -33,15 +33,33 @@ from rapidtide.workflows.calctexticc import (
 
 
 def _capture_writenpvecs():
-    """Return a side_effect function and its captured data list.
+    """
+    Return a side_effect function and its captured data list.
 
     calctexticc reuses a single numpy array for all writenpvecs calls,
     so the mock records a reference to the same mutating array.  This
     helper copies data at call time so each captured entry is independent.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     captured = []
 
     def _side_effect(data, filename, **kwargs):
+        """
+        Record the call for assertions in the surrounding test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        filename : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured.append((data.copy(), filename))
 
     return _side_effect, captured
@@ -51,7 +69,14 @@ def _capture_writenpvecs():
 
 
 def test_get_parser_returns_parser(debug=False):
-    """Test that _get_parser returns an ArgumentParser."""
+    """
+    Test that _get_parser returns an ArgumentParser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
     if debug:
@@ -59,7 +84,14 @@ def test_get_parser_returns_parser(debug=False):
 
 
 def test_get_parser_required_args(debug=False):
-    """Test that parser requires the three positional arguments."""
+    """
+    Test that parser requires the three positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     # Should fail with no arguments
     with pytest.raises(SystemExit):
@@ -67,7 +99,14 @@ def test_get_parser_required_args(debug=False):
 
 
 def test_get_parser_with_valid_args(debug=False):
-    """Test parser with valid positional arguments using a real temp file for measurementlist."""
+    """
+    Test parser with valid positional arguments using a real temp file for measurementlist.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         f.write("0 1\n2 3\n")
         measfile = f.name
@@ -91,7 +130,14 @@ def test_get_parser_with_valid_args(debug=False):
 
 
 def test_get_parser_optional_flags(debug=False):
-    """Test parser with all optional flags enabled."""
+    """
+    Test parser with all optional flags enabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         f.write("0 1\n")
         measfile = f.name
@@ -124,7 +170,14 @@ def test_get_parser_optional_flags(debug=False):
 
 
 def test_parsetextmeasurementlist_single_values(debug=False):
-    """Test parsing measurement list with single values (volume only, file=0)."""
+    """
+    Test parsing measurement list with single values (volume only, file=0).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     measlist = np.array([["0", "1"], ["2", "3"]])
     numfiles = 1
     filesel, volumesel = parsetextmeasurementlist(measlist, numfiles)
@@ -141,7 +194,14 @@ def test_parsetextmeasurementlist_single_values(debug=False):
 
 
 def test_parsetextmeasurementlist_comma_separated(debug=False):
-    """Test parsing measurement list with file,volume entries."""
+    """
+    Test parsing measurement list with file,volume entries.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     measlist = np.array([["0,1", "1,2"], ["0,3", "2,4"]])
     numfiles = 3
     filesel, volumesel = parsetextmeasurementlist(measlist, numfiles)
@@ -157,7 +217,14 @@ def test_parsetextmeasurementlist_comma_separated(debug=False):
 
 
 def test_parsetextmeasurementlist_mixed_formats(debug=False):
-    """Test parsing measurement list with mixed single and comma-separated entries."""
+    """
+    Test parsing measurement list with mixed single and comma-separated entries.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     measlist = np.array([["0,5", "3"], ["1,2", "0,7"]])
     numfiles = 2
     filesel, volumesel = parsetextmeasurementlist(measlist, numfiles)
@@ -169,7 +236,14 @@ def test_parsetextmeasurementlist_mixed_formats(debug=False):
 
 
 def test_parsetextmeasurementlist_debug_output(debug=False):
-    """Test that debug mode prints without errors."""
+    """
+    Test that debug mode prints without errors.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     measlist = np.array([["0,1", "2"]])
     numfiles = 1
     filesel, volumesel = parsetextmeasurementlist(measlist, numfiles, debug=True)
@@ -177,7 +251,14 @@ def test_parsetextmeasurementlist_debug_output(debug=False):
 
 
 def test_parsetextmeasurementlist_too_many_commas(debug=False):
-    """Test that entries with more than one comma cause sys.exit."""
+    """
+    Test that entries with more than one comma cause sys.exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     measlist = np.array([["0,1,2"]])
     numfiles = 3
     with pytest.raises(SystemExit):
@@ -185,7 +266,14 @@ def test_parsetextmeasurementlist_too_many_commas(debug=False):
 
 
 def test_parsetextmeasurementlist_file_out_of_range(debug=False):
-    """Test that file index exceeding numfiles causes sys.exit."""
+    """
+    Test that file index exceeding numfiles causes sys.exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     measlist = np.array([["5,0"]])
     numfiles = 3  # valid file indices: 0, 1, 2
     with pytest.raises(SystemExit):
@@ -193,7 +281,14 @@ def test_parsetextmeasurementlist_file_out_of_range(debug=False):
 
 
 def test_parsetextmeasurementlist_single_element(debug=False):
-    """Test with a single element measurement list."""
+    """
+    Test with a single element measurement list.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     measlist = np.array([["0,0"]])
     numfiles = 1
     filesel, volumesel = parsetextmeasurementlist(measlist, numfiles)
@@ -207,7 +302,14 @@ def test_parsetextmeasurementlist_single_element(debug=False):
 
 
 def test_makdcommandlinelist_without_extra(debug=False):
-    """Test command line list generation without extra info."""
+    """
+    Test command line list generation without extra info.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     arglist = ["python", "calctexticc", "--debug", "data.txt"]
     starttime = time.time() - 5.0
     endtime = time.time()
@@ -228,7 +330,14 @@ def test_makdcommandlinelist_without_extra(debug=False):
 
 
 def test_makdcommandlinelist_with_extra(debug=False):
-    """Test command line list generation with extra info."""
+    """
+    Test command line list generation with extra info.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     arglist = ["python", "calctexticc"]
     starttime = time.time() - 2.0
     endtime = time.time()
@@ -250,7 +359,14 @@ def test_makdcommandlinelist_with_extra(debug=False):
 
 
 def test_makdcommandlinelist_timing(debug=False):
-    """Test that timing information is computed correctly."""
+    """
+    Test that timing information is computed correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     arglist = ["test"]
     starttime = 1000.0
     endtime = 1010.5
@@ -263,7 +379,14 @@ def test_makdcommandlinelist_timing(debug=False):
 
 
 def test_makdcommandlinelist_empty_arglist(debug=False):
-    """Test with empty argument list."""
+    """
+    Test with empty argument list.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     arglist = []
     starttime = time.time()
     endtime = starttime + 1.0
@@ -280,10 +403,27 @@ def test_makdcommandlinelist_empty_arglist(debug=False):
 
 
 def _make_icc_test_data(numsubjs=4, nummeas=3, numvals=5, rng=None):
-    """Helper to create synthetic ICC test data.
+    """
+    Helper to create synthetic ICC test data.
 
     Creates data where each subject has a consistent pattern across measurements
     plus some noise, so ICC should be moderately high.
+
+    Parameters
+    ----------
+    numsubjs : int, optional
+        Value supplied as ``numsubjs`` by the test case.
+    nummeas : int, optional
+        Value supplied as ``nummeas`` by the test case.
+    numvals : int, optional
+        Value supplied as ``numvals`` by the test case.
+    rng : numpy.random.Generator, optional
+        Random number generator for test data.
+
+    Returns
+    -------
+    numpy.ndarray
+        Output values supplied to the caller.
     """
     if rng is None:
         rng = np.random.RandomState(42)
@@ -303,7 +443,21 @@ def _make_icc_test_data(numsubjs=4, nummeas=3, numvals=5, rng=None):
 
 
 def _make_measlist(numsubjs, nummeas):
-    """Helper to create a simple measurement list for a single data file."""
+    """
+    Helper to create a simple measurement list for a single data file.
+
+    Parameters
+    ----------
+    numsubjs : object
+        Value supplied as ``numsubjs`` by the test case.
+    nummeas : object
+        Value supplied as ``nummeas`` by the test case.
+
+    Returns
+    -------
+    numpy.ndarray
+        The ``measlist`` value supplied to the caller.
+    """
     measlist = np.zeros((nummeas, numsubjs), dtype="U10")
     for subj in range(numsubjs):
         for meas in range(nummeas):
@@ -312,7 +466,14 @@ def _make_measlist(numsubjs, nummeas):
 
 
 def test_calctexticc_basic(debug=False):
-    """Test basic ICC calculation with synthetic data."""
+    """
+    Test basic ICC calculation with synthetic data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     numsubjs = 4
     nummeas = 2
@@ -366,7 +527,14 @@ def test_calctexticc_basic(debug=False):
 
 
 def test_calctexticc_demedian(debug=False):
-    """Test ICC calculation with demedian option."""
+    """
+    Test ICC calculation with demedian option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(99)
     numsubjs = 3
     nummeas = 2
@@ -412,7 +580,14 @@ def test_calctexticc_demedian(debug=False):
 
 
 def test_calctexticc_demean(debug=False):
-    """Test ICC calculation with demean option."""
+    """
+    Test ICC calculation with demean option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(77)
     numsubjs = 3
     nummeas = 2
@@ -458,7 +633,14 @@ def test_calctexticc_demean(debug=False):
 
 
 def test_calctexticc_nocache(debug=False):
-    """Test ICC calculation with nocache option."""
+    """
+    Test ICC calculation with nocache option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(55)
     numsubjs = 3
     nummeas = 2
@@ -500,7 +682,14 @@ def test_calctexticc_nocache(debug=False):
 
 
 def test_calctexticc_multiple_files(debug=False):
-    """Test ICC calculation with data spread across multiple files."""
+    """
+    Test ICC calculation with data spread across multiple files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(33)
     numsubjs = 3
     nummeas = 2
@@ -554,7 +743,14 @@ def test_calctexticc_multiple_files(debug=False):
 
 
 def test_calctexticc_deepdebug(debug=False):
-    """Test ICC calculation with deepdebug output."""
+    """
+    Test ICC calculation with deepdebug output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(11)
     numsubjs = 2
     nummeas = 2
@@ -591,7 +787,14 @@ def test_calctexticc_deepdebug(debug=False):
 
 
 def test_calctexticc_icc_values_correct(debug=False):
-    """Test that ICC values are high for nearly-perfectly reproducible data."""
+    """
+    Test that ICC values are high for nearly-perfectly reproducible data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     numsubjs = 6
     nummeas = 4
@@ -650,7 +853,14 @@ def test_calctexticc_icc_values_correct(debug=False):
 
 
 def test_calctexticc_zero_icc_data(debug=False):
-    """Test ICC calculation with pure noise data (ICC should be near 0)."""
+    """
+    Test ICC calculation with pure noise data (ICC should be near 0).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(123)
     numsubjs = 10
     nummeas = 3
@@ -698,7 +908,14 @@ def test_calctexticc_zero_icc_data(debug=False):
 
 
 def test_calctexticc_output_variances(debug=False):
-    """Test that e_var outputs are non-negative for well-behaved data."""
+    """
+    Test that e_var outputs are non-negative for well-behaved data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(88)
     numsubjs = 5
     nummeas = 3
@@ -751,7 +968,14 @@ def test_calctexticc_output_variances(debug=False):
 
 
 def test_calctexticc(debug=False):
-    """Run all calctexticc sub-tests."""
+    """
+    Run all calctexticc sub-tests.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # _get_parser tests
     test_get_parser_returns_parser(debug=debug)
     test_get_parser_required_args(debug=debug)

@@ -236,27 +236,29 @@ def linfitfiltpass(
         Array to store data to be removed after fitting. Shape depends on ``procbyvoxel``.
     filtereddata : ndarray
         Array to store filtered data after regression. Shape depends on ``procbyvoxel``.
-    nprocs : int, default: 1
+    nprocs : int, default: 1, optional
         Number of processes to use for multiprocessing. If 1 and ``alwaysmultiproc`` is False, uses single-threaded processing.
-    alwaysmultiproc : bool, default: False
+    validmask : NDArray, optional
+        Mask of time series included in the fit.
+    alwaysmultiproc : bool, default: False, optional
         If True, always use multiprocessing even if ``nprocs`` is 1.
-    constantevs : bool, default: False
+    constantevs : bool, default: False, optional
         If True, treat experimental variables as constant across voxels/timepoints.
-    confoundregress : bool, default: False
+    confoundregress : bool, default: False, optional
         If True, perform confound regression only (no output of coefficients or residuals).
-    coefficientsonly : bool, default: False
+    coefficientsonly : bool, default: False, optional
         If True, store only regression coefficients and R-squared values.
-    procbyvoxel : bool, default: True
+    procbyvoxel : bool, default: True, optional
         If True, process data voxel-wise; otherwise, process by timepoint.
-    showprogressbar : bool, default: True
+    showprogressbar : bool, default: True, optional
         If True, display a progress bar during processing.
-    chunksize : int, default: 1000
+    chunksize : int, default: 1000, optional
         Size of chunks for multiprocessing.
-    rt_floattype : str, default: np.float64
+    rt_floattype : str, default: np.float64, optional
         Data type for internal floating-point calculations.
-    verbose : bool, default: True
+    verbose : bool, default: True, optional
         If True, print verbose output.
-    debug : bool, default: False
+    debug : bool, default: False, optional
         If True, enable debug printing.
 
     Returns
@@ -332,6 +334,16 @@ def linfitfiltpass(
     ):  # temporary workaround until I figure out why nprocs > 1 is failing
         # define the consumer function here so it inherits most of the arguments
         def GLM_consumer(inQ, outQ):
+            """
+            Fit and filter the time series supplied through the worker queue.
+
+            Parameters
+            ----------
+            inQ : queue-like
+                Queue supplying work items.
+            outQ : queue-like
+                Queue receiving processed results.
+            """
             while True:
                 try:
                     # get a new message

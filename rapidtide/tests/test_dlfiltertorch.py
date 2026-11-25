@@ -28,7 +28,14 @@ from rapidtide.tests.utils import get_test_temp_path, mse
 
 
 def create_dummy_data():
-    """Create dummy training data for testing."""
+    """
+    Create dummy training data for testing.
+
+    Returns
+    -------
+    dict
+        Values supplied together for the test case.
+    """
     window_size = 64
     num_samples = 100
 
@@ -82,7 +89,14 @@ def cnn_model_creation():
 
 
 def cnn_dlfilter_initialization(testtemproot):
-    """Test CNNDLFilter initialization."""
+    """
+    Test CNNDLFilter initialization.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     filter_obj = dlfiltertorch.CNNDLFilter(
         num_filters=10,
         kernel_size=5,
@@ -100,7 +114,14 @@ def cnn_dlfilter_initialization(testtemproot):
 
 
 def cnn_dlfilter_initialize(testtemproot):
-    """Test CNNDLFilter model initialization."""
+    """
+    Test CNNDLFilter model initialization.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     filter_obj = dlfiltertorch.CNNDLFilter(
         num_filters=10,
         kernel_size=5,
@@ -127,7 +148,16 @@ def cnn_dlfilter_initialize(testtemproot):
 
 
 def predict_model(testtemproot, dummy_data):
-    """Test the predict_model method."""
+    """
+    Test the predict_model method.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    dummy_data : object
+        Value supplied as ``dummy_data`` by the test case.
+    """
     filter_obj = dlfiltertorch.CNNDLFilter(
         num_filters=10,
         kernel_size=5,
@@ -150,7 +180,14 @@ def predict_model(testtemproot, dummy_data):
 
 
 def apply_method(testtemproot):
-    """Test the apply method for filtering a signal."""
+    """
+    Test the apply method for filtering a signal.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     window_size = 64
     signal_length = 500
 
@@ -179,7 +216,14 @@ def apply_method(testtemproot):
 
 
 def apply_method_with_badpts(testtemproot):
-    """Test the apply method with bad points."""
+    """
+    Test the apply method with bad points.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     window_size = 64
     signal_length = 500
 
@@ -211,7 +255,14 @@ def apply_method_with_badpts(testtemproot):
 
 
 def save_and_load_cnn_model(testtemproot):
-    """Test saving and loading a model."""
+    """
+    Test saving and loading a model.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     # This test is skipped because both savemodel() and initmetadata()
     # use self.modelname (a relative path) instead of self.modelpath (full path)
     filter_obj = dlfiltertorch.CNNDLFilter(
@@ -261,7 +312,14 @@ def save_and_load_cnn_model(testtemproot):
 
 
 def save_and_load_ppgattention_model(testtemproot):
-    """Test saving and loading a PPG attention model."""
+    """
+    Test saving and loading a PPG attention model.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     filter_obj = dlfiltertorch.PPGAttentionDLFilter(
         hidden_size=32,
         window_size=100,
@@ -308,7 +366,14 @@ def save_and_load_ppgattention_model(testtemproot):
 
 
 def save_and_load_convautoencoder_model(testtemproot):
-    """Test saving and loading a convolutional autoencoder model."""
+    """
+    Test saving and loading a convolutional autoencoder model.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     filter_obj = dlfiltertorch.ConvAutoencoderDLFilter(
         encoding_dim=8,
         num_filters=4,
@@ -405,7 +470,14 @@ def loaddata_calls_prep_when_initialized():
 
 
 def minimal_cpu_training_loop_cnn(testtemproot):
-    """Run a minimal real training loop using CPU only."""
+    """
+    Run a minimal real training loop using CPU only.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     rng = np.random.RandomState(1234)
     window_size = 32
     train_n = 8
@@ -491,11 +563,39 @@ def readindata_filters_and_returns_expected_shapes():
     )
 
     def _mock_readdictfromjson(path):
+        """
+        Simulate ``readdictfromjson`` for the test.
+
+        Parameters
+        ----------
+        path : object
+            Value supplied as ``path`` by the test case.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if "sub-01" in path:
             return info_good
         return info_bad_corr
 
     def _mock_readbidstsv(path, colspec=None):
+        """
+        Simulate ``readbidstsv`` for the test.
+
+        Parameters
+        ----------
+        path : object
+            Value supplied as ``path`` by the test case.
+        colspec : object or None, optional
+            Value supplied as ``colspec`` by the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         arr = input_good if "sub-01" in path else input_bad
         return (25.0, 0.0, ["x", "y", "badpts"], arr, False, "bids", {})
 
@@ -625,7 +725,14 @@ def targettoinput():
 
 
 def model_with_different_activations(testtemproot):
-    """Test models with different activation functions."""
+    """
+    Test models with different activation functions.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     activations = ["relu", "tanh"]
 
     for activation in activations:
@@ -656,7 +763,14 @@ def device_selection():
 
 
 def infodict_population(testtemproot):
-    """Test that infodict is properly populated."""
+    """
+    Test that infodict is properly populated.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     filter_obj = dlfiltertorch.CNNDLFilter(
         num_filters=10,
         kernel_size=5,
@@ -722,7 +836,14 @@ def ppg_attention_model_creation():
 
 
 def ppg_attention_dlfilter(testtemproot):
-    """Test PPGAttentionDLFilter initialization, getname, makenet."""
+    """
+    Test PPGAttentionDLFilter initialization, getname, makenet.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     filter_obj = dlfiltertorch.PPGAttentionDLFilter(
         hidden_size=32,
         window_size=100,
@@ -795,7 +916,14 @@ def dense_autoencoder_model_creation():
 
 
 def dense_autoencoder_dlfilter(testtemproot):
-    """Test DenseAutoencoderDLFilter initialization, getname, makenet."""
+    """
+    Test DenseAutoencoderDLFilter initialization, getname, makenet.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     filter_obj = dlfiltertorch.DenseAutoencoderDLFilter(
         encoding_dim=10,
         window_size=64,
@@ -859,7 +987,14 @@ def conv_autoencoder_model_creation():
 
 
 def conv_autoencoder_dlfilter(testtemproot):
-    """Test ConvAutoencoderDLFilter initialization, getname, makenet."""
+    """
+    Test ConvAutoencoderDLFilter initialization, getname, makenet.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     filter_obj = dlfiltertorch.ConvAutoencoderDLFilter(
         encoding_dim=8,
         num_filters=4,
@@ -991,6 +1126,16 @@ def filtscale_roundtrip():
 
 def test_dlfilterops(debug=False, local=False):
     # set input and output directories
+    """
+    Verify dlfilterops.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     testtemproot = get_test_temp_path(local)
 
     thedummydata = create_dummy_data()

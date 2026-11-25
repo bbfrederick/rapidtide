@@ -559,7 +559,7 @@ def FastResamplerFromFile(
         If None, all columns are read (default: None)
     debug : bool, optional
         Enable debug output printing (default: False)
-    **kwargs
+    **kwargs : object
         Additional keyword arguments passed to the FastResampler constructor
 
     Returns
@@ -770,6 +770,12 @@ def arbresample(
     NDArray
         Resampled data as a NumPy array with length adjusted according to `final_freq`.
 
+    See Also
+    --------
+    upsample : Function used for upsampling when `decimate=True`.
+    dotwostepresample : Function used for two-step resampling when `decimate=False`.
+    scipy.signal.decimate : Anti-aliasing filter used when `antialias=True`.
+
     Notes
     -----
     - When `decimate=True`, the function uses integer decimation for efficient downsampling.
@@ -785,12 +791,6 @@ def arbresample(
     >>> resampled = arbresample(data, init_freq=100, final_freq=50, decimate=True)
     >>> print(len(resampled))
     50
-
-    See Also
-    --------
-    upsample : Function used for upsampling when `decimate=True`.
-    dotwostepresample : Function used for two-step resampling when `decimate=False`.
-    scipy.signal.decimate : Anti-aliasing filter used when `antialias=True`.
     """
     if debug:
         print("arbresample - initial points:", len(inputdata))

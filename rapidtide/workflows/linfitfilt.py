@@ -334,10 +334,6 @@ def main() -> None:
     filter process on the input data file. It handles argument parsing exceptions
     and provides help output when needed.
 
-    Parameters
-    ----------
-    None
-
     Returns
     -------
     None

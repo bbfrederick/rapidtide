@@ -21,6 +21,7 @@ import rapidtide.workflows.retroregress as theworkflow
 
 
 def entrypoint():
+    """Run the `retroregress` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.retroregress)
 
 

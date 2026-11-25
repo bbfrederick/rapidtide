@@ -35,6 +35,29 @@ def _make_default_args(
     padseconds=30.0,
     spatialsmooth=3.0,
 ):
+    """
+    Create default args.
+
+    Parameters
+    ----------
+    inputfilename : str, optional
+        Value supplied as ``inputfilename`` by the test case.
+    outputfilename : str, optional
+        Value supplied as ``outputfilename`` by the test case.
+    lowestfreq : float, optional
+        Value supplied as ``lowestfreq`` by the test case.
+    highestfreq : float, optional
+        Value supplied as ``highestfreq`` by the test case.
+    padseconds : float, optional
+        Value supplied as ``padseconds`` by the test case.
+    spatialsmooth : float, optional
+        Value supplied as ``spatialsmooth`` by the test case.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     return argparse.Namespace(
         inputfilename=inputfilename,
         outputfilename=outputfilename,
@@ -46,20 +69,84 @@ def _make_default_args(
 
 
 def _make_dims(xsize, ysize, numslices, timepoints):
+    """
+    Create dims.
+
+    Parameters
+    ----------
+    xsize : int
+        Number of voxels along the x axis.
+    ysize : int
+        Number of voxels along the y axis.
+    numslices : int
+        Number of slices in the test image.
+    timepoints : int
+        Number of time samples.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array supplied to the test or its caller.
+    """
     return np.array([4, xsize, ysize, numslices, timepoints, 1, 1, 1])
 
 
 def _make_sizes(tr):
+    """
+    Create sizes.
+
+    Parameters
+    ----------
+    tr : float
+        Repetition time in seconds.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array supplied to the test or its caller.
+    """
     return np.array([1.0, 2.0, 2.0, 2.0, tr, 1.0, 1.0, 1.0])
 
 
 def _make_hdr(units="sec"):
+    """
+    Create hdr.
+
+    Parameters
+    ----------
+    units : str, optional
+        Value supplied as ``units`` by the test case.
+
+    Returns
+    -------
+    MagicMock
+        Mock object configured for the test case.
+    """
     hdr = MagicMock()
     hdr.get_xyzt_units = MagicMock(return_value=("mm", units))
     return hdr
 
 
 def _make_4d_data(xsize=3, ysize=3, numslices=2, timepoints=10):
+    """
+    Create 4D data.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array supplied to the test or its caller.
+    """
     rng = np.random.RandomState(0)
     return rng.randn(xsize, ysize, numslices, timepoints).astype(np.float64)
 
@@ -68,6 +155,14 @@ def _make_4d_data(xsize=3, ysize=3, numslices=2, timepoints=10):
 
 
 def parser_basic(debug=False):
+    """
+    Check that the command-line parser initializes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -76,6 +171,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
+    """
+    Check that the parser requires the mandatory arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -87,6 +190,14 @@ def parser_required_args(debug=False):
 
 
 def parser_parsing(debug=False):
+    """
+    Check parser handling of parsing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_parsing")
     parser = _get_parser()
@@ -101,6 +212,14 @@ def parser_parsing(debug=False):
 
 
 def filtnifti_basic_sec_units(debug=False):
+    """
+    Check filtnifti basic sec units in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("filtnifti_basic_sec_units")
     data = _make_4d_data()
@@ -112,9 +231,34 @@ def filtnifti_basic_sec_units(debug=False):
     saved = {}
 
     def mock_readfromnifti(fname):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (MagicMock(), data, hdr, dims, sizes)
 
     def mock_savetonifti(arr, hdr_arg, fname):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        arr : array-like
+            Array passed to the test helper.
+        hdr_arg : object
+            Image header passed to the stub.
+        fname : path-like
+            Filename supplied to the test helper.
+        """
         saved["fname"] = fname
         saved["data"] = arr.copy()
 
@@ -142,6 +286,14 @@ def filtnifti_basic_sec_units(debug=False):
 
 
 def filtnifti_msec_units(debug=False):
+    """
+    Check filtnifti msec units in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("filtnifti_msec_units")
     data = _make_4d_data()
@@ -151,6 +303,19 @@ def filtnifti_msec_units(debug=False):
     hdr = _make_hdr(units="msec")
 
     def mock_readfromnifti(fname):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (MagicMock(), data, hdr, dims, sizes)
 
     mock_filter = MagicMock()
@@ -176,6 +341,14 @@ def filtnifti_msec_units(debug=False):
 
 
 def filtnifti_negative_freqs(debug=False):
+    """
+    Check filtnifti negative freqs in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("filtnifti_negative_freqs")
     data = _make_4d_data()
@@ -185,6 +358,19 @@ def filtnifti_negative_freqs(debug=False):
     hdr = _make_hdr(units="sec")
 
     def mock_readfromnifti(fname):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (MagicMock(), data, hdr, dims, sizes)
 
     mock_filter = MagicMock()
@@ -215,6 +401,14 @@ def filtnifti_negative_freqs(debug=False):
 
 
 def test_filtnifti(debug=False):
+    """
+    Verify filtnifti.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("Running parser tests")
     parser_basic(debug=debug)

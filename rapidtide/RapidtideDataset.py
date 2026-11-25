@@ -283,21 +283,6 @@ class Timecourse:
         the timecourse object, including name, label, file information, sampling rate,
         length, and statistical measures.
 
-        Parameters
-        ----------
-        self : object
-            The timecourse object instance containing the properties to be summarized.
-            Expected attributes include:
-            - name: str, the name of the timecourse
-            - label: str, the label associated with the timecourse
-            - filename: str, the filename of the timecourse data
-            - namebase: str, the base name of the file
-            - samplerate: float, the sampling rate of the timecourse
-            - length: int, the length of the timecourse
-            - kurtosis: float, the kurtosis value of the timecourse
-            - kurtosis_z: float, the z-score of the kurtosis
-            - kurtosis_p: float, the p-value of the kurtosis
-
         Returns
         -------
         None
@@ -561,10 +546,6 @@ class Overlay:
         including min/max values, quartiles, robust statistics, and histogram data.
         The results are stored as instance attributes for later use.
 
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         None
@@ -779,36 +760,42 @@ class Overlay:
         return np.round((time - self.toffset) / self.tr, 0)
 
     def tr2real(self, tpos: int) -> float:
+        """
+        Convert a timepoint index to elapsed time using the sampling interval and offset.
+
+        Parameters
+        ----------
+        tpos : int
+            Zero-based timepoint index.
+
+        Returns
+        -------
+        float
+            Time in seconds, including the instance time offset.
+        """
         return self.toffset + self.tr * tpos
 
     def real2vox(
         self, xcoord: float, ycoord: float, zcoord: float, time: float
     ) -> tuple[int, int, int, int]:
         """
-        Convert a time position to a real time value.
+        Convert world coordinates and time to the nearest voxel and timepoint indices.
 
         Parameters
         ----------
-        tpos : int
-            Time position index to convert to real time value.
+        xcoord : float
+            World-space x coordinate.
+        ycoord : float
+            World-space y coordinate.
+        zcoord : float
+            World-space z coordinate.
+        time : float
+            Time in seconds.
 
         Returns
         -------
-        float
-            The corresponding real time value calculated as `toffset + tr * tpos`.
-
-        Notes
-        -----
-        This function performs a linear transformation from discrete time positions
-        to continuous time values using the instance's time offset and time rate
-        parameters.
-
-        Examples
-        --------
-        >>> obj.tr2real(0)
-        10.0
-        >>> obj.tr2real(5)
-        15.0
+        tuple of int
+            Nearest x, y, z, and timepoint indices.
         """
         x, y, z = nib.affines.apply_affine(self.invaffine, [xcoord, ycoord, zcoord])
         t = self.real2tr(time)
@@ -936,12 +923,6 @@ class Overlay:
         current position coordinates. The method handles both 3D and 4D data arrays
         by checking the time dimension.
 
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the masked data and position
-            coordinates.
-
         Returns
         -------
         float
@@ -1055,10 +1036,6 @@ class Overlay:
         then checks if the mask has changed since the last update. If the mask has
         changed, it applies the mask to the data, sets masked values to zero, and
         updates the statistics.
-
-        Parameters
-        ----------
-        None
 
         Returns
         -------
@@ -1509,20 +1486,6 @@ class RapidtideDataset:
         read into a `Timecourse` object and stored in `self.regressors`. If no regressor is
         successfully loaded, the first one in the list is set as the focus regressor.
 
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the method. Expected to have the following
-            attributes:
-            - `regressorspecs`: list of tuples specifying regressor files and parameters.
-            - `fileroot`: string, base path for regressor files.
-            - `regressors`: dict, to store loaded regressors.
-            - `focusregressor`: str, name of the currently focused regressor.
-            - `verbose`: int, level of verbosity for logging.
-            - `bidsformat`: bool, flag indicating BIDS format usage.
-            - `regressorsimcalclimits`: tuple, limits for regressor calculation.
-            - `isbids`: bool, flag indicating BIDS format usage (likely a typo for `bidsformat`).
-
         Returns
         -------
         None
@@ -1587,10 +1550,6 @@ class RapidtideDataset:
         initializes an `Overlay` object for each. It ensures that all loaded
         maps have consistent dimensions and voxel sizes. If a map is listed in
         `mapstoinvert`, it will be inverted upon loading.
-
-        Parameters
-        ----------
-        None
 
         Returns
         -------
@@ -1685,23 +1644,6 @@ class RapidtideDataset:
         This method iterates through the functional masks defined in `self.funcmasks`
         and attempts to load each mask file. If a mask file exists, it creates an
         Overlay object and stores it in `self.overlays` with the mask name as key.
-
-        Parameters
-        ----------
-        self : object
-            The instance containing the following attributes:
-            - funcmasks : list of tuples
-                List of (maskname, maskfilename) pairs to load
-            - fileroot : str
-                Root directory path for mask files
-            - overlays : dict
-                Dictionary to store loaded overlay objects
-            - verbose : int
-                Verbosity level for printing status messages
-            - init_LUT : bool, optional
-                Flag to initialize lookup table for overlays
-            - loadedfuncmasks : list
-                List to store names of successfully loaded masks
 
         Returns
         -------
@@ -2166,12 +2108,6 @@ class RapidtideDataset:
         corresponding file exists, it creates an Overlay object for the white
         matter mask and stores it in `self.overlays["whitemask"]`.
 
-        Parameters
-        ----------
-        self : object
-            The instance containing the white matter mask specification and
-            overlay storage.
-
         Returns
         -------
         bool
@@ -2220,10 +2156,6 @@ class RapidtideDataset:
         various configuration parameters such as filter limits, sampling frequencies,
         and similarity metrics, and prepares a list of regressor specifications for
         use in subsequent processing steps.
-
-        Parameters
-        ----------
-        None
 
         Returns
         -------
@@ -2487,39 +2419,6 @@ class RapidtideDataset:
         BIDS format, use of correlation outputs, and coordinate space. It also handles
         setting TR and time offset values for the loaded maps, and loads additional
         data such as atlases and tissue masks if applicable.
-
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing this method. Expected to have the
-            following attributes:
-
-            - bidsformat : bool
-                Indicates whether the data is in BIDS format.
-            - usecorrout : bool
-                Whether to include correlation output maps.
-            - newstylenames : bool
-                Whether to use new-style naming conventions for maps.
-            - userise : bool
-                Whether to include rise time-related maps.
-            - forcetr : bool
-                Whether to force TR value for loaded maps.
-            - forceoffset : bool
-                Whether to force time offset for loaded maps.
-            - trval : float
-                The TR value to be set if `forcetr` is True.
-            - offsettime : float
-                The time offset to be set if `forceoffset` is True.
-            - verbose : int
-                Verbosity level for output messages.
-            - referencedir : str
-                Directory containing reference data such as atlases.
-            - init_LUT : bool
-                Whether to initialize lookup tables for overlays.
-            - useatlas : bool
-                Whether to load atlas data.
-            - coordinatespace : str
-                The coordinate space of the data (e.g., "MNI152", "MNI152NLin2009cAsym").
 
         Returns
         -------

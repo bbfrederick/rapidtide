@@ -11,6 +11,14 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
+        """
+        Build the Tidepool controls and attach them to the main window.
+
+        Parameters
+        ----------
+        MainWindow : QMainWindow
+            Window whose interface is being configured.
+        """
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1595, 810)
         sizePolicy = QtWidgets.QSizePolicy(
@@ -1034,6 +1042,14 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
+        """
+        Set the translated labels and title on the main window.
+
+        Parameters
+        ----------
+        MainWindow : QMainWindow
+            Window whose interface is being configured.
+        """
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.imageData_groupBox.setTitle(_translate("MainWindow", "Image Data"))

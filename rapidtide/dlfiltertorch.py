@@ -177,7 +177,7 @@ class DeepLearningFilter:
             Number of samples to skip at the end of each timecourse. Default is 200.
         step : int, optional
             Step size for sliding window. Default is 1.
-        batch_size: int, optional
+        batch_size : int, optional
             Training batch size.  Default is 1024.
         namesuffix : str, optional
             Suffix to append to model name. Default is None.
@@ -187,7 +187,7 @@ class DeepLearningFilter:
             Number of samples to skip when reading data. Default is None.
         countlim : int, optional
             Limit on number of timecourses to process. Default is None.
-        **kwargs
+        **kwargs : object
             Additional keyword arguments passed to the parent class.
 
         Notes
@@ -268,47 +268,6 @@ class DeepLearningFilter:
         with a set of parameters derived from the instance attributes. It handles both
         FFT and non-FFT modes of data preprocessing. The loaded data is stored in
         instance variables for use in subsequent training steps.
-
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the following attributes:
-            - initialized : bool
-                Indicates whether the model has been initialized.
-            - dofft : bool
-                Whether to apply FFT transformation to the data.
-            - window_size : int
-                Size of the sliding window used for data segmentation.
-            - thesuffix : str
-                Suffix to append to filenames when reading data.
-            - thedatadir : str
-                Directory path where the data files are located.
-            - inputfrag : str
-                Fragment identifier for input data.
-            - targetfrag : str
-                Fragment identifier for target data.
-            - startskip : int
-                Number of samples to skip at the beginning of each file.
-            - endskip : int
-                Number of samples to skip at the end of each file.
-            - corrthresh_rp : float
-                Correlation threshold (raw to pleth) for filtering data.
-            - corrthresh_pp : float
-                Correlation threshold (pleth to filtered pleth) for filtering data.
-            - step : int
-                Step size for sliding window.
-            - usebadpts : bool
-                Whether to include bad points in the data.
-            - excludethresh : float
-                Threshold for excluding data points.
-            - excludebysubject : bool
-                Whether to exclude data by subject.
-            - readlim : int
-                Limit on the number of samples to read.
-            - readskip : int
-                Number of samples to skip while reading.
-            - countlim : int
-                Limit on the number of data points to process.
 
         Returns
         -------
@@ -430,11 +389,6 @@ class DeepLearningFilter:
         between input and actual values). The method also generates and saves a
         plot of the training and validation loss over epochs.
 
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the model and data attributes.
-
         Returns
         -------
         tuple[list, list, float, float]
@@ -542,21 +496,6 @@ class DeepLearningFilter:
         This function creates a dictionary containing various model configuration parameters
         and writes them to a JSON file for future reference and reproducibility.
 
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the metadata attributes. Expected to have
-            the following attributes:
-            - `nettype`: Type of neural network
-            - `window_size`: Size of the window used for processing
-            - `usebadpts`: Flag indicating whether bad points are handled
-            - `dofft`: Flag indicating whether FFT is used
-            - `excludethresh`: Threshold for exclusion
-            - `num_epochs`: Number of training epochs
-            - `num_layers`: Number of layers in the model
-            - `dropout_rate`: Dropout rate for regularization
-            - `modelname`: Name of the model
-
         Returns
         -------
         None
@@ -604,24 +543,6 @@ class DeepLearningFilter:
         This method updates the internal information dictionary with various model
         performance metrics and writes the complete metadata to a JSON file for
         model persistence and tracking.
-
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the metadata and model information.
-            Expected to have the following attributes:
-            - infodict : dict
-                Dictionary containing model metadata.
-            - loss : float
-                Training loss value.
-            - val_loss : float
-                Validation loss value.
-            - raw_error : float
-                Raw error metric.
-            - pred_error : float
-                Prediction error metric.
-            - modelname : str
-                Name/path of the model for file output.
 
         Returns
         -------
@@ -830,11 +751,6 @@ class DeepLearningFilter:
         saving the model configuration, initializing metadata, and setting appropriate
         flags to indicate initialization status.
 
-        Parameters
-        ----------
-        self : object
-            The instance of the model class being initialized.
-
         Returns
         -------
         None
@@ -871,20 +787,6 @@ class DeepLearningFilter:
         This method performs model training with optional pretraining and logging. It supports
         TensorBoard logging, model checkpointing, early stopping, and NaN termination. The trained
         model is saved at the end of training.
-
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the model and training configuration.
-            Expected attributes include:
-            - `model`: PyTorch model to be trained.
-            - `train_x`, `train_y`, `val_x`, `val_y`: Training and validation data as numpy arrays.
-            - `device`: Device to run the training on (e.g., 'cpu' or 'cuda').
-            - `num_pretrain_epochs`: Number of pretraining epochs (default: 0).
-            - `num_epochs`: Number of main training epochs.
-            - `modelname`: Directory name to save model checkpoints and logs.
-            - `usetensorboard`: Boolean flag to enable TensorBoard logging.
-            - `savemodel()`: Method to save the final trained model.
 
         Returns
         -------
@@ -1107,6 +1009,14 @@ class DeepLearningFilter:
 
 class SelfAttention(nn.Module):
     def __init__(self, feature_dim):
+        """
+        Initialize `SelfAttention`.
+
+        Parameters
+        ----------
+        feature_dim : int
+            Number of input features per time step.
+        """
         super(SelfAttention, self).__init__()
         self.query = nn.Linear(feature_dim, feature_dim)
         self.key = nn.Linear(feature_dim, feature_dim)
@@ -1115,6 +1025,19 @@ class SelfAttention(nn.Module):
 
     def forward(self, x):
         # x shape: (batch, seq_len, feature_dim)
+        """
+        Run a forward pass through the model.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor passed to the model.
+
+        Returns
+        -------
+        tuple of torch.Tensor
+            Model output and temporal attention weights.
+        """
         Q = self.query(x)
         K = self.key(x)
         V = self.value(x)
@@ -1134,6 +1057,14 @@ class SelfAttention(nn.Module):
 
 class PPGAttentionModel(nn.Module):
     def __init__(self, hidden_size=64):
+        """
+        Initialize `PPGAttentionModel`.
+
+        Parameters
+        ----------
+        hidden_size : int, optional
+            Number of features in the hidden state.
+        """
         super(PPGAttentionModel, self).__init__()
         self.cnn = nn.Sequential(
             nn.Conv1d(1, 32, kernel_size=7, padding=3),
@@ -1149,6 +1080,19 @@ class PPGAttentionModel(nn.Module):
 
     def forward(self, x):
         # x: (batch, 1, 100)
+        """
+        Run a forward pass through the model.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Input tensor passed to the model.
+
+        Returns
+        -------
+        torch.Tensor
+            Model output for the input tensor.
+        """
         c_out = self.cnn(x).permute(0, 2, 1)  # (batch, 50, 64)
         l_out, _ = self.lstm(c_out)  # (batch, 50, 128)
         attn_out, weights = self.attention(l_out)
@@ -1167,7 +1111,18 @@ class PPGAttentionDLFilter(DeepLearningFilter):
         *args,
         **kwargs,
     ) -> None:
+        """
+        Initialize `PPGAttentionDLFilter`.
 
+        Parameters
+        ----------
+        hidden_size : int, optional
+            Number of features in the hidden state.
+        *args : object
+            Additional positional arguments.
+        **kwargs : object
+            Additional arguments accepted by the constructor.
+        """
         self.nettype = "ppgattention"
         self.hidden_size = hidden_size
         self.infodict["nettype"] = self.nettype
@@ -1182,11 +1137,6 @@ class PPGAttentionDLFilter(DeepLearningFilter):
         includes information about model architecture, hyperparameters, and configuration
         options. The method also ensures the model directory exists by creating it if
         necessary.
-
-        Parameters
-        ----------
-        self : object
-            The instance containing model configuration parameters.
 
         Returns
         -------
@@ -1264,15 +1214,6 @@ class PPGAttentionDLFilter(DeepLearningFilter):
         This method initializes a CNNModel with the specified parameters and moves
         it to the designated device (CPU or GPU). The model configuration is
         determined by the instance attributes set prior to calling this method.
-
-        Parameters
-        ----------
-        self : object
-            The instance containing the following attributes:
-            - hidden_size : int
-                Number of filters in each convolutional layer
-            - kernel_size : int or tuple
-                Size of the convolutional kernel
 
         Returns
         -------
@@ -1530,9 +1471,9 @@ class CNNDLFilter(DeepLearningFilter):
             Size of the convolutional kernel, by default 5
         dilation_rate : int, optional
             Dilation rate for the convolutional layers, by default 1
-        *args
+        *args : object
             Variable length argument list passed to parent class
-        **kwargs
+        **kwargs : object
             Arbitrary keyword arguments passed to parent class
 
         Returns
@@ -1571,11 +1512,6 @@ class CNNDLFilter(DeepLearningFilter):
         includes information about model architecture, hyperparameters, and configuration
         options. The method also ensures the model directory exists by creating it if
         necessary.
-
-        Parameters
-        ----------
-        self : object
-            The instance containing model configuration parameters.
 
         Returns
         -------
@@ -1666,27 +1602,6 @@ class CNNDLFilter(DeepLearningFilter):
         This method initializes a CNNModel with the specified parameters and moves
         it to the designated device (CPU or GPU). The model configuration is
         determined by the instance attributes set prior to calling this method.
-
-        Parameters
-        ----------
-        self : object
-            The instance containing the following attributes:
-            - num_filters : int
-                Number of filters in each convolutional layer
-            - kernel_size : int or tuple
-                Size of the convolutional kernel
-            - num_layers : int
-                Number of convolutional layers in the network
-            - dropout_rate : float
-                Dropout rate for regularization
-            - dilation_rate : int or tuple
-                Dilation rate for dilated convolutions
-            - activation : str or callable
-                Activation function to use
-            - inputsize : tuple
-                Input dimensions for the model
-            - device : torch.device
-                Device to move the model to (CPU or GPU)
 
         Returns
         -------
@@ -1942,12 +1857,12 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
 
         Parameters
         ----------
-        encoding_dim : int, default=10
+        encoding_dim : int, default=10, optional
             Dimension of the encoding layer in the autoencoder. This determines
             the size of the latent representation learned by the model.
-        *args
+        *args : object
             Variable length argument list passed to the parent class constructor.
-        **kwargs
+        **kwargs : object
             Arbitrary keyword arguments passed to the parent class constructor.
 
         Returns
@@ -1985,35 +1900,6 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
         parameters and creates the corresponding directory path for model storage. The
         generated name includes information about window size, encoding dimensions, epochs,
         thresholds, step size, activation function, and additional flags.
-
-        Parameters
-        ----------
-        self : object
-            The instance containing the following attributes:
-            - window_size : int
-                Size of the sliding window
-            - encoding_dim : int
-                Dimension of the encoding layer
-            - num_epochs : int
-                Number of training epochs
-            - excludethresh : float
-                Threshold for excluding data points
-            - corrthresh_rp : float
-                Correlation threshold (raw to pleth) for filtering
-            - corrthresh_pp : float
-                Correlation threshold (pleth to filtered pleth) for filtering
-            - step : int
-                Step size for sliding window
-            - activation : str
-                Activation function name
-            - usebadpts : bool
-                Flag indicating whether to use bad points
-            - excludebysubject : bool
-                Flag indicating whether to exclude by subject
-            - namesuffix : str, optional
-                Additional suffix to append to model name
-            - modelroot : str
-                Root directory for model storage
 
         Returns
         -------
@@ -2082,19 +1968,6 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
 
         This method initializes a DenseAutoencoderModel with the specified parameters
         and moves it to the designated device (CPU or GPU).
-
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing this method. Expected to have the
-            following attributes:
-            - window_size : int
-            - encoding_dim : int
-            - num_layers : int
-            - dropout_rate : float
-            - activation : str or callable
-            - inputsize : int
-            - device : torch.device
 
         Returns
         -------
@@ -2390,9 +2263,9 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
             Size of the convolutional kernel, by default 5
         dilation_rate : int, optional
             Dilation rate for the convolutional layers, by default 1
-        *args
+        *args : object
             Variable length argument list
-        **kwargs
+        **kwargs : object
             Arbitrary keyword arguments
 
         Returns
@@ -2434,26 +2307,6 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         configuration parameters and creates the corresponding directory path.
         The generated name includes information about window size, encoding dimensions,
         filters, kernel size, epochs, thresholds, and other model configuration options.
-
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing model configuration parameters.
-            Expected attributes include:
-            - window_size : int
-            - encoding_dim : int
-            - num_filters : int
-            - kernel_size : int
-            - num_epochs : int
-            - excludethresh : float
-            - corrthresh_rp : float
-            - corrthresh_pp : float
-            - step : int
-            - activation : str
-            - usebadpts : bool
-            - excludebysubject : bool
-            - namesuffix : str, optional
-            - modelroot : str
 
         Returns
         -------
@@ -2526,28 +2379,6 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
 
         This method constructs a ConvAutoencoderModel with the specified parameters
         and moves it to the designated device (CPU or GPU).
-
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing this method. Expected to have the
-            following attributes:
-            - window_size : int
-                Size of the input window
-            - encoding_dim : int
-                Dimension of the encoded representation
-            - num_filters : int
-                Number of filters in the convolutional layers
-            - kernel_size : int
-                Size of the convolutional kernel
-            - dropout_rate : float
-                Dropout rate for regularization
-            - activation : str or callable
-                Activation function to use
-            - inputsize : tuple
-                Input size dimensions
-            - device : torch.device
-                Device to move the model to (CPU or GPU)
 
         Returns
         -------
@@ -3137,6 +2968,21 @@ def readindata(
 
 
 def calcnumchannels(usebadpts, dofft):
+    """
+    Count the input channels required by the selected feature representation.
+
+    Parameters
+    ----------
+    usebadpts : bool
+        Include a channel for invalid samples.
+    dofft : bool
+        Use frequency-domain features.
+
+    Returns
+    -------
+    tuple of int
+        Total channel count, bad-sample channels, and frequency-domain channels.
+    """
     if usebadpts:
         badptchans = 1
     else:
@@ -3154,6 +3000,31 @@ def datatochannels(
     timecourse, badpts, usebadpts, dofft, logtrans=True, stdnorm=True, magthresh=0.001
 ):
     # make an X array with the proper number of channels
+    """
+    Convert a time course and optional bad-sample mask into model input channels.
+
+    Parameters
+    ----------
+    timecourse : numpy.ndarray
+        Signal samples in time order.
+    badpts : array-like
+        Mask identifying invalid time samples.
+    usebadpts : bool
+        Include a channel for invalid samples.
+    dofft : bool
+        Use frequency-domain features.
+    logtrans : bool, optional
+        Apply logarithmic scaling to spectral magnitudes.
+    stdnorm : bool, optional
+        Standardize the channels before returning them.
+    magthresh : float, optional
+        Threshold used when processing spectral magnitudes.
+
+    Returns
+    -------
+    numpy.ndarray
+        Feature channels assembled from the input time course.
+    """
     numchans, badptchans, fftchans = calcnumchannels(usebadpts, dofft)
     channeldata = np.zeros((len(timecourse), numchans), dtype=float)
 
@@ -3236,8 +3107,6 @@ def prep(
     excludebysubject : bool, optional
         If True, exclude subjects with any region exceeding `excludethresh`;
         otherwise, exclude windows (default is True).
-    thesuffix : str, optional
-        Suffix used in file search pattern (default is "sliceres").
     thedatadir : str, optional
         Directory path where the data files are stored (default is
         "/data/frederic/physioconn/output_2025").

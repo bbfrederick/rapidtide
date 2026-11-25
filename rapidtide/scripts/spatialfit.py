@@ -21,6 +21,7 @@ import rapidtide.workflows.spatialfit as theworkflow
 
 
 def entrypoint():
+    """Run the `spatialfit` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.spatialfit)
 
 

@@ -21,6 +21,7 @@ import rapidtide.workflows.resamplenifti as theworkflow
 
 
 def entrypoint():
+    """Run the `resamplenifti` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.resamplenifti)
 
 

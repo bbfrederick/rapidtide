@@ -30,7 +30,21 @@ from rapidtide.workflows.happy2std import _get_parser, happy2std, transformmaps
 
 
 def _make_default_args(tmpdir, **overrides):
-    """Create default args Namespace for happy2std."""
+    """
+    Create default args Namespace for happy2std.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         inputfileroot=os.path.join(tmpdir, "sub-01_task-rest_desc-"),
         outputdir=os.path.join(tmpdir, "output"),
@@ -46,7 +60,25 @@ def _make_default_args(tmpdir, **overrides):
 
 
 def _setup_feat_dir(tmpdir, with_warp=False, with_hires=True, with_standard=True):
-    """Create a minimal feat directory structure."""
+    """
+    Create a minimal feat directory structure.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    with_warp : bool, optional
+        Setting for ``with_warp`` in the test case.
+    with_hires : bool, optional
+        Setting for ``with_hires`` in the test case.
+    with_standard : bool, optional
+        Setting for ``with_standard`` in the test case.
+
+    Returns
+    -------
+    str
+        The ``regdir`` value supplied to the caller.
+    """
     regdir = os.path.join(tmpdir, "sub-01.feat", "reg")
     os.makedirs(regdir, exist_ok=True)
 
@@ -81,7 +113,21 @@ def _setup_feat_dir(tmpdir, with_warp=False, with_hires=True, with_standard=True
 
 
 def _setup_input_files(tmpdir, subjroot="sub-01_task-rest_desc-"):
-    """Create minimal input files that happy2std expects to find."""
+    """
+    Create minimal input files that happy2std expects to find.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    subjroot : str, optional
+        Value supplied as ``subjroot`` by the test case.
+
+    Returns
+    -------
+    object
+        The ``derived_subjroot`` value supplied to the caller.
+    """
     # The glob pattern: inputfileroot + "*app.nii.gz"
     # With inputfileroot = "sub-01_task-rest_desc-", this matches "sub-01_task-rest_desc-normapp.nii.gz"
     # thebase[:-11] strips "_app.nii.gz" (11 chars?) Actually let me check:
@@ -140,7 +186,14 @@ def _setup_input_files(tmpdir, subjroot="sub-01_task-rest_desc-"):
 
 
 def parser_basic(debug=False):
-    """Test that _get_parser returns a valid parser."""
+    """
+    Test that _get_parser returns a valid parser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
     assert parser.prog == "rapidtide2std"
@@ -150,7 +203,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
-    """Test that parser requires all three positional arguments."""
+    """
+    Test that parser requires all three positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args([])
@@ -166,7 +226,14 @@ def parser_required_args(debug=False):
 
 
 def parser_all_positional(debug=False):
-    """Test parser with all three positional arguments."""
+    """
+    Test parser with all three positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["myinput", "myoutput", "myfeat.feat"])
     assert args.inputfileroot == "myinput"
@@ -178,7 +245,14 @@ def parser_all_positional(debug=False):
 
 
 def parser_defaults(debug=False):
-    """Test default values for optional arguments."""
+    """
+    Test default values for optional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat"])
 
@@ -193,7 +267,14 @@ def parser_defaults(debug=False):
 
 
 def parser_all_flag(debug=False):
-    """Test --all flag."""
+    """
+    Test --all flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--all"])
     assert getattr(args, "all") is True
@@ -203,7 +284,14 @@ def parser_all_flag(debug=False):
 
 
 def parser_hires(debug=False):
-    """Test --hires flag."""
+    """
+    Test --hires flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--hires"])
     assert args.aligntohires is True
@@ -213,7 +301,14 @@ def parser_hires(debug=False):
 
 
 def parser_linear(debug=False):
-    """Test --linear flag."""
+    """
+    Test --linear flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--linear"])
     assert args.forcelinear is True
@@ -223,7 +318,14 @@ def parser_linear(debug=False):
 
 
 def parser_onefile(debug=False):
-    """Test --onefile option."""
+    """
+    Test --onefile option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--onefile", "myfile"])
     assert args.onefilename == "myfile"
@@ -233,7 +335,14 @@ def parser_onefile(debug=False):
 
 
 def parser_fake(debug=False):
-    """Test --fake flag."""
+    """
+    Test --fake flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--fake"])
     assert args.preponly is True
@@ -246,7 +355,14 @@ def parser_fake(debug=False):
 
 
 def transformmaps_prints_entry(debug=False):
-    """Test that transformmaps prints entry diagnostics."""
+    """
+    Test that transformmaps prints entry diagnostics.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("transformmaps_prints_entry")
 
@@ -273,7 +389,14 @@ def transformmaps_prints_entry(debug=False):
 
 
 def transformmaps_no_maps(debug=False):
-    """Test transformmaps with no fmri or anat maps (both None)."""
+    """
+    Test transformmaps with no fmri or anat maps (both None).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("transformmaps_no_maps")
 
@@ -299,7 +422,14 @@ def transformmaps_no_maps(debug=False):
 
 
 def transformmaps_fmri_file_not_found(debug=False):
-    """Test transformmaps skips fmri maps whose input files don't exist."""
+    """
+    Test transformmaps skips fmri maps whose input files don't exist.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("transformmaps_fmri_file_not_found")
 
@@ -327,7 +457,14 @@ def transformmaps_fmri_file_not_found(debug=False):
 
 
 def transformmaps_fmri_with_outputtag(debug=False):
-    """Test that transformmaps uses outputtag in fmri output filenames."""
+    """
+    Test that transformmaps uses outputtag in fmri output filenames.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("transformmaps_fmri_with_outputtag")
 
@@ -343,6 +480,27 @@ def transformmaps_fmri_with_outputtag(debug=False):
         flirt_calls = []
 
         def mock_makeflirtcmd(inputfile, targetname, xform, outputname, **kwargs):
+            """
+            Simulate ``makeflirtcmd`` for the test.
+
+            Parameters
+            ----------
+            inputfile : path-like
+                Path of the input file.
+            targetname : path-like
+                Path of the registration reference image.
+            xform : path-like
+                Transformation supplied to the registration stub.
+            outputname : path-like
+                Name of the output file.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            list
+                Values supplied together for the test case.
+            """
             flirt_calls.append({"input": inputfile, "output": outputname})
             return ["flirt", "-in", inputfile]
 
@@ -373,7 +531,14 @@ def transformmaps_fmri_with_outputtag(debug=False):
 
 
 def transformmaps_anat_hires_copies(debug=False):
-    """Test that transformmaps copies anat maps when aligntohires=True."""
+    """
+    Test that transformmaps copies anat maps when aligntohires=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("transformmaps_anat_hires_copies")
 
@@ -392,6 +557,14 @@ def transformmaps_anat_hires_copies(debug=False):
         subprocess_calls = []
 
         def mock_subprocess_call(cmd):
+            """
+            Simulate ``subprocess_call`` for the test.
+
+            Parameters
+            ----------
+            cmd : object
+                Command supplied to the subprocess stub.
+            """
             subprocess_calls.append(cmd)
 
         with patch("subprocess.call", side_effect=mock_subprocess_call):
@@ -419,7 +592,14 @@ def transformmaps_anat_hires_copies(debug=False):
 
 
 def transformmaps_anat_standard_transforms(debug=False):
-    """Test that transformmaps transforms anat maps when aligntohires=False."""
+    """
+    Test that transformmaps transforms anat maps when aligntohires=False.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("transformmaps_anat_standard_transforms")
 
@@ -440,6 +620,27 @@ def transformmaps_anat_standard_transforms(debug=False):
         flirt_calls = []
 
         def mock_makeflirtcmd(inputfile, targetname, xform, outputname, **kwargs):
+            """
+            Simulate ``makeflirtcmd`` for the test.
+
+            Parameters
+            ----------
+            inputfile : path-like
+                Path of the input file.
+            targetname : path-like
+                Path of the registration reference image.
+            xform : path-like
+                Transformation supplied to the registration stub.
+            outputname : path-like
+                Name of the output file.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            list
+                Values supplied together for the test case.
+            """
             flirt_calls.append({"xform": xform, "output": outputname})
             return ["flirt", "-in", inputfile]
 
@@ -476,7 +677,14 @@ def transformmaps_anat_standard_transforms(debug=False):
 
 
 def workflow_no_fsldir(debug=False):
-    """Test that happy2std raises RuntimeError when FSLDIR is not set."""
+    """
+    Test that happy2std raises RuntimeError when FSLDIR is not set.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_no_fsldir")
 
@@ -491,7 +699,14 @@ def workflow_no_fsldir(debug=False):
 
 
 def workflow_missing_xform(debug=False):
-    """Test that happy2std exits when transform matrix is missing."""
+    """
+    Test that happy2std exits when transform matrix is missing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_missing_xform")
 
@@ -509,7 +724,14 @@ def workflow_missing_xform(debug=False):
 
 
 def workflow_missing_reftarget(debug=False):
-    """Test that happy2std exits when reference target is missing."""
+    """
+    Test that happy2std exits when reference target is missing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_missing_reftarget")
 
@@ -530,7 +752,14 @@ def workflow_missing_reftarget(debug=False):
 
 
 def workflow_onefile_missing(debug=False):
-    """Test happy2std with --onefile pointing to a nonexistent file."""
+    """
+    Test happy2std with --onefile pointing to a nonexistent file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_onefile_missing")
 
@@ -566,7 +795,14 @@ def workflow_onefile_missing(debug=False):
 
 
 def workflow_onefile_exists(debug=False):
-    """Test happy2std --onefile with an existing file calls makeflirtcmd and exits."""
+    """
+    Test happy2std --onefile with an existing file calls makeflirtcmd and exits.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_onefile_exists")
 
@@ -590,6 +826,27 @@ def workflow_onefile_exists(debug=False):
         flirt_calls = []
 
         def mock_makeflirtcmd(inputfile, targetname, xform, outputname, **kwargs):
+            """
+            Simulate ``makeflirtcmd`` for the test.
+
+            Parameters
+            ----------
+            inputfile : path-like
+                Path of the input file.
+            targetname : path-like
+                Path of the registration reference image.
+            xform : path-like
+                Transformation supplied to the registration stub.
+            outputname : path-like
+                Name of the output file.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            list
+                Values supplied together for the test case.
+            """
             flirt_calls.append(inputfile)
             return ["flirt", "-in", inputfile]
 
@@ -613,7 +870,14 @@ def workflow_onefile_exists(debug=False):
 
 
 def workflow_hires_setup(debug=False):
-    """Test that happy2std with --hires sets correct reference and xform."""
+    """
+    Test that happy2std with --hires sets correct reference and xform.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_hires_setup")
 
@@ -629,6 +893,16 @@ def workflow_hires_setup(debug=False):
         transformmaps_calls = []
 
         def mock_transformmaps(*a, **kw):
+            """
+            Simulate ``transformmaps`` for the test.
+
+            Parameters
+            ----------
+            *a : object
+                Additional positional arguments passed by the caller.
+            **kw : object
+                Additional keyword arguments accepted by the stub.
+            """
             transformmaps_calls.append({"args": a, "kwargs": kw})
 
         with (
@@ -656,7 +930,14 @@ def workflow_hires_setup(debug=False):
 
 
 def workflow_standard_setup(debug=False):
-    """Test that happy2std without --hires sets correct standard space refs."""
+    """
+    Test that happy2std without --hires sets correct standard space refs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_standard_setup")
 
@@ -679,6 +960,16 @@ def workflow_standard_setup(debug=False):
         transformmaps_calls = []
 
         def mock_transformmaps(*a, **kw):
+            """
+            Simulate ``transformmaps`` for the test.
+
+            Parameters
+            ----------
+            *a : object
+                Additional positional arguments passed by the caller.
+            **kw : object
+                Additional keyword arguments accepted by the stub.
+            """
             transformmaps_calls.append({"args": a, "kwargs": kw})
 
         with (
@@ -704,7 +995,14 @@ def workflow_standard_setup(debug=False):
 
 
 def workflow_nonlinear(debug=False):
-    """Test that happy2std detects warp file for nonlinear transformation."""
+    """
+    Test that happy2std detects warp file for nonlinear transformation.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_nonlinear")
 
@@ -727,6 +1025,16 @@ def workflow_nonlinear(debug=False):
         transformmaps_calls = []
 
         def mock_transformmaps(*a, **kw):
+            """
+            Simulate ``transformmaps`` for the test.
+
+            Parameters
+            ----------
+            *a : object
+                Additional positional arguments passed by the caller.
+            **kw : object
+                Additional keyword arguments accepted by the stub.
+            """
             transformmaps_calls.append({"args": a, "kwargs": kw})
 
         captured = io.StringIO()
@@ -753,7 +1061,14 @@ def workflow_nonlinear(debug=False):
 
 
 def workflow_forcelinear(debug=False):
-    """Test that --linear forces linear even when warp file exists."""
+    """
+    Test that --linear forces linear even when warp file exists.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_forcelinear")
 
@@ -776,6 +1091,16 @@ def workflow_forcelinear(debug=False):
         transformmaps_calls = []
 
         def mock_transformmaps(*a, **kw):
+            """
+            Simulate ``transformmaps`` for the test.
+
+            Parameters
+            ----------
+            *a : object
+                Additional positional arguments passed by the caller.
+            **kw : object
+                Additional keyword arguments accepted by the stub.
+            """
             transformmaps_calls.append({"args": a, "kwargs": kw})
 
         with (
@@ -796,7 +1121,14 @@ def workflow_forcelinear(debug=False):
 
 
 def workflow_default_fmri_maps(debug=False):
-    """Test that default (no --all) passes 6 fmri maps to transformmaps."""
+    """
+    Test that default (no --all) passes 6 fmri maps to transformmaps.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_default_fmri_maps")
 
@@ -820,6 +1152,16 @@ def workflow_default_fmri_maps(debug=False):
         transformmaps_calls = []
 
         def mock_transformmaps(*a, **kw):
+            """
+            Simulate ``transformmaps`` for the test.
+
+            Parameters
+            ----------
+            *a : object
+                Additional positional arguments passed by the caller.
+            **kw : object
+                Additional keyword arguments accepted by the stub.
+            """
             transformmaps_calls.append({"args": a, "kwargs": kw})
 
         with (
@@ -847,7 +1189,14 @@ def workflow_default_fmri_maps(debug=False):
 
 
 def workflow_all_fmri_maps(debug=False):
-    """Test that --all adds extra fmri maps."""
+    """
+    Test that --all adds extra fmri maps.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_all_fmri_maps")
 
@@ -871,6 +1220,16 @@ def workflow_all_fmri_maps(debug=False):
         transformmaps_calls = []
 
         def mock_transformmaps(*a, **kw):
+            """
+            Simulate ``transformmaps`` for the test.
+
+            Parameters
+            ----------
+            *a : object
+                Additional positional arguments passed by the caller.
+            **kw : object
+                Additional keyword arguments accepted by the stub.
+            """
             transformmaps_calls.append({"args": a, "kwargs": kw})
 
         with (
@@ -896,7 +1255,14 @@ def workflow_all_fmri_maps(debug=False):
 
 
 def workflow_preponly_passed(debug=False):
-    """Test that preponly flag is passed through to transformmaps."""
+    """
+    Test that preponly flag is passed through to transformmaps.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_preponly_passed")
 
@@ -919,6 +1285,16 @@ def workflow_preponly_passed(debug=False):
         transformmaps_calls = []
 
         def mock_transformmaps(*a, **kw):
+            """
+            Simulate ``transformmaps`` for the test.
+
+            Parameters
+            ----------
+            *a : object
+                Additional positional arguments passed by the caller.
+            **kw : object
+                Additional keyword arguments accepted by the stub.
+            """
             transformmaps_calls.append({"args": a, "kwargs": kw})
 
         with (
@@ -937,7 +1313,14 @@ def workflow_preponly_passed(debug=False):
 
 
 def workflow_subjroot_derivation(debug=False):
-    """Test that happy2std correctly derives subjroot from glob result."""
+    """
+    Test that happy2std correctly derives subjroot from glob result.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_subjroot_derivation")
 
@@ -965,6 +1348,16 @@ def workflow_subjroot_derivation(debug=False):
         transformmaps_calls = []
 
         def mock_transformmaps(*a, **kw):
+            """
+            Simulate ``transformmaps`` for the test.
+
+            Parameters
+            ----------
+            *a : object
+                Additional positional arguments passed by the caller.
+            **kw : object
+                Additional keyword arguments accepted by the stub.
+            """
             transformmaps_calls.append({"args": a, "kwargs": kw})
 
         with (
@@ -993,6 +1386,14 @@ def workflow_subjroot_derivation(debug=False):
 
 def test_happy2std(debug=False):
     # parser tests
+    """
+    Verify happy2std.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_all_positional(debug=debug)

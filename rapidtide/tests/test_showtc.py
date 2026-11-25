@@ -146,16 +146,13 @@ def _run_showtc(tmpdir, arglist, outname="plot.png"):
 
 
 def _assert_wrote_image(thepath):
-    """Assert that a plot file was created and is not empty.
+    """
+    Assert that a plot file was created and is not empty.
 
     Parameters
     ----------
     thepath : str
         Path that showtc was asked to write.
-
-    Returns
-    -------
-    None
     """
     assert os.path.exists(thepath), f"{thepath} was not created"
     assert os.path.getsize(thepath) > 0, f"{thepath} is empty"
@@ -165,7 +162,14 @@ def _assert_wrote_image(thepath):
 
 
 def phase_cardinal_values(debug=False):
-    """Test phase returns the expected angles for the four cardinal complex directions."""
+    """
+    Test phase returns the expected angles for the four cardinal complex directions.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("phase_cardinal_values")
     z = np.array([1 + 0j, 0 + 1j, -1 + 0j, 0 - 1j])
@@ -174,7 +178,14 @@ def phase_cardinal_values(debug=False):
 
 
 def phase_diagonal_values(debug=False):
-    """Test phase returns the expected angles in all four quadrants."""
+    """
+    Test phase returns the expected angles in all four quadrants.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("phase_diagonal_values")
     z = np.array([1 + 1j, -1 + 1j, -1 - 1j, 1 - 1j])
@@ -183,7 +194,14 @@ def phase_diagonal_values(debug=False):
 
 
 def phase_range_is_bounded(debug=False):
-    """Test phase always returns values in [-pi, pi]."""
+    """
+    Test phase always returns values in [-pi, pi].
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("phase_range_is_bounded")
     rng = np.random.RandomState(11)
@@ -194,7 +212,14 @@ def phase_range_is_bounded(debug=False):
 
 
 def phase_preserves_shape(debug=False):
-    """Test phase preserves the shape of multidimensional input."""
+    """
+    Test phase preserves the shape of multidimensional input.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("phase_preserves_shape")
     rng = np.random.RandomState(12)
@@ -203,7 +228,14 @@ def phase_preserves_shape(debug=False):
 
 
 def phase_origin_is_zero(debug=False):
-    """Test phase of zero is zero (arctan2 handles the degenerate case without dividing)."""
+    """
+    Test phase of zero is zero (arctan2 handles the degenerate case without dividing).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("phase_origin_is_zero")
     assert phase(np.array([0 + 0j]))[0] == 0.0
@@ -213,14 +245,28 @@ def phase_origin_is_zero(debug=False):
 
 
 def get_parser_returns_parser(debug=False):
-    """Test _get_parser returns an ArgumentParser."""
+    """
+    Test _get_parser returns an ArgumentParser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_returns_parser")
     assert isinstance(_get_parser(), argparse.ArgumentParser)
 
 
 def get_parser_requires_a_filename(debug=False):
-    """Test _get_parser requires at least one input file."""
+    """
+    Test _get_parser requires at least one input file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_requires_a_filename")
     try:
@@ -231,7 +277,14 @@ def get_parser_requires_a_filename(debug=False):
 
 
 def get_parser_accepts_multiple_filenames(debug=False):
-    """Test _get_parser accepts a variable number of input files."""
+    """
+    Test _get_parser accepts a variable number of input files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_accepts_multiple_filenames")
     args = _get_parser().parse_args(["a.txt", "b.txt", "c.txt"])
@@ -239,7 +292,14 @@ def get_parser_accepts_multiple_filenames(debug=False):
 
 
 def get_parser_defaults(debug=False):
-    """Test _get_parser default values."""
+    """
+    Test _get_parser default values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_defaults")
     args = _get_parser().parse_args(["a.txt"])
@@ -273,7 +333,14 @@ def get_parser_defaults(debug=False):
 
 
 def get_parser_samplerate(debug=False):
-    """Test --samplerate is stored directly."""
+    """
+    Test --samplerate is stored directly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_samplerate")
     args = _get_parser().parse_args(["a.txt", "--samplerate", "4.0"])
@@ -281,7 +348,14 @@ def get_parser_samplerate(debug=False):
 
 
 def get_parser_sampletime_is_inverted(debug=False):
-    """Test --sampletime is inverted into a sample rate."""
+    """
+    Test --sampletime is inverted into a sample rate.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_sampletime_is_inverted")
     args = _get_parser().parse_args(["a.txt", "--sampletime", "0.25"])
@@ -289,7 +363,14 @@ def get_parser_sampletime_is_inverted(debug=False):
 
 
 def get_parser_sampling_is_mutually_exclusive(debug=False):
-    """Test --samplerate and --sampletime cannot both be given."""
+    """
+    Test --samplerate and --sampletime cannot both be given.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_sampling_is_mutually_exclusive")
     try:
@@ -300,7 +381,14 @@ def get_parser_sampling_is_mutually_exclusive(debug=False):
 
 
 def get_parser_displaytype_choices(debug=False):
-    """Test --displaytype accepts each valid choice."""
+    """
+    Test --displaytype accepts each valid choice.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_displaytype_choices")
     for choice in ["time", "power", "phase"]:
@@ -309,7 +397,14 @@ def get_parser_displaytype_choices(debug=False):
 
 
 def get_parser_displaytype_rejects_bad_choice(debug=False):
-    """Test --displaytype rejects an unknown choice."""
+    """
+    Test --displaytype rejects an unknown choice.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_displaytype_rejects_bad_choice")
     try:
@@ -320,7 +415,14 @@ def get_parser_displaytype_rejects_bad_choice(debug=False):
 
 
 def get_parser_format_choices(debug=False):
-    """Test --format accepts each valid choice."""
+    """
+    Test --format accepts each valid choice.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_format_choices")
     for choice in ["overlaid", "separate", "separatelinked"]:
@@ -329,7 +431,14 @@ def get_parser_format_choices(debug=False):
 
 
 def get_parser_format_rejects_bad_choice(debug=False):
-    """Test --format rejects an unknown choice."""
+    """
+    Test --format rejects an unknown choice.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_format_rejects_bad_choice")
     try:
@@ -340,7 +449,14 @@ def get_parser_format_rejects_bad_choice(debug=False):
 
 
 def get_parser_boolean_flags(debug=False):
-    """Test each store_true/store_false flag flips its destination."""
+    """
+    Test each store_true/store_false flag flips its destination.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_boolean_flags")
     for flag, dest, expected in [
@@ -359,7 +475,14 @@ def get_parser_boolean_flags(debug=False):
 
 
 def get_parser_numeric_options(debug=False):
-    """Test the numeric valued options are parsed with the right types."""
+    """
+    Test the numeric valued options are parsed with the right types.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_numeric_options")
     args = _get_parser().parse_args(
@@ -391,7 +514,14 @@ def get_parser_numeric_options(debug=False):
 
 
 def get_parser_string_options(debug=False):
-    """Test the string valued plot appearance options are stored unparsed."""
+    """
+    Test the string valued plot appearance options are stored unparsed.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_string_options")
     args = _get_parser().parse_args(
@@ -423,7 +553,14 @@ def get_parser_string_options(debug=False):
 
 
 def get_parser_rejects_abbreviations(debug=False):
-    """Test the parser was built with allow_abbrev=False."""
+    """
+    Test the parser was built with allow_abbrev=False.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_rejects_abbreviations")
     try:
@@ -437,7 +574,14 @@ def get_parser_rejects_abbreviations(debug=False):
 
 
 def showtc_time_domain(debug=False):
-    """Test showtc plots a simple two column time series."""
+    """
+    Test showtc plots a simple two column time series.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_time_domain")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -449,7 +593,14 @@ def showtc_time_domain(debug=False):
 
 
 def showtc_power_spectrum(debug=False):
-    """Test showtc plots a power spectrum and labels the axes accordingly."""
+    """
+    Test showtc plots a power spectrum and labels the axes accordingly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_power_spectrum")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -461,7 +612,14 @@ def showtc_power_spectrum(debug=False):
 
 
 def showtc_phase_spectrum(debug=False):
-    """Test showtc plots a phase spectrum and labels the axes accordingly."""
+    """
+    Test showtc plots a phase spectrum and labels the axes accordingly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_phase_spectrum")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -473,7 +631,14 @@ def showtc_phase_spectrum(debug=False):
 
 
 def showtc_spectrum_of_odd_length_data(debug=False):
-    """Test showtc drops the final point of odd length data before computing a spectrum."""
+    """
+    Test showtc drops the final point of odd length data before computing a spectrum.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_spectrum_of_odd_length_data")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -483,7 +648,14 @@ def showtc_spectrum_of_odd_length_data(debug=False):
 
 
 def showtc_illegal_display_mode(debug=False):
-    """Test showtc exits when handed a display mode the parser would have rejected."""
+    """
+    Test showtc exits when handed a display mode the parser would have rejected.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_illegal_display_mode")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -503,7 +675,14 @@ def showtc_illegal_display_mode(debug=False):
 
 
 def showtc_overlaid_format(debug=False):
-    """Test showtc renders multiple timecourses overlaid in one axis."""
+    """
+    Test showtc renders multiple timecourses overlaid in one axis.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_overlaid_format")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -513,7 +692,14 @@ def showtc_overlaid_format(debug=False):
 
 
 def showtc_separate_format(debug=False):
-    """Test showtc renders each timecourse in its own independently scaled axis."""
+    """
+    Test showtc renders each timecourse in its own independently scaled axis.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_separate_format")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -523,7 +709,14 @@ def showtc_separate_format(debug=False):
 
 
 def showtc_separatelinked_format(debug=False):
-    """Test showtc renders each timecourse in its own axis with linked y scaling."""
+    """
+    Test showtc renders each timecourse in its own axis with linked y scaling.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_separatelinked_format")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -533,7 +726,14 @@ def showtc_separatelinked_format(debug=False):
 
 
 def showtc_separate_format_single_vector(debug=False):
-    """Test showtc handles the single subplot case, where fig.subplots returns a bare axis."""
+    """
+    Test showtc handles the single subplot case, where fig.subplots returns a bare axis.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_separate_format_single_vector")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -543,7 +743,14 @@ def showtc_separate_format_single_vector(debug=False):
 
 
 def showtc_illegal_plot_format(debug=False):
-    """Test showtc exits when handed a plot format the parser would have rejected."""
+    """
+    Test showtc exits when handed a plot format the parser would have rejected.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_illegal_plot_format")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -563,7 +770,14 @@ def showtc_illegal_plot_format(debug=False):
 
 
 def showtc_multiple_files(debug=False):
-    """Test showtc concatenates timecourses drawn from several files."""
+    """
+    Test showtc concatenates timecourses drawn from several files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_multiple_files")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -574,7 +788,14 @@ def showtc_multiple_files(debug=False):
 
 
 def showtc_transpose(debug=False):
-    """Test --transpose swaps the row and column interpretation of the input."""
+    """
+    Test --transpose swaps the row and column interpretation of the input.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_transpose")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -587,7 +808,14 @@ def showtc_transpose(debug=False):
 
 
 def showtc_explicit_samplerate(debug=False):
-    """Test an explicit --samplerate sets the time axis spacing for a plain text file."""
+    """
+    Test an explicit --samplerate sets the time axis spacing for a plain text file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_explicit_samplerate")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -600,7 +828,14 @@ def showtc_explicit_samplerate(debug=False):
 
 
 def showtc_auto_samplerate_defaults_to_one(debug=False):
-    """Test an unspecified sample rate becomes 1.0 for a file carrying no rate metadata."""
+    """
+    Test an unspecified sample rate becomes 1.0 for a file carrying no rate metadata.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_auto_samplerate_defaults_to_one")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -612,7 +847,14 @@ def showtc_auto_samplerate_defaults_to_one(debug=False):
 
 
 def showtc_bids_input_uses_embedded_metadata(debug=False):
-    """Test showtc picks up sample rate and start time from a BIDS json sidecar."""
+    """
+    Test showtc picks up sample rate and start time from a BIDS json sidecar.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_bids_input_uses_embedded_metadata")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -632,7 +874,14 @@ def showtc_bids_input_uses_embedded_metadata(debug=False):
 
 
 def showtc_bids_column_selection(debug=False):
-    """Test a column specification appended to a BIDS filename selects a single timecourse."""
+    """
+    Test a column specification appended to a BIDS filename selects a single timecourse.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_bids_column_selection")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -647,10 +896,16 @@ def showtc_bids_column_selection(debug=False):
 
 
 def showtc_starttime_without_debug(debug=False):
-    """Test --starttime works on a file with no embedded start offset.
+    """
+    Test --starttime works on a file with no embedded start offset.
 
     This pins the fix for a mis-indented assignment that left ``thestarttime`` unbound
     unless ``--debug`` happened to also be set.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("showtc_starttime_without_debug")
@@ -662,7 +917,14 @@ def showtc_starttime_without_debug(debug=False):
 
 
 def showtc_starttime_with_debug(debug=False):
-    """Test --starttime behaves identically with --debug set."""
+    """
+    Test --starttime behaves identically with --debug set.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_starttime_with_debug")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -673,7 +935,14 @@ def showtc_starttime_with_debug(debug=False):
 
 
 def showtc_starttime_overrides_bids_offset(debug=False):
-    """Test an explicit --starttime overrides the offset recorded in a BIDS sidecar."""
+    """
+    Test an explicit --starttime overrides the offset recorded in a BIDS sidecar.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_starttime_overrides_bids_offset")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -690,7 +959,14 @@ def showtc_starttime_overrides_bids_offset(debug=False):
 
 
 def showtc_bids_offset_with_debug(debug=False):
-    """Test the debug reporting path for a file that carries its own start offset."""
+    """
+    Test the debug reporting path for a file that carries its own start offset.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_bids_offset_with_debug")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -714,7 +990,14 @@ def showtc_bids_offset_with_debug(debug=False):
 
 
 def showtc_starttime_across_multiple_files(debug=False):
-    """Test an explicit --starttime overrides the per file minimum across several files."""
+    """
+    Test an explicit --starttime overrides the per file minimum across several files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_starttime_across_multiple_files")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -726,7 +1009,14 @@ def showtc_starttime_across_multiple_files(debug=False):
 
 
 def showtc_without_seaborn(debug=False):
-    """Test the plain matplotlib fallback used when seaborn is not installed."""
+    """
+    Test the plain matplotlib fallback used when seaborn is not installed.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_without_seaborn")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -742,7 +1032,14 @@ def showtc_without_seaborn(debug=False):
 
 
 def showtc_endtime_truncates_range(debug=False):
-    """Test --endtime clips the plotted x range."""
+    """
+    Test --endtime clips the plotted x range.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_endtime_truncates_range")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -753,7 +1050,14 @@ def showtc_endtime_truncates_range(debug=False):
 
 
 def showtc_endtime_before_starttime(debug=False):
-    """Test showtc exits if the requested end time precedes the start time."""
+    """
+    Test showtc exits if the requested end time precedes the start time.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_endtime_before_starttime")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -769,11 +1073,17 @@ def showtc_endtime_before_starttime(debug=False):
 
 
 def showtc_numskip_is_currently_ignored(debug=False):
-    """Pin the fact that --numskip is parsed but never applied.
+    """
+    Pin the fact that --numskip is parsed but never applied.
 
     The help text promises that NUM lines are skipped at the start of each file, but
     ``args.numskip`` is never read inside ``showtc``.  This test asserts the current (wrong)
     behaviour, so it will fail loudly if and when the option is actually implemented.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("showtc_numskip_is_currently_ignored")
@@ -790,7 +1100,14 @@ def showtc_numskip_is_currently_ignored(debug=False):
 
 
 def showtc_normall(debug=False):
-    """Test --normall renders normalized timecourses."""
+    """
+    Test --normall renders normalized timecourses.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_normall")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -800,7 +1117,14 @@ def showtc_normall(debug=False):
 
 
 def showtc_normall_with_spectrum(debug=False):
-    """Test --normall applies to spectral display as well as time series."""
+    """
+    Test --normall applies to spectral display as well as time series.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_normall_with_spectrum")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -810,7 +1134,14 @@ def showtc_normall_with_spectrum(debug=False):
 
 
 def showtc_explicit_voffset(debug=False):
-    """Test a positive --voffset separates overlaid traces."""
+    """
+    Test a positive --voffset separates overlaid traces.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_explicit_voffset")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -821,7 +1152,14 @@ def showtc_explicit_voffset(debug=False):
 
 
 def showtc_automatic_voffset(debug=False):
-    """Test a negative --voffset is replaced by the full y range of the data."""
+    """
+    Test a negative --voffset is replaced by the full y range of the data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_automatic_voffset")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -833,7 +1171,14 @@ def showtc_automatic_voffset(debug=False):
 
 
 def showtc_waterfall(debug=False):
-    """Test --waterfall staggers the traces in both x and y."""
+    """
+    Test --waterfall staggers the traces in both x and y.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_waterfall")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -843,7 +1188,14 @@ def showtc_waterfall(debug=False):
 
 
 def showtc_fullxrange(debug=False):
-    """Test --fullxrange uses the union of all file time ranges."""
+    """
+    Test --fullxrange uses the union of all file time ranges.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_fullxrange")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -856,7 +1208,14 @@ def showtc_fullxrange(debug=False):
 
 
 def showtc_forcezerostart(debug=False):
-    """Test --forcezerostart shifts the displayed axis to begin at zero."""
+    """
+    Test --forcezerostart shifts the displayed axis to begin at zero.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_forcezerostart")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -872,7 +1231,14 @@ def showtc_forcezerostart(debug=False):
 
 
 def showtc_custom_colors_cycle(debug=False):
-    """Test a --colors list shorter than the number of traces is cycled."""
+    """
+    Test a --colors list shorter than the number of traces is cycled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_custom_colors_cycle")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -882,7 +1248,14 @@ def showtc_custom_colors_cycle(debug=False):
 
 
 def showtc_custom_legends_cycle(debug=False):
-    """Test a --legends list shorter than the number of traces is cycled."""
+    """
+    Test a --legends list shorter than the number of traces is cycled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_custom_legends_cycle")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -892,7 +1265,14 @@ def showtc_custom_legends_cycle(debug=False):
 
 
 def showtc_custom_linewidths_cycle(debug=False):
-    """Test a --linewidth list shorter than the number of traces is cycled."""
+    """
+    Test a --linewidth list shorter than the number of traces is cycled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_custom_linewidths_cycle")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -902,7 +1282,14 @@ def showtc_custom_linewidths_cycle(debug=False):
 
 
 def showtc_nolegend(debug=False):
-    """Test --nolegend suppresses the legend."""
+    """
+    Test --nolegend suppresses the legend.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_nolegend")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -912,7 +1299,14 @@ def showtc_nolegend(debug=False):
 
 
 def showtc_legendloc_bounds(debug=False):
-    """Test the extremes of the legal legend location range are accepted."""
+    """
+    Test the extremes of the legal legend location range are accepted.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_legendloc_bounds")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -925,9 +1319,15 @@ def showtc_legendloc_bounds(debug=False):
 
 
 def showtc_illegal_legendloc(debug=False):
-    """Test showtc exits on an out of range legend location.
+    """
+    Test showtc exits on an out of range legend location.
 
     The parser accepts any integer, so the range check only happens inside showtc.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("showtc_illegal_legendloc")
@@ -945,7 +1345,14 @@ def showtc_illegal_legendloc(debug=False):
 
 
 def showtc_hidden_axes(debug=False):
-    """Test --noxax and --noyax hide the axes without erroring."""
+    """
+    Test --noxax and --noyax hide the axes without erroring.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_hidden_axes")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -955,7 +1362,14 @@ def showtc_hidden_axes(debug=False):
 
 
 def showtc_titles_and_labels(debug=False):
-    """Test explicit title and axis labels are honoured rather than defaulted."""
+    """
+    Test explicit title and axis labels are honoured rather than defaulted.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_titles_and_labels")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -971,7 +1385,14 @@ def showtc_titles_and_labels(debug=False):
 
 
 def showtc_separate_format_with_title(debug=False):
-    """Test a title on a separate format plot becomes a figure suptitle."""
+    """
+    Test a title on a separate format plot becomes a figure suptitle.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_separate_format_with_title")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -983,7 +1404,14 @@ def showtc_separate_format_with_title(debug=False):
 
 
 def showtc_fontscalefac(debug=False):
-    """Test a nondefault font scaling factor is applied without error."""
+    """
+    Test a nondefault font scaling factor is applied without error.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_fontscalefac")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -993,7 +1421,14 @@ def showtc_fontscalefac(debug=False):
 
 
 def showtc_figure_geometry(debug=False):
-    """Test explicit figure width and aspect ratio are accepted in both plot formats."""
+    """
+    Test explicit figure width and aspect ratio are accepted in both plot formats.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_figure_geometry")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1008,7 +1443,14 @@ def showtc_figure_geometry(debug=False):
 
 
 def showtc_debug_output(debug=False):
-    """Test the debug path runs end to end and prints diagnostics."""
+    """
+    Test the debug path runs end to end and prints diagnostics.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_debug_output")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1018,7 +1460,14 @@ def showtc_debug_output(debug=False):
 
 
 def showtc_displays_when_no_output_file(debug=False):
-    """Test showtc calls show() when no output file is requested."""
+    """
+    Test showtc calls show() when no output file is requested.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_displays_when_no_output_file")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1034,7 +1483,14 @@ def showtc_displays_when_no_output_file(debug=False):
 
 
 def showtc_saves_at_requested_resolution(debug=False):
-    """Test the --saveres value is passed through to savefig as the dpi."""
+    """
+    Test the --saveres value is passed through to savefig as the dpi.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showtc_saves_at_requested_resolution")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1055,6 +1511,14 @@ def showtc_saves_at_requested_resolution(debug=False):
 
 def test_showtc(debug=False):
     # phase tests
+    """
+    Verify showtc.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("Running phase tests")
     phase_cardinal_values(debug=debug)

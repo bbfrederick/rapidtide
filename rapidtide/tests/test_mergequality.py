@@ -30,6 +30,19 @@ from rapidtide.workflows.mergequality import _get_parser, mergequality
 
 
 def _make_default_args(**overrides):
+    """
+    Create default args.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         input=["run1.json", "run2.json"],
         outputroot="merged_out",
@@ -44,6 +57,14 @@ def _make_default_args(**overrides):
 
 
 def _simple_keydict():
+    """
+    Set up ``_simple_keydict`` for the test.
+
+    Returns
+    -------
+    dict
+        Values supplied together for the test case.
+    """
     return {
         "mask": {"a": 1, "b": 2},
         "lag": {"c": 3},
@@ -51,10 +72,26 @@ def _simple_keydict():
 
 
 def _gray_keydict():
+    """
+    Set up ``_gray_keydict`` for the test.
+
+    Returns
+    -------
+    dict
+        Values supplied together for the test case.
+    """
     return {"grayonly-lag": {"g1": 10}}
 
 
 def _white_keydict():
+    """
+    Set up ``_white_keydict`` for the test.
+
+    Returns
+    -------
+    dict
+        Values supplied together for the test case.
+    """
     return {"whiteonly-lag": {"w1": 20}}
 
 
@@ -62,6 +99,14 @@ def _white_keydict():
 
 
 def parser_basic(debug=False):
+    """
+    Check that the command-line parser initializes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -70,6 +115,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
+    """
+    Check that the parser requires the mandatory arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -78,6 +131,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
+    """
+    Check the parser defaults.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     parser = _get_parser()
@@ -93,12 +154,33 @@ def parser_defaults(debug=False):
 
 
 def mergequality_with_keyfile(debug=False):
+    """
+    Check mergequality with keyfile in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("mergequality_with_keyfile")
 
     keydict = _simple_keydict()
 
     def mock_readdictfromjson(fname):
+        """
+        Simulate ``readdictfromjson`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if fname == "key.json":
             return keydict
         # two runs with different values
@@ -115,6 +197,16 @@ def mergequality_with_keyfile(debug=False):
         hist_calls = []
 
         def mock_hist(*_args, **_kwargs):
+            """
+            Simulate ``hist`` for the test.
+
+            Parameters
+            ----------
+            *_args : object
+                Additional positional arguments passed by the caller.
+            **_kwargs : object
+                Additional keyword arguments passed by the caller.
+            """
             hist_calls.append(_args[3])  # outputroot + "_" + column
 
         with (
@@ -139,12 +231,33 @@ def mergequality_with_keyfile(debug=False):
 
 
 def mergequality_missing_keys_fills_none(debug=False):
+    """
+    Check mergequality missing keys fills none in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("mergequality_missing_keys_fills_none")
 
     keydict = _simple_keydict()
 
     def mock_readdictfromjson(fname):
+        """
+        Simulate ``readdictfromjson`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if fname == "key.json":
             return keydict
         # missing mask_b in run2
@@ -171,6 +284,14 @@ def mergequality_missing_keys_fills_none(debug=False):
 
 
 def mergequality_add_gray_white_metrics(debug=False):
+    """
+    Check mergequality add gray white metrics in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("mergequality_add_gray_white_metrics")
 
@@ -180,6 +301,19 @@ def mergequality_add_gray_white_metrics(debug=False):
 
     def mock_readdictfromjson(fname):
         # no keyfile → defaults: we'll intercept by returning a minimal dict when keyfile is None
+        """
+        Simulate ``readdictfromjson`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        dict
+            Values supplied together for the test case.
+        """
         return {"mask": {"a": 1, "b": 2}, "lag": {"c": 3}}
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -195,6 +329,16 @@ def mergequality_add_gray_white_metrics(debug=False):
         hist_calls = []
 
         def mock_hist(*_args, **_kwargs):
+            """
+            Simulate ``hist`` for the test.
+
+            Parameters
+            ----------
+            *_args : object
+                Additional positional arguments passed by the caller.
+            **_kwargs : object
+                Additional keyword arguments passed by the caller.
+            """
             hist_calls.append(_args[3])
 
         # patch the default dict by stubbing mergequality's local keydict through readdictfromjson
@@ -218,6 +362,14 @@ def mergequality_add_gray_white_metrics(debug=False):
 
             def _wrapped(args_inner):
                 # replicate default behavior with a small keydict
+                """
+                Set up ``_wrapped`` for the test.
+
+                Parameters
+                ----------
+                args_inner : object
+                    Value supplied as ``args_inner`` by the test case.
+                """
                 if args_inner.keyfile is not None:
                     thekeydict = {}
                 else:
@@ -273,6 +425,14 @@ def mergequality_add_gray_white_metrics(debug=False):
 
 
 def test_mergequality(debug=False):
+    """
+    Verify mergequality.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_defaults(debug=debug)

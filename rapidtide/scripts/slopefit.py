@@ -21,6 +21,7 @@ import rapidtide.workflows.slopefit as theworkflow
 
 
 def entrypoint():
+    """Run the `slopefit` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.main)
 
 

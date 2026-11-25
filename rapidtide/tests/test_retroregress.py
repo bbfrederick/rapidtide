@@ -61,14 +61,28 @@ def _makedummyinputs(tmpdir):
 
 
 def test_get_parser_returns_parser(debug=False):
-    """The parser factory returns a real ArgumentParser."""
+    """
+    The parser factory returns a real ArgumentParser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_returns_parser")
     assert isinstance(rr._get_parser(), argparse.ArgumentParser)
 
 
 def test_get_parser_requires_both_positionals(debug=False):
-    """Both the fmri file and the dataset root are required."""
+    """
+    Both the fmri file and the dataset root are required.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_requires_both_positionals")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -79,7 +93,14 @@ def test_get_parser_requires_both_positionals(debug=False):
 
 
 def test_get_parser_rejects_missing_fmri_file(debug=False):
-    """A nonexistent fmri file is caught at parse time."""
+    """
+    A nonexistent fmri file is caught at parse time.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_rejects_missing_fmri_file")
     with pytest.raises(SystemExit):
@@ -87,7 +108,14 @@ def test_get_parser_rejects_missing_fmri_file(debug=False):
 
 
 def test_get_parser_defaults(debug=False):
-    """The option defaults are what the workflow documents."""
+    """
+    The option defaults are what the workflow documents.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_defaults")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -111,7 +139,14 @@ def test_get_parser_defaults(debug=False):
 
 
 def test_get_parser_negating_flags(debug=False):
-    """Each of the "no" flags turns its feature off."""
+    """
+    Each of the "no" flags turns its feature off.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_negating_flags")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -127,7 +162,14 @@ def test_get_parser_negating_flags(debug=False):
 
 
 def test_get_parser_enabling_flags(debug=False):
-    """Each of the plain store_true flags turns its feature on."""
+    """
+    Each of the plain store_true flags turns its feature on.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_enabling_flags")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -143,7 +185,14 @@ def test_get_parser_enabling_flags(debug=False):
 
 
 def test_get_parser_numeric_options(debug=False):
-    """The numeric options are parsed with the right types."""
+    """
+    The numeric options are parsed with the right types.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_numeric_options")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -172,7 +221,14 @@ def test_get_parser_numeric_options(debug=False):
 
 
 def test_get_parser_alternateoutput(debug=False):
-    """An alternate output root is stored as given."""
+    """
+    An alternate output root is stored as given.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_alternateoutput")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -183,7 +239,14 @@ def test_get_parser_alternateoutput(debug=False):
 
 
 def test_get_parser_outputlevel_choices(debug=False):
-    """Every documented output level is accepted, and nothing else is."""
+    """
+    Every documented output level is accepted, and nothing else is.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_outputlevel_choices")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -196,7 +259,14 @@ def test_get_parser_outputlevel_choices(debug=False):
 
 
 def test_get_parser_rejects_abbreviations(debug=False):
-    """The parser does not accept abbreviated option names."""
+    """
+    The parser does not accept abbreviated option names.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_rejects_abbreviations")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -209,7 +279,14 @@ def test_get_parser_rejects_abbreviations(debug=False):
 
 
 def test_process_args_from_list(debug=False):
-    """process_args parses an explicit argument list into a namespace."""
+    """
+    Process_args parses an explicit argument list into a namespace.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("process_args_from_list")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -221,7 +298,14 @@ def test_process_args_from_list(debug=False):
 
 
 def test_process_args_reads_sys_argv(debug=False):
-    """With no argument list, process_args falls back to the command line."""
+    """
+    With no argument list, process_args falls back to the command line.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("process_args_reads_sys_argv")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -236,7 +320,14 @@ def test_process_args_reads_sys_argv(debug=False):
 
 
 def test_process_args_rejects_bad_input(debug=False):
-    """Invalid arguments still exit rather than returning a partial namespace."""
+    """
+    Invalid arguments still exit rather than returning a partial namespace.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("process_args_rejects_bad_input")
     with pytest.raises(SystemExit):
@@ -247,10 +338,16 @@ def test_process_args_rejects_bad_input(debug=False):
 
 
 def test_retroregress_missing_dataset_root(debug=False):
-    """A dataset root with no rapidtide output behind it fails loudly.
+    """
+    A dataset root with no rapidtide output behind it fails loudly.
 
     The workflow's first act is to read the runoptions file written by the original
     rapidtide run; if that is not there, nothing downstream can work.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("retroregress_missing_dataset_root")
@@ -263,7 +360,14 @@ def test_retroregress_missing_dataset_root(debug=False):
 
 
 def test_sentinel_is_a_distinct_object(debug=False):
-    """The module sentinel is a unique marker, not something a user could pass by accident."""
+    """
+    The module sentinel is a unique marker, not something a user could pass by accident.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("sentinel_is_a_distinct_object")
     assert isinstance(rr.sentinel, rr._Sentinel)
@@ -275,6 +379,14 @@ def test_sentinel_is_a_distinct_object(debug=False):
 
 
 def test_retroregress(debug=False):
+    """
+    Verify retroregress.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     test_get_parser_returns_parser(debug=debug)
     test_get_parser_requires_both_positionals(debug=debug)
     test_get_parser_rejects_missing_fmri_file(debug=debug)

@@ -31,6 +31,23 @@ DEFAULT_MODEL = "model_cnn_pytorch"
 
 
 def findfirst(searchlist: list, available: list, debug: bool = False) -> tuple[int, str | None]:
+    """
+    Find the first requested item present in the available items.
+
+    Parameters
+    ----------
+    searchlist : list
+        Candidate items in order of preference.
+    available : list
+        Items available for selection.
+    debug : bool, optional
+        Enable diagnostic output.
+
+    Returns
+    -------
+    tuple
+        Matching index and value, or (-1, None) if no candidate is present.
+    """
     if debug:
         print(f"FINDFIRST: {searchlist=}, {available=}")
     try:

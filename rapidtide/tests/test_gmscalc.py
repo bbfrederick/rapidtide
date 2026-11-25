@@ -31,23 +31,60 @@ from rapidtide.workflows.gmscalc import (
 
 
 def _capture_writevec():
-    """Return a side_effect function and its captured data list.
+    """
+    Return a side_effect function and its captured data list.
 
     gmscalc_main reuses the same writevec call pattern; capture copies
     of the data at call time so each entry is independent.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     captured = []
 
     def _side_effect(data, filename, **kwargs):
+        """
+        Record the call for assertions in the surrounding test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        filename : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured.append((np.array(data, copy=True), filename))
 
     return _side_effect, captured
 
 
 def _make_mock_nifti_data(xsize=3, ysize=3, numslices=2, timepoints=50, rng=None):
-    """Create synthetic 4D fMRI data and matching NIfTI metadata.
+    """
+    Create synthetic 4D fMRI data and matching NIfTI metadata.
 
     Returns (img, data, hdr, dims, sizes) matching readfromnifti output.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+    rng : numpy.random.Generator, optional
+        Random number generator for test data.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     if rng is None:
         rng = np.random.RandomState(42)
@@ -70,7 +107,14 @@ def _make_mock_nifti_data(xsize=3, ysize=3, numslices=2, timepoints=50, rng=None
 
 
 def test_get_parser_returns_parser(debug=False):
-    """Test that _get_parser returns an ArgumentParser."""
+    """
+    Test that _get_parser returns an ArgumentParser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
     if debug:
@@ -78,14 +122,28 @@ def test_get_parser_returns_parser(debug=False):
 
 
 def test_get_parser_required_args(debug=False):
-    """Test that parser requires the two positional arguments."""
+    """
+    Test that parser requires the two positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args([])
 
 
 def test_get_parser_with_valid_args(debug=False):
-    """Test parser with valid positional arguments."""
+    """
+    Test parser with valid positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data.nii.gz", "output_root"])
     assert args.datafile == "data.nii.gz"
@@ -100,7 +158,14 @@ def test_get_parser_with_valid_args(debug=False):
 
 
 def test_get_parser_optional_flags(debug=False):
-    """Test parser with optional flags."""
+    """
+    Test parser with optional flags.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(
         [
@@ -121,7 +186,14 @@ def test_get_parser_optional_flags(debug=False):
 
 
 def test_get_parser_default_normmethod(debug=False):
-    """Test that default normmethod is 'None'."""
+    """
+    Test that default normmethod is 'None'.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["data.nii", "out"])
     assert args.normmethod == "None"
@@ -131,7 +203,14 @@ def test_get_parser_default_normmethod(debug=False):
 
 
 def test_makecommandlinelist_without_extra(debug=False):
-    """Test command line list generation without extra info."""
+    """
+    Test command line list generation without extra info.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     arglist = ["python", "gmscalc", "data.nii", "output"]
     starttime = time.time() - 5.0
     endtime = time.time()
@@ -152,7 +231,14 @@ def test_makecommandlinelist_without_extra(debug=False):
 
 
 def test_makecommandlinelist_with_extra(debug=False):
-    """Test command line list generation with extra info."""
+    """
+    Test command line list generation with extra info.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     arglist = ["python", "gmscalc"]
     starttime = time.time() - 2.0
     endtime = time.time()
@@ -171,7 +257,14 @@ def test_makecommandlinelist_with_extra(debug=False):
 
 
 def test_makecommandlinelist_timing(debug=False):
-    """Test that timing information is computed correctly."""
+    """
+    Test that timing information is computed correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     arglist = ["test"]
     starttime = 1000.0
     endtime = 1010.5
@@ -184,7 +277,14 @@ def test_makecommandlinelist_timing(debug=False):
 
 
 def test_makecommandlinelist_empty_arglist(debug=False):
-    """Test with empty argument list."""
+    """
+    Test with empty argument list.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     arglist = []
     starttime = time.time()
     endtime = starttime + 1.0
@@ -200,7 +300,14 @@ def test_makecommandlinelist_empty_arglist(debug=False):
 
 
 def test_gmscalc_main_basic(debug=False):
-    """Test basic GMS calculation without mask or smoothing."""
+    """
+    Test basic GMS calculation without mask or smoothing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     img, data, hdr, dims, sizes = _make_mock_nifti_data()
     xsize, ysize, numslices, timepoints = 3, 3, 2, 50
 
@@ -242,7 +349,14 @@ def test_gmscalc_main_basic(debug=False):
 
 
 def test_gmscalc_main_gms_is_voxel_mean(debug=False):
-    """Test that GMS is the mean across all voxels at each timepoint."""
+    """
+    Test that GMS is the mean across all voxels at each timepoint.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(99)
     xsize, ysize, numslices, timepoints = 2, 2, 1, 30
     img, data, hdr, dims, sizes = _make_mock_nifti_data(
@@ -276,7 +390,14 @@ def test_gmscalc_main_gms_is_voxel_mean(debug=False):
 
 
 def test_gmscalc_main_with_mask(debug=False):
-    """Test GMS calculation with a data mask."""
+    """
+    Test GMS calculation with a data mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(77)
     xsize, ysize, numslices, timepoints = 3, 3, 2, 40
     img, data, hdr, dims, sizes = _make_mock_nifti_data(
@@ -331,7 +452,14 @@ def test_gmscalc_main_with_mask(debug=False):
 
 
 def test_gmscalc_main_mask_mismatch(debug=False):
-    """Test that mismatched mask dimensions cause sys.exit."""
+    """
+    Test that mismatched mask dimensions cause sys.exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     img, data, hdr, dims, sizes = _make_mock_nifti_data()
 
     mask_img = MagicMock()
@@ -363,7 +491,14 @@ def test_gmscalc_main_mask_mismatch(debug=False):
 
 
 def test_gmscalc_main_with_smoothing(debug=False):
-    """Test GMS calculation with spatial smoothing enabled."""
+    """
+    Test GMS calculation with spatial smoothing enabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     img, data, hdr, dims, sizes = _make_mock_nifti_data()
     timepoints = 50
 
@@ -396,7 +531,14 @@ def test_gmscalc_main_with_smoothing(debug=False):
 
 
 def test_gmscalc_main_no_smoothing_when_zero(debug=False):
-    """Test that smoothing is skipped when sigma=0."""
+    """
+    Test that smoothing is skipped when sigma=0.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     img, data, hdr, dims, sizes = _make_mock_nifti_data()
 
     side_effect, captured = _capture_writevec()
@@ -418,7 +560,14 @@ def test_gmscalc_main_no_smoothing_when_zero(debug=False):
 
 
 def test_gmscalc_main_with_normmethod(debug=False):
-    """Test GMS calculation with a specific normalization method."""
+    """
+    Test GMS calculation with a specific normalization method.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     img, data, hdr, dims, sizes = _make_mock_nifti_data()
     timepoints = 50
 
@@ -447,7 +596,14 @@ def test_gmscalc_main_with_normmethod(debug=False):
 
 
 def test_gmscalc_main_output_filenames(debug=False):
-    """Test that output files have correct names."""
+    """
+    Test that output files have correct names.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     img, data, hdr, dims, sizes = _make_mock_nifti_data()
 
     side_effect, captured = _capture_writevec()
@@ -471,7 +627,14 @@ def test_gmscalc_main_output_filenames(debug=False):
 
 
 def test_gmscalc_main_debug_flag(debug=False):
-    """Test that debug flag doesn't cause errors."""
+    """
+    Test that debug flag doesn't cause errors.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     img, data, hdr, dims, sizes = _make_mock_nifti_data()
 
     side_effect, captured = _capture_writevec()
@@ -494,7 +657,14 @@ def test_gmscalc_main_debug_flag(debug=False):
 
 
 def test_gmscalc(debug=False):
-    """Run all gmscalc sub-tests."""
+    """
+    Run all gmscalc sub-tests.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # _get_parser tests
     test_get_parser_returns_parser(debug=debug)
     test_get_parser_required_args(debug=debug)

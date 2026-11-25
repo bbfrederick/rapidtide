@@ -21,6 +21,7 @@ import rapidtide.workflows.rapidtide_parser as rapidtide_parser
 
 
 def entrypoint():
+    """Run the `rapidtide` command."""
     rapidtide_workflow.rapidtide_main(rapidtide_parser.process_args(inputargs=None))
 
 

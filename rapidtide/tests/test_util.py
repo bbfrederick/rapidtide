@@ -33,6 +33,7 @@ import rapidtide.util as tide_util
 class TestDisablenumba:
     def test_sets_global_flag(self):
         # Save original value
+        """Verify sets global flag."""
         original = tide_util.donotusenumba
         tide_util.disablenumba()
         assert tide_util.donotusenumba is True
@@ -45,6 +46,14 @@ class TestDisablenumba:
 
 class TestCheckimports:
     def test_updates_optiondict(self, capsys):
+        """
+        Verify updates optiondict.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         optiondict = {}
         tide_util.checkimports(optiondict)
         assert "pfftwexists" in optiondict
@@ -61,15 +70,18 @@ class TestCheckimports:
 class TestDisablemkl:
     def test_no_error_with_multiple_procs(self):
         # Should not raise any error
+        """Verify no error with multiple procs."""
         tide_util.disablemkl(numprocs=4, debug=False)
 
     def test_no_error_with_single_proc(self):
+        """Verify no error with single proc."""
         tide_util.disablemkl(numprocs=1, debug=False)
 
 
 class TestEnablemkl:
     def test_no_error(self):
         # Should not raise any error
+        """Verify no error."""
         tide_util.enablemkl(numthreads=4, debug=False)
 
 
@@ -79,6 +91,14 @@ class TestEnablemkl:
 class TestCheckifincontainer:
     def test_returns_correct_type(self, monkeypatch):
         # Clear all container env vars
+        """
+        Verify returns correct type.
+
+        Parameters
+        ----------
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
+        """
         monkeypatch.delenv("SINGULARITY_CONTAINER", raising=False)
         monkeypatch.delenv("RUNNING_IN_CONTAINER", raising=False)
         monkeypatch.delenv("CIRCLECI", raising=False)
@@ -86,6 +106,14 @@ class TestCheckifincontainer:
         assert result is None
 
     def test_detects_docker(self, monkeypatch):
+        """
+        Verify detects docker.
+
+        Parameters
+        ----------
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
+        """
         monkeypatch.delenv("SINGULARITY_CONTAINER", raising=False)
         monkeypatch.delenv("CIRCLECI", raising=False)
         monkeypatch.setenv("RUNNING_IN_CONTAINER", "1")
@@ -93,6 +121,14 @@ class TestCheckifincontainer:
         assert result == "Docker"
 
     def test_detects_singularity(self, monkeypatch):
+        """
+        Verify detects singularity.
+
+        Parameters
+        ----------
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
+        """
         monkeypatch.delenv("RUNNING_IN_CONTAINER", raising=False)
         monkeypatch.delenv("CIRCLECI", raising=False)
         monkeypatch.setenv("SINGULARITY_CONTAINER", "/path/to/container")
@@ -100,6 +136,14 @@ class TestCheckifincontainer:
         assert result == "Singularity"
 
     def test_detects_circleci(self, monkeypatch):
+        """
+        Verify detects circleci.
+
+        Parameters
+        ----------
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
+        """
         monkeypatch.delenv("SINGULARITY_CONTAINER", raising=False)
         monkeypatch.delenv("RUNNING_IN_CONTAINER", raising=False)
         monkeypatch.setenv("CIRCLECI", "true")
@@ -107,6 +151,14 @@ class TestCheckifincontainer:
         assert result == "CircleCI"
 
     def test_circleci_overrides_docker(self, monkeypatch):
+        """
+        Verify circleci overrides docker.
+
+        Parameters
+        ----------
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
+        """
         monkeypatch.setenv("RUNNING_IN_CONTAINER", "1")
         monkeypatch.setenv("CIRCLECI", "true")
         result = tide_util.checkifincontainer()
@@ -118,26 +170,32 @@ class TestCheckifincontainer:
 
 class TestFormatmemamt:
     def test_bytes(self):
+        """Verify bytes."""
         result = tide_util.formatmemamt(512)
         assert result == "512.000B"
 
     def test_kilobytes(self):
+        """Verify kilobytes."""
         result = tide_util.formatmemamt(1024)
         assert result == "1.000kB"
 
     def test_megabytes(self):
+        """Verify megabytes."""
         result = tide_util.formatmemamt(1024 * 1024)
         assert result == "1.000MB"
 
     def test_gigabytes(self):
+        """Verify gigabytes."""
         result = tide_util.formatmemamt(1024 * 1024 * 1024)
         assert result == "1.000GB"
 
     def test_terabytes(self):
+        """Verify terabytes."""
         result = tide_util.formatmemamt(1024 * 1024 * 1024 * 1024)
         assert result == "1.000TB"
 
     def test_fractional(self):
+        """Verify fractional."""
         result = tide_util.formatmemamt(1536)
         assert result == "1.500kB"
 
@@ -147,23 +205,27 @@ class TestFormatmemamt:
 
 class TestFormatBytes:
     def test_bytes(self):
+        """Verify bytes."""
         size, unit = tide_util.format_bytes(512)
         assert size == 512
         assert unit == "bytes"
 
     def test_kilobytes(self):
+        """Verify kilobytes."""
         size, unit = tide_util.format_bytes(2048)
         assert size == 2.0
         assert unit == "kilobytes"
 
     def test_megabytes(self):
         # format_bytes uses > 1024 threshold, so 1024^2 = 1024 kilobytes
+        """Verify megabytes."""
         size, unit = tide_util.format_bytes(1024 * 1024)
         assert size == 1024.0
         assert unit == "kilobytes"
 
     def test_gigabytes(self):
         # format_bytes uses > 1024 threshold, so 1024^3 = 1024 megabytes
+        """Verify gigabytes."""
         size, unit = tide_util.format_bytes(1024 * 1024 * 1024)
         assert size == 1024.0
         assert unit == "megabytes"
@@ -174,11 +236,13 @@ class TestFormatBytes:
 
 class TestFindexecutable:
     def test_finds_python(self):
+        """Verify finds python."""
         result = tide_util.findexecutable("python")
         assert result is not None
         assert "python" in result.lower()
 
     def test_returns_none_for_nonexistent(self):
+        """Verify returns none for nonexistent."""
         result = tide_util.findexecutable("this_command_does_not_exist_12345")
         assert result is None
 
@@ -188,9 +252,11 @@ class TestFindexecutable:
 
 class TestIsexecutable:
     def test_python_is_executable(self):
+        """Verify python is executable."""
         assert tide_util.isexecutable("python") is True
 
     def test_nonexistent_is_not_executable(self):
+        """Verify nonexistent is not executable."""
         assert tide_util.isexecutable("this_command_does_not_exist_12345") is False
 
 
@@ -199,16 +265,40 @@ class TestIsexecutable:
 
 class TestMakeadir:
     def test_creates_new_directory(self, tmp_path):
+        """
+        Verify creates new directory.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         new_dir = tmp_path / "newdir"
         result = tide_util.makeadir(str(new_dir))
         assert result is True
         assert new_dir.exists()
 
     def test_existing_directory_returns_true(self, tmp_path):
+        """
+        Verify existing directory returns true.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         result = tide_util.makeadir(str(tmp_path))
         assert result is True
 
     def test_nested_directory(self, tmp_path):
+        """
+        Verify nested directory.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         nested = tmp_path / "a" / "b" / "c"
         result = tide_util.makeadir(str(nested))
         assert result is True
@@ -220,21 +310,53 @@ class TestMakeadir:
 
 class TestStartendcheck:
     def test_valid_range(self, capsys):
+        """
+        Verify valid range.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         start, end = tide_util.startendcheck(10, 2, 5)
         assert start == 2
         assert end == 5
 
     def test_negative_start_sets_to_zero(self, capsys):
+        """
+        Verify negative start sets to zero.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         start, end = tide_util.startendcheck(10, -5, 5)
         assert start == 0
         assert end == 5
 
     def test_endpoint_minus_one_sets_to_max(self, capsys):
+        """
+        Verify endpoint minus one sets to max.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         start, end = tide_util.startendcheck(10, 2, -1)
         assert start == 2
         assert end == 9
 
     def test_endpoint_exceeds_max_clips(self, capsys):
+        """
+        Verify endpoint exceeds max clips.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         start, end = tide_util.startendcheck(10, 2, 100)
         assert start == 2
         assert end == 9
@@ -245,31 +367,37 @@ class TestStartendcheck:
 
 class TestValtoindex:
     def test_evenly_spaced_round(self):
+        """Verify evenly spaced round."""
         arr = np.linspace(0, 10, 11)
         idx = tide_util.valtoindex(arr, 5.4)
         assert idx == 5
 
     def test_evenly_spaced_floor(self):
+        """Verify evenly spaced floor."""
         arr = np.linspace(0, 10, 11)
         idx = tide_util.valtoindex(arr, 5.9, discretization="floor")
         assert idx == 5
 
     def test_evenly_spaced_ceiling(self):
+        """Verify evenly spaced ceiling."""
         arr = np.linspace(0, 10, 11)
         idx = tide_util.valtoindex(arr, 5.1, discretization="ceiling")
         assert idx == 6
 
     def test_uneven_spacing(self):
+        """Verify uneven spacing."""
         arr = np.array([0, 1, 3, 6, 10])
         idx = tide_util.valtoindex(arr, 5.5, evenspacing=False)
         assert idx == 3  # closest to 6
 
     def test_clamps_to_bounds(self):
+        """Verify clamps to bounds."""
         arr = np.linspace(0, 10, 11)
         idx = tide_util.valtoindex(arr, 100)
         assert idx == 10
 
     def test_clamps_to_lower_bound(self):
+        """Verify clamps to lower bound."""
         arr = np.linspace(0, 10, 11)
         idx = tide_util.valtoindex(arr, -100)
         assert idx == 0
@@ -280,11 +408,27 @@ class TestValtoindex:
 
 class TestMakelaglist:
     def test_basic_range(self, capsys):
+        """
+        Verify basic range.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         lags = tide_util.makelaglist(0.0, 1.0, 0.25)
         expected = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
         np.testing.assert_allclose(lags, expected, atol=1e-10)
 
     def test_negative_range(self, capsys):
+        """
+        Verify negative range.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         lags = tide_util.makelaglist(-1.0, 1.0, 0.5)
         expected = np.array([-1.0, -0.5, 0.0, 0.5, 1.0])
         np.testing.assert_allclose(lags, expected, atol=1e-10)
@@ -295,11 +439,13 @@ class TestMakelaglist:
 
 class TestVersion:
     def test_returns_tuple(self):
+        """Verify returns tuple."""
         result = tide_util.version()
         assert isinstance(result, tuple)
         assert len(result) == 4
 
     def test_version_string(self):
+        """Verify version string."""
         version, sha, date, isdirty = tide_util.version()
         assert isinstance(version, str)
         assert isinstance(sha, str)
@@ -311,18 +457,22 @@ class TestVersion:
 
 class TestTimefmt:
     def test_basic_formatting(self):
+        """Verify basic formatting."""
         result = tide_util.timefmt(123.456)
         assert result.strip() == "123.46"
 
     def test_small_number(self):
+        """Verify small number."""
         result = tide_util.timefmt(1.234)
         assert result.strip() == "1.23"
 
     def test_zero(self):
+        """Verify zero."""
         result = tide_util.timefmt(0.0)
         assert result.strip() == "0.00"
 
     def test_width(self):
+        """Verify width."""
         result = tide_util.timefmt(1.0)
         assert len(result) == 10
 
@@ -332,6 +482,14 @@ class TestTimefmt:
 
 class TestMaketcfrom3col:
     def test_basic(self, capsys):
+        """
+        Verify basic.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         timeaxis = np.linspace(0, 10, 11)
         # inputdata format: row 0 = start times, row 1 = durations, row 2 = values
         # Each column is one interval
@@ -352,6 +510,14 @@ class TestMaketcfrom3col:
         assert result[5] == 10.0
 
     def test_out_of_range_ignored(self, capsys):
+        """
+        Verify out of range ignored.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         timeaxis = np.linspace(0, 5, 6)
         # start=10, duration=2, value=5 - starts after timeaxis ends
         inputdata = np.array([[10.0], [2.0], [5.0]])
@@ -365,6 +531,7 @@ class TestMaketcfrom3col:
 
 class TestMaketcfrom2col:
     def test_basic(self):
+        """Verify basic."""
         timeaxis = np.arange(15)
         # Row 0: time boundaries, Row 1: values for each segment
         inputdata = np.array([[0, 5, 10], [1, 2, 3]]).astype(float)
@@ -384,6 +551,7 @@ class TestMaketcfrom2col:
 
 class TestMakeslicetimes:
     def test_ascending(self):
+        """Verify ascending."""
         result = tide_util.makeslicetimes(4, "ascending", tr=1.0)
         assert result is not None
         assert len(result) == 4
@@ -391,6 +559,7 @@ class TestMakeslicetimes:
         assert result[0] < result[1] < result[2] < result[3]
 
     def test_descending(self):
+        """Verify descending."""
         result = tide_util.makeslicetimes(4, "descending", tr=1.0)
         assert result is not None
         assert len(result) == 4
@@ -398,55 +567,66 @@ class TestMakeslicetimes:
         assert result[0] > result[1] > result[2] > result[3]
 
     def test_ascending_interleaved(self):
+        """Verify ascending interleaved."""
         result = tide_util.makeslicetimes(4, "ascending_interleaved", tr=1.0)
         assert result is not None
         assert len(result) == 4
 
     def test_descending_interleaved(self):
+        """Verify descending interleaved."""
         result = tide_util.makeslicetimes(4, "descending_interleaved", tr=1.0)
         assert result is not None
         assert len(result) == 4
 
     def test_ascending_sparkplug(self):
+        """Verify ascending sparkplug."""
         result = tide_util.makeslicetimes(4, "ascending_sparkplug", tr=1.0)
         assert result is not None
         assert len(result) == 4
 
     def test_descending_sparkplug(self):
+        """Verify descending sparkplug."""
         result = tide_util.makeslicetimes(4, "descending_sparkplug", tr=1.0)
         assert result is not None
         assert len(result) == 4
 
     def test_ascending_interleaved_siemens(self):
+        """Verify ascending interleaved siemens."""
         result = tide_util.makeslicetimes(4, "ascending_interleaved_siemens", tr=1.0)
         assert result is not None
         assert len(result) == 4
 
     def test_descending_interleaved_siemens(self):
+        """Verify descending interleaved siemens."""
         result = tide_util.makeslicetimes(4, "descending_interleaved_siemens", tr=1.0)
         assert result is not None
         assert len(result) == 4
 
     def test_ascending_interleaved_philips(self):
+        """Verify ascending interleaved philips."""
         result = tide_util.makeslicetimes(4, "ascending_interleaved_philips", tr=1.0)
         assert result is not None
         assert len(result) == 4
 
     def test_descending_interleaved_philips(self):
+        """Verify descending interleaved philips."""
         result = tide_util.makeslicetimes(4, "descending_interleaved_philips", tr=1.0)
         assert result is not None
         assert len(result) == 4
 
     def test_multiband(self):
+        """Verify multiband."""
         result = tide_util.makeslicetimes(8, "ascending", tr=1.0, multibandfac=2)
         assert result is not None
         assert len(result) == 8
 
     def test_invalid_sliceorder_returns_none(self):
+        """Verify invalid sliceorder returns none."""
         result = tide_util.makeslicetimes(4, "invalid_type", tr=1.0)
         assert result is None
 
     def test_incompatible_multiband_returns_none(self):
+        """Verify incompatible multiband returns none."""
         result = tide_util.makeslicetimes(5, "ascending", tr=1.0, multibandfac=2)
         assert result is None
 
@@ -456,6 +636,7 @@ class TestMakeslicetimes:
 
 class TestComparemap:
     def test_identical_maps(self):
+        """Verify identical maps."""
         map1 = np.array([1.0, 2.0, 3.0])
         map2 = np.array([1.0, 2.0, 3.0])
         mindiff, maxdiff, meandiff, mse, minreldiff, maxreldiff, meanreldiff, relmse = (
@@ -467,6 +648,7 @@ class TestComparemap:
         assert mse == 0.0
 
     def test_different_maps(self):
+        """Verify different maps."""
         map1 = np.array([1.0, 2.0, 3.0])
         map2 = np.array([1.1, 2.2, 2.9])
         mindiff, maxdiff, meandiff, mse, minreldiff, maxreldiff, meanreldiff, relmse = (
@@ -476,6 +658,7 @@ class TestComparemap:
         assert maxdiff > 0
 
     def test_with_mask(self):
+        """Verify with mask."""
         map1 = np.array([[1.0, 2.0], [3.0, 4.0]])
         map2 = np.array([[1.1, 2.0], [3.0, 4.1]])
         mask = np.array([[1, 0], [0, 1]])
@@ -488,6 +671,7 @@ class TestComparemap:
 
 class TestNumpy2shared:
     def test_basic(self):
+        """Verify basic."""
         arr = np.array([1, 2, 3, 4, 5])
         shared_arr, shm = tide_util.numpy2shared(arr, np.int32)
         try:
@@ -497,6 +681,7 @@ class TestNumpy2shared:
             shm.close()
 
     def test_2d_array(self):
+        """Verify 2D array."""
         arr = np.array([[1, 2], [3, 4]], dtype=np.float64)
         shared_arr, shm = tide_util.numpy2shared(arr, np.float64)
         try:
@@ -511,6 +696,7 @@ class TestNumpy2shared:
 
 class TestAllocshared:
     def test_basic(self):
+        """Verify basic."""
         arr, shm = tide_util.allocshared((3, 4), np.float64)
         try:
             assert arr.shape == (3, 4)
@@ -519,6 +705,7 @@ class TestAllocshared:
             shm.close()
 
     def test_1d(self):
+        """Verify 1D."""
         arr, shm = tide_util.allocshared((10,), np.int32)
         try:
             assert arr.shape == (10,)
@@ -532,12 +719,14 @@ class TestAllocshared:
 
 class TestAllocarray:
     def test_non_shared(self):
+        """Verify non shared."""
         arr, shm = tide_util.allocarray((3, 4), np.float64, shared=False)
         assert arr.shape == (3, 4)
         assert shm is None
         np.testing.assert_allclose(arr, 0.0)
 
     def test_shared(self):
+        """Verify shared."""
         arr, shm = tide_util.allocarray((3, 4), np.float64, shared=True)
         try:
             assert arr.shape == (3, 4)
@@ -552,9 +741,11 @@ class TestAllocarray:
 class TestCleanupShm:
     def test_with_none(self):
         # Should not raise
+        """Verify with none."""
         tide_util.cleanup_shm(None)
 
     def test_with_shm(self):
+        """Verify with shm."""
         arr, shm = tide_util.allocshared((10,), np.float64)
         # Should not raise
         tide_util.cleanup_shm(shm)
@@ -567,10 +758,12 @@ class TestCleanupShm:
 class TestLogmem:
     def test_header(self):
         # Should not raise on any platform
+        """Verify header."""
         tide_util.logmem()
 
     def test_with_message(self):
         # Should not raise on any platform
+        """Verify with message."""
         tide_util.logmem("Test message")
 
 
@@ -579,11 +772,27 @@ class TestLogmem:
 
 class TestProgressbar:
     def test_basic(self, capsys):
+        """
+        Verify basic.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         tide_util.progressbar(50, 100, "Test", 20)
         captured = capsys.readouterr()
         assert "50.00%" in captured.out
 
     def test_complete(self, capsys):
+        """
+        Verify complete.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         tide_util.progressbar(100, 100, "Test", 20)
         captured = capsys.readouterr()
         assert "100.00%" in captured.out
@@ -594,6 +803,7 @@ class TestProgressbar:
 
 class TestFindreferencedir:
     def test_returns_string(self):
+        """Verify returns string."""
         result = tide_util.findreferencedir()
         assert isinstance(result, str)
         assert "rapidtide" in result
@@ -608,6 +818,7 @@ class TestSetmemlimit:
     def test_callable(self):
         # Just verify the function exists and is callable
         # Actually setting memory limits can cause issues in test environments
+        """Verify callable."""
         assert callable(tide_util.setmemlimit)
 
 
@@ -616,16 +827,49 @@ class TestSetmemlimit:
 
 class TestFindavailablemem:
     def test_cgroup_branch(self, monkeypatch):
+        """
+        Verify cgroup branch.
+
+        Parameters
+        ----------
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
+        """
         monkeypatch.setattr(tide_util.os.path, "isfile", lambda p: True)
 
         class DummyFile:
             def __enter__(self):
+                """
+                Enter the test context.
+
+                Returns
+                -------
+                object
+                    Value returned to the caller in this test case.
+                """
                 from io import StringIO
 
                 self._f = StringIO("1048576")
                 return self._f
 
             def __exit__(self, exc_type, exc, tb):
+                """
+                Exit the test context.
+
+                Parameters
+                ----------
+                exc_type : object
+                    Value supplied as ``exc_type`` by the test case.
+                exc : object
+                    Value supplied as ``exc`` by the test case.
+                tb : object
+                    Value supplied as ``tb`` by the test case.
+
+                Returns
+                -------
+                bool
+                    Value returned to the caller in this test case.
+                """
                 return False
 
         monkeypatch.setattr(tide_util, "open", lambda *args, **kwargs: DummyFile(), raising=False)
@@ -634,6 +878,14 @@ class TestFindavailablemem:
         assert swap == 1048576
 
     def test_free_command_branch(self, monkeypatch):
+        """
+        Verify free command branch.
+
+        Parameters
+        ----------
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
+        """
         monkeypatch.setattr(tide_util.os.path, "isfile", lambda p: False)
         fake_stdout = b"              total        used        free      shared  buff/cache   available\nMem:          1000         500         200          20         300         400\nSwap:         1000         200         300\n"
         monkeypatch.setattr(
@@ -651,6 +903,7 @@ class TestFindavailablemem:
 
 class TestSavecommandline:
     def test_calls_writevec(self):
+        """Verify calls writevec."""
         with patch("rapidtide.util.tide_io.writevec") as w:
             tide_util.savecommandline(["python", "prog.py", "--x", "1"], "testrun")
         w.assert_called_once()
@@ -664,10 +917,12 @@ class TestSavecommandline:
 
 class TestStartendcheckErrors:
     def test_start_too_large_exits(self):
+        """Verify start too large exits."""
         with pytest.raises(SystemExit):
             tide_util.startendcheck(10, 20, 30)
 
     def test_start_greater_equal_end_exits(self):
+        """Verify start greater equal end exits."""
         with pytest.raises(SystemExit):
             tide_util.startendcheck(10, 5, 5)
 
@@ -677,11 +932,13 @@ class TestStartendcheckErrors:
 
 class TestValtoindexExtra:
     def test_continuous_position(self):
+        """Verify continuous position."""
         arr = np.linspace(0, 10, 11)
         pos = tide_util.valtoindex(arr, 5.5, discrete=False)
         assert np.fabs(pos - 5.5) < 1e-12
 
     def test_illegal_discretization_raises(self):
+        """Verify illegal discretization raises."""
         arr = np.linspace(0, 10, 11)
         with pytest.raises(TypeError):
             tide_util.valtoindex(arr, 5.5, discretization="illegal_mode")
@@ -692,6 +949,14 @@ class TestValtoindexExtra:
 
 class TestTimingHelpers:
     def test_proctiminglogfile(self, tmp_path):
+        """
+        Verify proctiminglogfile.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         logfile = tmp_path / "timing.tsv"
         logfile.write_text(
             "\n".join(
@@ -709,6 +974,7 @@ class TestTimingHelpers:
         assert np.fabs(total - 3.0) < 1e-6
 
     def test_proctiminginfo_with_output(self):
+        """Verify proctiminginfo with output."""
         timings = [
             ("start", 1000.0, None, None),
             ("step", 1002.0, 200.0, "voxels"),
@@ -724,10 +990,17 @@ class TestTimingHelpers:
 
 class TestComparemapNumerics:
     def test_zero_denominators_do_not_warn(self, recwarn):
-        """The relative difference skips voxels whose reference value is zero.  It used
+        """
+        The relative difference skips voxels whose reference value is zero.  It used
         to compute the division for every voxel and then throw the bad ones away, which
         is correct but fills the log with divide-by-zero warnings from a routine that
-        runs over every map of every comparison."""
+        runs over every map of every comparison.
+
+        Parameters
+        ----------
+        recwarn : object
+            Value supplied as ``recwarn`` by the test case.
+        """
         themap1 = np.array([0.0, 1.0, 2.0, 0.0, 4.0])
         themap2 = themap1 + 1.0
         theresult = tide_util.comparemap(themap1, themap2)
@@ -746,10 +1019,12 @@ class TestComparemapNumerics:
 
 class TestComparemapBranches:
     def test_shape_mismatch_exits(self):
+        """Verify shape mismatch exits."""
         with pytest.raises(SystemExit):
             tide_util.comparemap(np.zeros((2, 2)), np.zeros((3, 3)))
 
     def test_mask_one_less_dimension(self):
+        """Verify mask one less dimension."""
         map1 = np.arange(12, dtype=float).reshape(2, 2, 3)
         map2 = map1 + 1.0
         mask = np.array([[1, 0], [0, 1]], dtype=int)
@@ -758,6 +1033,7 @@ class TestComparemapBranches:
         assert result[1] > 0.0
 
     def test_incompatible_mask_exits(self):
+        """Verify incompatible mask exits."""
         map1 = np.zeros((2, 2, 2))
         map2 = np.zeros((2, 2, 2))
         badmask = np.zeros((2,), dtype=int)
@@ -770,6 +1046,7 @@ class TestComparemapBranches:
 
 class TestCompareRunHelpers:
     def test_comparerapidtideruns_smoke(self):
+        """Verify comparerapidtideruns smoke."""
         mask_hdr = {"dim": [0, 2, 2, 1, 1]}
         mask_data = np.ones((2, 2, 1), dtype=float)
 
@@ -786,6 +1063,7 @@ class TestCompareRunHelpers:
         assert isinstance(out, dict)
 
     def test_comparehappyruns_smoke(self):
+        """Verify comparehappyruns smoke."""
         mask_hdr = {"dim": [0, 2, 2, 1, 1]}
         mask_data = np.ones((2, 2, 1), dtype=float)
         with (
@@ -812,6 +1090,7 @@ class TestVersionInContainer:
     """
 
     def test_no_git_variables_at_all(self):
+        """Verify no git variables at all."""
         with patch.dict(os.environ, {"RUNNING_IN_CONTAINER": "1"}, clear=True):
             theversion, thesha, thedate, isdirty = tide_util.version()
         assert (theversion, thesha, thedate, isdirty) == (
@@ -822,6 +1101,7 @@ class TestVersionInContainer:
         )
 
     def test_gitversion_without_a_direct_version(self):
+        """Verify gitversion without a direct version."""
         theenv = {"RUNNING_IN_CONTAINER": "1", "GITVERSION": "2.9.0"}
         with patch.dict(os.environ, theenv, clear=True):
             theversion, thesha, thedate, isdirty = tide_util.version()
@@ -830,6 +1110,7 @@ class TestVersionInContainer:
         assert isdirty == "UNKNOWN"
 
     def test_a_clean_tag_is_not_dirty(self):
+        """Verify a clean tag is not dirty."""
         theenv = {
             "RUNNING_IN_CONTAINER": "1",
             "GITVERSION": "2.9.0",
@@ -845,6 +1126,7 @@ class TestVersionInContainer:
         assert isdirty is False
 
     def test_commits_past_the_tag_are_dirty(self):
+        """Verify commits past the tag are dirty."""
         for thedirect, theexpected in (
             ("v2.9.0-3", "v2.9.0.3"),
             ("v2.9.0-3-gabc1234", "v2.9.0.3+gabc1234"),
@@ -873,6 +1155,7 @@ class TestVersionInContainer:
         assert isdirty is True
 
     def test_the_direct_version_wins_over_gitversion(self):
+        """Verify the direct version wins over gitversion."""
         theenv = {
             "RUNNING_IN_CONTAINER": "1",
             "GITVERSION": "9.9.9",
@@ -883,11 +1166,13 @@ class TestVersionInContainer:
         assert theversion == "v2.9.0", "GITDIRECTVERSION did not take precedence"
 
     def test_versioneer_failure_falls_back_to_unknown(self):
+        """Verify versioneer failure falls back to unknown."""
         with patch.dict(os.environ, {}, clear=True):
             with patch("rapidtide.util.tide_versioneer.get_versions", side_effect=RuntimeError):
                 assert tide_util.version() == ("UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN")
 
     def test_missing_versioneer_fields_become_unknown(self):
+        """Verify missing versioneer fields become unknown."""
         thefields = {"version": None, "full-revisionid": None, "date": None, "dirty": None}
         with patch.dict(os.environ, {}, clear=True):
             with patch("rapidtide.util.tide_versioneer.get_versions", return_value=thefields):
@@ -919,13 +1204,19 @@ class TestVersionInContainer:
 
 @pytest.fixture
 def restorepyfftwconfig():
-    """Put pyfftw's global config back after a test has changed it.
+    """
+    Put pyfftw's global config back after a test has changed it.
 
     pyfftw.config is process wide, and rapidtide.stats installs pyfftw as the backend
     for every scipy.fft call at import time.  A test that leaves NUM_THREADS somewhere
     other than it found it silently changes how every later test in the same pytest
     session transforms - which is exactly the kind of order dependent behaviour that
     only ever shows up in CI, where the whole suite runs in one process.
+
+    Yields
+    ------
+    None
+        Control passes to the test while the fixture is active.
     """
     import pyfftw
 
@@ -936,6 +1227,16 @@ def restorepyfftwconfig():
 
 class TestConfigurePyfftw:
     def test_returns_a_wisdom_path_under_home(self, tmp_path, restorepyfftwconfig):
+        """
+        Verify returns a wisdom path under home.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        restorepyfftwconfig : object
+            Fixture that restores the pyFFTW configuration after the test.
+        """
         theenv = {"HOME": str(tmp_path)}
         with patch.dict(os.environ, theenv, clear=True):
             thewisdomfile = tide_util.configurepyfftw(threads=2)
@@ -944,6 +1245,16 @@ class TestConfigurePyfftw:
         assert ".config" in thewisdomfile
 
     def test_thread_count_is_applied(self, tmp_path, restorepyfftwconfig):
+        """
+        Verify thread count is applied.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        restorepyfftwconfig : object
+            Fixture that restores the pyFFTW configuration after the test.
+        """
         import pyfftw
 
         with patch.dict(os.environ, {"HOME": str(tmp_path)}, clear=True):
@@ -951,8 +1262,17 @@ class TestConfigurePyfftw:
         assert pyfftw.config.NUM_THREADS == 3
 
     def test_wisdom_round_trips_through_the_file(self, tmp_path, restorepyfftwconfig):
-        """savewisdom writes what configurepyfftw reads back, so the two have to agree
-        on the format.  They are only ever exercised as a pair."""
+        """
+        Savewisdom writes what configurepyfftw reads back, so the two have to agree
+        on the format.  They are only ever exercised as a pair.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        restorepyfftwconfig : object
+            Fixture that restores the pyFFTW configuration after the test.
+        """
         with patch.dict(os.environ, {"HOME": str(tmp_path)}, clear=True):
             thewisdomfile = tide_util.configurepyfftw(threads=1)
             assert not os.path.isfile(thewisdomfile), "no wisdom should exist yet"
@@ -965,15 +1285,31 @@ class TestConfigurePyfftw:
         assert thesamefile == thewisdomfile
 
     def test_works_without_HOME_set(self, restorepyfftwconfig):
-        """A stripped environment has no HOME.  Building the wisdom path out of None
-        used to raise TypeError before anything could report a useful problem."""
+        """
+        A stripped environment has no HOME.  Building the wisdom path out of None
+        used to raise TypeError before anything could report a useful problem.
+
+        Parameters
+        ----------
+        restorepyfftwconfig : object
+            Fixture that restores the pyFFTW configuration after the test.
+        """
         theenv = {k: v for k, v in os.environ.items() if k != "HOME"}
         with patch.dict(os.environ, theenv, clear=True):
             thewisdomfile = tide_util.configurepyfftw(threads=1)
         assert isinstance(thewisdomfile, str) and thewisdomfile.endswith(".txt")
 
     def test_thread_count_from_the_environment_is_an_integer(self, tmp_path, restorepyfftwconfig):
-        """PYFFTW_NUM_THREADS arrives as a string; NUM_THREADS is a count."""
+        """
+        PYFFTW_NUM_THREADS arrives as a string; NUM_THREADS is a count.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        restorepyfftwconfig : object
+            Fixture that restores the pyFFTW configuration after the test.
+        """
         import pyfftw
 
         theenv = {"HOME": str(tmp_path), "PYFFTW_NUM_THREADS": "4"}
@@ -985,9 +1321,20 @@ class TestConfigurePyfftw:
     def test_unparseable_wisdom_is_reported_not_executed(
         self, tmp_path, capsys, restorepyfftwconfig
     ):
-        """The wisdom file is read back from disk, so it must be parsed as data rather
+        """
+        The wisdom file is read back from disk, so it must be parsed as data rather
         than executed.  Anything that is not a Python literal is a corrupt file, and
-        has to be reported rather than run or raised."""
+        has to be reported rather than run or raised.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        restorepyfftwconfig : object
+            Fixture that restores the pyFFTW configuration after the test.
+        """
         thewisdomdir = tmp_path / ".config"
         thewisdomdir.mkdir()
         with patch.dict(os.environ, {"HOME": str(tmp_path)}, clear=True):
@@ -1002,6 +1349,7 @@ class TestConfigurePyfftw:
 
     def test_savewisdom_ignores_a_none_path(self):
         # nothing to write to, and it must not raise trying
+        """Verify savewisdom ignores a none path."""
         assert tide_util.savewisdom(None) is None
 
 
@@ -1027,6 +1375,21 @@ def _make_comparerun_mocks(mapshape=(2, 2, 1), offset=0.5):
     thehdr = {"dim": [3, mapshape[0], mapshape[1], mapshape[2], 1]}
 
     def thereader(thename, **thekwargs):
+        """
+        Provide the ``thereader`` test substitute.
+
+        Parameters
+        ----------
+        thename : object
+            Value supplied as ``thename`` by the test case.
+        **thekwargs : dict
+            Keyword options passed to the case under test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         thedata = np.ones(mapshape, dtype=float)
         # run2 filenames carry the second root, so key off that
         if "run2" in thename or "happy2" in thename:
@@ -1067,6 +1430,7 @@ class TestCompareRapidtideRunsFull:
         assert np.isclose(theresults["maxtime"]["relmse"], 0.25)
 
     def test_timecourses_are_compared_when_readable(self):
+        """Verify timecourses are compared when readable."""
         thereader = _make_comparerun_mocks()
         thetc1 = np.arange(10, dtype=float)
         thetc2 = thetc1 + 1.0
@@ -1074,6 +1438,21 @@ class TestCompareRapidtideRunsFull:
         thecalls = {"n": 0}
 
         def thetcreader(thespec, **thekwargs):
+            """
+            Provide the ``thetcreader`` test substitute.
+
+            Parameters
+            ----------
+            thespec : object
+                Value supplied as ``thespec`` by the test case.
+            **thekwargs : dict
+                Keyword options passed to the case under test.
+
+            Returns
+            -------
+            tuple
+                Values supplied together for the test case.
+            """
             thecalls["n"] += 1
             thewhich = thetc2 if "run2" in thespec else thetc1
             return None, None, None, thewhich, None, None
@@ -1093,9 +1472,25 @@ class TestCompareRapidtideRunsFull:
         assert np.isclose(theresults[thetckeys[0]]["meandiff"], 1.0)
 
     def test_mismatched_timecourse_lengths_are_skipped(self):
+        """Verify mismatched timecourse lengths are skipped."""
         thereader = _make_comparerun_mocks()
 
         def thetcreader(thespec, **thekwargs):
+            """
+            Provide the ``thetcreader`` test substitute.
+
+            Parameters
+            ----------
+            thespec : object
+                Value supplied as ``thespec`` by the test case.
+            **thekwargs : dict
+                Keyword options passed to the case under test.
+
+            Returns
+            -------
+            tuple
+                Values supplied together for the test case.
+            """
             thelength = 10 if "run1" in thespec else 11
             return None, None, None, np.zeros(thelength), None, None
 
@@ -1110,6 +1505,7 @@ class TestCompareRapidtideRunsFull:
         assert not [thekey for thekey in theresults if "movingregressor" in thekey]
 
     def test_mismatched_map_dimensions_abort(self):
+        """Verify mismatched map dimensions abort."""
         thereader = _make_comparerun_mocks()
         with (
             patch("rapidtide.util.tide_io.readfromnifti", side_effect=thereader),
@@ -1141,6 +1537,23 @@ def _make_bidstsv_mock(offset=0.25, length=20):
     """
 
     def thereader(thefilename, thecolumn, **thekwargs):
+        """
+        Provide the ``thereader`` test substitute.
+
+        Parameters
+        ----------
+        thefilename : object
+            Value supplied as ``thefilename`` by the test case.
+        thecolumn : object
+            Value supplied as ``thecolumn`` by the test case.
+        **thekwargs : dict
+            Keyword options passed to the case under test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         thedata = np.arange(length, dtype=float)
         if "happy2" in thefilename:
             thedata = thedata + offset
@@ -1152,6 +1565,7 @@ def _make_bidstsv_mock(offset=0.25, length=20):
 
 class TestCompareHappyRunsFull:
     def test_every_map_and_timecourse_is_compared_when_present(self):
+        """Verify every map and timecourse is compared when present."""
         thereader = _make_comparerun_mocks(offset=0.25)
         with (
             patch("rapidtide.util.tide_io.readfromnifti", side_effect=thereader),
@@ -1181,6 +1595,23 @@ class TestCompareHappyRunsFull:
         thereader = _make_comparerun_mocks()
 
         def thetcreader(thefilename, thecolumn, **thekwargs):
+            """
+            Provide the ``thetcreader`` test substitute.
+
+            Parameters
+            ----------
+            thefilename : object
+                Value supplied as ``thefilename`` by the test case.
+            thecolumn : object
+                Value supplied as ``thecolumn`` by the test case.
+            **thekwargs : dict
+                Keyword options passed to the case under test.
+
+            Returns
+            -------
+            tuple
+                Values supplied together for the test case.
+            """
             thesamplerate = 1.0 if "happy1" in thefilename else 2.0
             return thesamplerate, 0.0, [thecolumn], np.zeros(20), False, None, None
 
@@ -1194,6 +1625,7 @@ class TestCompareHappyRunsFull:
                 tide_util.comparehappyruns("happy1", "happy2")
 
     def test_mismatched_dimensions_abort(self):
+        """Verify mismatched dimensions abort."""
         thereader = _make_comparerun_mocks()
         with (
             patch("rapidtide.util.tide_io.readfromnifti", side_effect=thereader),
@@ -1238,6 +1670,7 @@ class TestLibThreadControl:
                 ), f"{thename} came back as {os.environ[thename]}, expected {thevalue}"
 
     def test_findlibthreads_defaults_when_unset(self):
+        """Verify findlibthreads defaults when unset."""
         theenv = {
             thename: thevalue
             for thename, thevalue in os.environ.items()
@@ -1269,6 +1702,7 @@ class TestMklControl:
             assert thecalls == [1], "MKL was not pinned for a multiprocess run"
 
     def test_enablemkl_restores_the_requested_count(self):
+        """Verify enablemkl restores the requested count."""
         thecalls = []
         themkl = SimpleNamespace(set_num_threads=lambda n: thecalls.append(n))
         with (
@@ -1279,6 +1713,7 @@ class TestMklControl:
         assert thecalls == [6]
 
     def test_both_are_noops_without_mkl(self):
+        """Verify both are noops without mkl."""
         with patch("rapidtide.util.mklexists", False):
             # must not raise even though rapidtide.util.mkl may not exist at all
             tide_util.disablemkl(8, debug=True)

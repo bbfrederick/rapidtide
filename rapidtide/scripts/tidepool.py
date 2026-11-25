@@ -21,6 +21,7 @@ import rapidtide.workflows.tidepool as theworkflow
 
 
 def entrypoint():
+    """Run the `tidepool` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.tidepool)
 
 

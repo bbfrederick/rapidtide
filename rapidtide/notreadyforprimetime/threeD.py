@@ -54,6 +54,7 @@ import rapidtide.stats as tide_stats
 
 
 def usage():
+    """Print command-line usage information."""
     print(os.path.basename(sys.argv[0]), "- render 3 (or 4) d images")
     print("")
     print("usage: ", os.path.basename(sys.argv[0]), " niftifile")
@@ -67,6 +68,14 @@ def usage():
 
 
 def incrementvolume(volumelist):
+    """
+    Switch the display to the next volume.
+
+    Parameters
+    ----------
+    volumelist : sequence
+        Volumes available to the viewer.
+    """
     global activevol
 
     volumelist[activevol].visible = False
@@ -170,6 +179,14 @@ translucent_cmap = next(translucent_cmaps)
 # Implement axis connection with cam2
 @canvas.events.mouse_move.connect
 def on_mouse_move(event):
+    """
+    Handle pointer motion over the displayed volume.
+
+    Parameters
+    ----------
+    event : object
+        Viewer event supplied by the plotting backend.
+    """
     if event.button == 1 and event.is_dragging:
         axis.transform.reset()
 
@@ -185,6 +202,14 @@ def on_mouse_move(event):
 # Implement key presses
 @canvas.events.key_press.connect
 def on_key_press(event):
+    """
+    Handle keyboard input for the volume viewer.
+
+    Parameters
+    ----------
+    event : object
+        Viewer event supplied by the plotting backend.
+    """
     global opaque_cmap, translucent_cmap, activevol
     if event.text == "1":
         cam_toggle = {cam1: cam2, cam2: cam3, cam3: cam1}
@@ -233,6 +258,7 @@ def on_key_press(event):
 
 
 def entrypoint():
+    """Run the `threeD` command."""
     print(__doc__)
     app.run()
 

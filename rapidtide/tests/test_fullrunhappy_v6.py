@@ -48,7 +48,18 @@ pytestmark = pytest.mark.slow
 
 
 def test_fullrunhappy_v6(debug=False, local=False, displayplots=False):
-    """Run happy with global mean signal filtering and Wright's vessel mask."""
+    """
+    Run happy with global mean signal filtering and Wright's vessel mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     exampleroot, testtemproot = get_example_and_temp_roots(local)
 
     inputargs = [

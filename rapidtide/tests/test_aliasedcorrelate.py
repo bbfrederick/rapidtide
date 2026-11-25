@@ -35,23 +35,30 @@ def aliasedcorrelate(
     lowresstarttime=0.0,
     padtime=30.0,
 ):
-    """Perform an aliased correlation.
+    """
+    Perform an aliased correlation.
 
     This function is deprecated, and is retained here as a reference against
     which to test AliasedCorrelator.
 
     Parameters
     ----------
-    hiressignal: 1D array
+    hiressignal : 1D array
         The unaliased waveform to match
-    hires_Fs: float
+    hires_Fs : float
         The sample rate of the unaliased waveform
-    lowressignal: 1D array
+    lowressignal : 1D array
         The aliased waveform to match
-    lowres_Fs: float
+    lowres_Fs : float
         The sample rate of the aliased waveform
-    timerange: 1D array
+    timerange : 1D array
         The delays for which to calculate the correlation function
+    hiresstarttime : float, optional
+        Value supplied as ``hiresstarttime`` by the test case.
+    lowresstarttime : float, optional
+        Value supplied as ``lowresstarttime`` by the test case.
+    padtime : float, optional
+        Value supplied as ``padtime`` by the test case.
 
     Returns
     -------
@@ -70,6 +77,14 @@ def aliasedcorrelate(
 
 
 def test_aliasedcorrelate(displayplots=False):
+    """
+    Verify aliasedcorrelate.
+
+    Parameters
+    ----------
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     Fs_hi = 10.0
     Fs_lo = 1.0
     numsteps = 10

@@ -30,7 +30,25 @@ from rapidtide.workflows.atlasaverage import _get_parser, atlasaverage, summariz
 
 
 def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
-    """Create a mock NIfTI header that supports __getitem__ and __setitem__."""
+    """
+    Create a mock NIfTI header that supports __getitem__ and __setitem__.
+
+    Parameters
+    ----------
+    xsize : int
+        Number of voxels along the x axis.
+    ysize : int
+        Number of voxels along the y axis.
+    numslices : int
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+
+    Returns
+    -------
+    MagicMock
+        Mock object configured for the test case.
+    """
     store = {
         "dim": [4, xsize, ysize, numslices, timepoints, 1, 1, 1],
         "pixdim": [1.0, 2.0, 2.0, 2.0, 1.5, 1.0, 1.0, 1.0],
@@ -40,6 +58,14 @@ def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
     hdr.__setitem__ = MagicMock(side_effect=lambda key, val: store.__setitem__(key, val))
 
     def copy_fn():
+        """
+        Copy fn.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         new_store = {
             "dim": list(store["dim"]),
             "pixdim": list(store["pixdim"]),
@@ -54,7 +80,25 @@ def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
 
 
 def _make_3d_atlas(xsize=6, ysize=6, numslices=4, numregions=3):
-    """Create a 3D integer-labeled atlas with regions assigned along the x-axis."""
+    """
+    Create a 3D integer-labeled atlas with regions assigned along the x-axis.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    numregions : int, optional
+        Number of regions in the test atlas.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     data = np.zeros((xsize, ysize, numslices), dtype=np.float64)
     region_size = xsize // numregions
     for r in range(numregions):
@@ -68,7 +112,23 @@ def _make_3d_atlas(xsize=6, ysize=6, numslices=4, numregions=3):
 
 
 def _make_3d_data(xsize=6, ysize=6, numslices=4):
-    """Create 3D data with distinct values per spatial location."""
+    """
+    Create 3D data with distinct values per spatial location.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     rng = np.random.RandomState(42)
     data = rng.rand(xsize, ysize, numslices).astype(np.float64) + 0.5
     hdr = _make_mock_hdr(xsize, ysize, numslices, 1)
@@ -78,7 +138,25 @@ def _make_3d_data(xsize=6, ysize=6, numslices=4):
 
 
 def _make_4d_data(xsize=6, ysize=6, numslices=4, numtimepoints=10):
-    """Create 4D data with distinct timecourses per voxel."""
+    """
+    Create 4D data with distinct timecourses per voxel.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    numtimepoints : int, optional
+        Number of time samples.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     rng = np.random.RandomState(42)
     data = rng.rand(xsize, ysize, numslices, numtimepoints).astype(np.float64) + 1.0
     hdr = _make_mock_hdr(xsize, ysize, numslices, numtimepoints)
@@ -88,7 +166,19 @@ def _make_4d_data(xsize=6, ysize=6, numslices=4, numtimepoints=10):
 
 
 def _make_base_args(outputroot="/tmp/test_atlasaverage_out"):
-    """Create baseline args namespace."""
+    """
+    Create baseline args namespace.
+
+    Parameters
+    ----------
+    outputroot : str, optional
+        Value supplied as ``outputroot`` by the test case.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     return argparse.Namespace(
         datafile="dummy_data.nii.gz",
         templatefile="dummy_template.nii.gz",
@@ -109,7 +199,19 @@ def _make_base_args(outputroot="/tmp/test_atlasaverage_out"):
 
 
 def _parse_test_args(extra_args=None):
-    """Parse atlasaverage args with temporary input/template NIfTI files."""
+    """
+    Parse atlasaverage args with temporary input/template NIfTI files.
+
+    Parameters
+    ----------
+    extra_args : list of str or None, optional
+        Arguments appended to the generated input filenames.
+
+    Returns
+    -------
+    object
+        Value returned to the caller in this test case.
+    """
     import tempfile
 
     parser = _get_parser()
@@ -132,11 +234,52 @@ def _make_readfromnifti_side_effect(
     atlas_dims,
     atlas_sizes,
 ):
-    """Build a standard readfromnifti side-effect that routes data vs atlas loads."""
+    """
+    Build a standard readfromnifti side-effect that routes data vs atlas loads.
+
+    Parameters
+    ----------
+    input_data : object
+        Value supplied as ``input_data`` by the test case.
+    input_hdr : object
+        Value supplied as ``input_hdr`` by the test case.
+    input_dims : object
+        Value supplied as ``input_dims`` by the test case.
+    input_sizes : object
+        Value supplied as ``input_sizes`` by the test case.
+    atlas_data : object
+        Value supplied as ``atlas_data`` by the test case.
+    atlas_hdr : object
+        Value supplied as ``atlas_hdr`` by the test case.
+    atlas_dims : object
+        Value supplied as ``atlas_dims`` by the test case.
+    atlas_sizes : object
+        Value supplied as ``atlas_sizes`` by the test case.
+
+    Returns
+    -------
+    object
+        The ``_mock_readfromnifti`` value supplied to the caller.
+    """
     data_return = (MagicMock(), input_data, input_hdr, input_dims, input_sizes)
     atlas_return = (MagicMock(), atlas_data, atlas_hdr, atlas_dims, atlas_sizes)
 
     def _mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return data_return if "data" in fname else atlas_return
 
     return _mock_readfromnifti
@@ -146,7 +289,14 @@ def _make_readfromnifti_side_effect(
 
 
 def parser_basic(debug=False):
-    """Test that parser creates successfully and has expected defaults."""
+    """
+    Test that parser creates successfully and has expected defaults.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -155,7 +305,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
-    """Test parser with required arguments only."""
+    """
+    Test parser with required arguments only.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -168,7 +325,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
-    """Test default values for optional arguments."""
+    """
+    Test default values for optional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     defaults = _parse_test_args()
@@ -187,7 +351,14 @@ def parser_defaults(debug=False):
 
 
 def parser_normmethod_choices(debug=False):
-    """Test that normmethod accepts only valid choices."""
+    """
+    Test that normmethod accepts only valid choices.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_normmethod_choices")
     for method in ["none", "pct", "var", "std", "p2p"]:
@@ -196,7 +367,14 @@ def parser_normmethod_choices(debug=False):
 
 
 def parser_summarymethod_choices(debug=False):
-    """Test that summarymethod accepts only valid choices."""
+    """
+    Test that summarymethod accepts only valid choices.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_summarymethod_choices")
     for method in ["mean", "median", "sum", "std", "MAD", "CoV"]:
@@ -205,7 +383,14 @@ def parser_summarymethod_choices(debug=False):
 
 
 def parser_numpercentiles(debug=False):
-    """Test that numpercentiles can be set."""
+    """
+    Test that numpercentiles can be set.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_numpercentiles")
     args = _parse_test_args(["--numpercentiles", "5"])
@@ -213,7 +398,14 @@ def parser_numpercentiles(debug=False):
 
 
 def parser_flags(debug=False):
-    """Test boolean flags."""
+    """
+    Test boolean flags.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_flags")
     args = _parse_test_args(["--ignorezeros", "--headerline", "--debug"])
@@ -223,7 +415,14 @@ def parser_flags(debug=False):
 
 
 def parser_datalabel(debug=False):
-    """Test datalabel option."""
+    """
+    Test datalabel option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_datalabel")
     args = _parse_test_args(["--datalabel", "my_label"])
@@ -234,7 +433,14 @@ def parser_datalabel(debug=False):
 
 
 def summarizevoxels_mean_1d(debug=False):
-    """Test mean summary on 1D array."""
+    """
+    Test mean summary on 1D array.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("summarizevoxels_mean_1d")
     data = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
@@ -243,7 +449,14 @@ def summarizevoxels_mean_1d(debug=False):
 
 
 def summarizevoxels_mean_2d(debug=False):
-    """Test mean summary on 2D array (voxels x timepoints)."""
+    """
+    Test mean summary on 2D array (voxels x timepoints).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("summarizevoxels_mean_2d")
     data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
@@ -253,7 +466,14 @@ def summarizevoxels_mean_2d(debug=False):
 
 
 def summarizevoxels_sum(debug=False):
-    """Test sum summary."""
+    """
+    Test sum summary.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("summarizevoxels_sum")
     data = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
@@ -263,7 +483,14 @@ def summarizevoxels_sum(debug=False):
 
 
 def summarizevoxels_median(debug=False):
-    """Test median summary."""
+    """
+    Test median summary.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("summarizevoxels_median")
     data = np.array([[1.0, 10.0], [2.0, 20.0], [3.0, 30.0]])
@@ -273,7 +500,14 @@ def summarizevoxels_median(debug=False):
 
 
 def summarizevoxels_std(debug=False):
-    """Test std summary."""
+    """
+    Test std summary.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("summarizevoxels_std")
     data = np.array([2.0, 4.0, 6.0, 8.0])
@@ -283,7 +517,14 @@ def summarizevoxels_std(debug=False):
 
 
 def summarizevoxels_mad(debug=False):
-    """Test MAD summary."""
+    """
+    Test MAD summary.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("summarizevoxels_mad")
     data = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
@@ -295,7 +536,14 @@ def summarizevoxels_mad(debug=False):
 
 
 def summarizevoxels_cov_1d(debug=False):
-    """Test CoV summary on 1D array."""
+    """
+    Test CoV summary on 1D array.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("summarizevoxels_cov_1d")
     data = np.array([2.0, 4.0, 6.0, 8.0])
@@ -305,7 +553,14 @@ def summarizevoxels_cov_1d(debug=False):
 
 
 def summarizevoxels_cov_2d(debug=False):
-    """Test CoV summary on 2D array."""
+    """
+    Test CoV summary on 2D array.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("summarizevoxels_cov_2d")
     data = np.array([[1.0, 2.0], [3.0, 4.0]])
@@ -315,7 +570,14 @@ def summarizevoxels_cov_2d(debug=False):
 
 
 def summarizevoxels_nan_handling(debug=False):
-    """Test that NaN values are handled (converted to zero)."""
+    """
+    Test that NaN values are handled (converted to zero).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("summarizevoxels_nan_handling")
     data = np.array([1.0, np.nan, 3.0])
@@ -327,7 +589,14 @@ def summarizevoxels_nan_handling(debug=False):
 
 
 def summarizevoxels_default_method(debug=False):
-    """Test that default method is mean."""
+    """
+    Test that default method is mean.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("summarizevoxels_default_method")
     data = np.array([1.0, 2.0, 3.0])
@@ -340,7 +609,14 @@ def summarizevoxels_default_method(debug=False):
 
 
 def atlasaverage_3d_basic(debug=False):
-    """Test atlasaverage with 3D data, basic operation."""
+    """
+    Test atlasaverage with 3D data, basic operation.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_3d_basic")
     xsize, ysize, numslices = 6, 6, 4
@@ -366,9 +642,40 @@ def atlasaverage_3d_basic(debug=False):
     )
 
     def mock_savetonifti(data, hdr, fname, **kwargs):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        hdr : object
+            Image header used by the helper.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         saved_data[fname] = data.copy()
 
     def mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return np.percentile(data[data != 0], np.array(fracs) * 100).tolist()
 
     with (
@@ -408,7 +715,14 @@ def atlasaverage_3d_basic(debug=False):
 
 
 def atlasaverage_3d_with_headerline(debug=False):
-    """Test 3D mode with headerline enabled."""
+    """
+    Test 3D mode with headerline enabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_3d_with_headerline")
     xsize, ysize, numslices = 6, 6, 4
@@ -432,11 +746,40 @@ def atlasaverage_3d_with_headerline(debug=False):
     )
 
     def mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return np.percentile(data[data != 0], np.array(fracs) * 100).tolist()
 
     written_data = {}
 
     def mock_writevec(data, fname, **kwargs):
+        """
+        Simulate ``writevec`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         written_data[fname] = data
 
     with (
@@ -474,7 +817,14 @@ def atlasaverage_3d_with_headerline(debug=False):
 
 
 def atlasaverage_3d_no_headerline(debug=False):
-    """Test 3D mode without headerline."""
+    """
+    Test 3D mode without headerline.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_3d_no_headerline")
     xsize, ysize, numslices = 6, 6, 4
@@ -498,11 +848,40 @@ def atlasaverage_3d_no_headerline(debug=False):
     )
 
     def mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return np.percentile(data[data != 0], np.array(fracs) * 100).tolist()
 
     written_data = {}
 
     def mock_writevec(data, fname, **kwargs):
+        """
+        Simulate ``writevec`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         written_data[fname] = data
 
     with (
@@ -539,10 +918,16 @@ def atlasaverage_3d_no_headerline(debug=False):
 
 
 def atlasaverage_3d_with_datalabel(debug=False):
-    """Test 3D mode with datalabel prepended.
+    """
+    Test 3D mode with datalabel prepended.
 
     Regression coverage: datalabel should not trigger an off-by-one
     when writing region percentile outputs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("atlasaverage_3d_with_datalabel")
@@ -568,6 +953,23 @@ def atlasaverage_3d_with_datalabel(debug=False):
     )
 
     def mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return np.percentile(data[data != 0], np.array(fracs) * 100).tolist()
 
     with (
@@ -598,7 +1000,14 @@ def atlasaverage_3d_with_datalabel(debug=False):
 
 
 def atlasaverage_3d_ignorezeros(debug=False):
-    """Test 3D mode with ignorezeros flag."""
+    """
+    Test 3D mode with ignorezeros flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_3d_ignorezeros")
     xsize, ysize, numslices = 6, 6, 4
@@ -628,6 +1037,23 @@ def atlasaverage_3d_ignorezeros(debug=False):
     )
 
     def mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         nonzero = data[data != 0]
         if len(nonzero) == 0:
             return [0.0] * len(fracs)
@@ -663,7 +1089,14 @@ def atlasaverage_3d_ignorezeros(debug=False):
 
 
 def atlasaverage_3d_summary_methods(debug=False):
-    """Test 3D mode with different summary methods."""
+    """
+    Test 3D mode with different summary methods.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_3d_summary_methods")
     xsize, ysize, numslices = 6, 6, 4
@@ -685,6 +1118,23 @@ def atlasaverage_3d_summary_methods(debug=False):
     )
 
     def mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         nonzero = data[data != 0]
         if len(nonzero) == 0:
             return [0.0] * len(fracs)
@@ -726,7 +1176,14 @@ def atlasaverage_3d_summary_methods(debug=False):
 
 
 def atlasaverage_3d_numpercentiles(debug=False):
-    """Test 3D mode with multiple percentiles."""
+    """
+    Test 3D mode with multiple percentiles.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_3d_numpercentiles")
     xsize, ysize, numslices = 6, 6, 4
@@ -750,6 +1207,23 @@ def atlasaverage_3d_numpercentiles(debug=False):
     )
 
     def mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         nonzero = data[data != 0]
         if len(nonzero) == 0:
             return [0.0] * len(fracs)
@@ -784,7 +1258,14 @@ def atlasaverage_3d_numpercentiles(debug=False):
 
 
 def atlasaverage_4d_basic(debug=False):
-    """Test atlasaverage with 4D data, basic operation."""
+    """
+    Test atlasaverage with 4D data, basic operation.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_4d_basic")
     xsize, ysize, numslices = 6, 6, 4
@@ -813,6 +1294,20 @@ def atlasaverage_4d_basic(debug=False):
     )
 
     def mock_writebidstsv(fname, data, samplerate, **kwargs):
+        """
+        Simulate ``writebidstsv`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        data : array-like
+            Data passed to the test helper.
+        samplerate : float
+            Sampling rate in Hz.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         written_bids[fname] = {"data": data.copy(), "samplerate": samplerate}
 
     with (
@@ -853,7 +1348,14 @@ def atlasaverage_4d_basic(debug=False):
 
 
 def atlasaverage_4d_normmethod_pct(debug=False):
-    """Test 4D mode with pct normalization."""
+    """
+    Test 4D mode with pct normalization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_4d_normmethod_pct")
     xsize, ysize, numslices = 6, 6, 4
@@ -905,7 +1407,14 @@ def atlasaverage_4d_normmethod_pct(debug=False):
 
 
 def atlasaverage_4d_normmethod_std(debug=False):
-    """Test 4D mode with std normalization."""
+    """
+    Test 4D mode with std normalization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_4d_normmethod_std")
     xsize, ysize, numslices = 6, 6, 4
@@ -957,7 +1466,14 @@ def atlasaverage_4d_normmethod_std(debug=False):
 
 
 def atlasaverage_4d_normmethod_var(debug=False):
-    """Test 4D mode with var normalization."""
+    """
+    Test 4D mode with var normalization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_4d_normmethod_var")
     xsize, ysize, numslices = 6, 6, 4
@@ -1009,7 +1525,14 @@ def atlasaverage_4d_normmethod_var(debug=False):
 
 
 def atlasaverage_4d_normmethod_p2p(debug=False):
-    """Test 4D mode with p2p normalization."""
+    """
+    Test 4D mode with p2p normalization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_4d_normmethod_p2p")
     xsize, ysize, numslices = 6, 6, 4
@@ -1061,7 +1584,14 @@ def atlasaverage_4d_normmethod_p2p(debug=False):
 
 
 def atlasaverage_4d_median_summary(debug=False):
-    """Test 4D mode with median summary method."""
+    """
+    Test 4D mode with median summary method.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_4d_median_summary")
     xsize, ysize, numslices = 6, 6, 4
@@ -1113,7 +1643,14 @@ def atlasaverage_4d_median_summary(debug=False):
 
 
 def atlasaverage_space_mismatch(debug=False):
-    """Test that space mismatch causes exit."""
+    """
+    Test that space mismatch causes exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_space_mismatch")
     xsize, ysize, numslices = 6, 6, 4
@@ -1147,7 +1684,14 @@ def atlasaverage_space_mismatch(debug=False):
 
 
 def atlasaverage_regionlabelfile(debug=False):
-    """Test atlasaverage with a region label file."""
+    """
+    Test atlasaverage with a region label file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_regionlabelfile")
     xsize, ysize, numslices = 6, 6, 4
@@ -1175,6 +1719,20 @@ def atlasaverage_regionlabelfile(debug=False):
     )
 
     def mock_writebidstsv(fname, data, samplerate, **kwargs):
+        """
+        Simulate ``writebidstsv`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        data : array-like
+            Data passed to the test helper.
+        samplerate : float
+            Sampling rate in Hz.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         written_bids[fname] = kwargs.get("columns", [])
 
     with (
@@ -1208,7 +1766,14 @@ def atlasaverage_regionlabelfile(debug=False):
 
 
 def atlasaverage_regionlabelfile_mismatch(debug=False):
-    """Test that mismatched region labels cause exit."""
+    """
+    Test that mismatched region labels cause exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_regionlabelfile_mismatch")
     xsize, ysize, numslices = 6, 6, 4
@@ -1262,7 +1827,14 @@ def atlasaverage_regionlabelfile_mismatch(debug=False):
 
 
 def atlasaverage_regionlistfile(debug=False):
-    """Test atlasaverage with a region list file (subset of regions)."""
+    """
+    Test atlasaverage with a region list file (subset of regions).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_regionlistfile")
     xsize, ysize, numslices = 6, 6, 4
@@ -1293,6 +1865,20 @@ def atlasaverage_regionlistfile(debug=False):
     )
 
     def mock_writebidstsv(fname, data, samplerate, **kwargs):
+        """
+        Simulate ``writebidstsv`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        data : array-like
+            Data passed to the test helper.
+        samplerate : float
+            Sampling rate in Hz.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         written_bids[fname] = {"data": data.copy(), "columns": kwargs.get("columns", [])}
 
     with (
@@ -1327,7 +1913,14 @@ def atlasaverage_regionlistfile(debug=False):
 
 
 def atlasaverage_debug_mode(debug=False):
-    """Test atlasaverage with debug flag enabled."""
+    """
+    Test atlasaverage with debug flag enabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_debug_mode")
     xsize, ysize, numslices = 6, 6, 4
@@ -1351,6 +1944,23 @@ def atlasaverage_debug_mode(debug=False):
     )
 
     def mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         nonzero = data[data != 0]
         if len(nonzero) == 0:
             return [0.0] * len(fracs)
@@ -1385,7 +1995,14 @@ def atlasaverage_debug_mode(debug=False):
 
 
 def atlasaverage_auto_labels(debug=False):
-    """Test that auto-generated labels follow region_NNN format."""
+    """
+    Test that auto-generated labels follow region_NNN format.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_auto_labels")
     xsize, ysize, numslices = 6, 6, 4
@@ -1410,6 +2027,20 @@ def atlasaverage_auto_labels(debug=False):
     )
 
     def mock_writebidstsv(fname, data, samplerate, **kwargs):
+        """
+        Simulate ``writebidstsv`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        data : array-like
+            Data passed to the test helper.
+        samplerate : float
+            Sampling rate in Hz.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         written_bids[fname] = kwargs.get("columns", [])
 
     with (
@@ -1445,7 +2076,14 @@ def atlasaverage_auto_labels(debug=False):
 
 
 def atlasaverage_includemask(debug=False):
-    """Test atlasaverage with an include mask."""
+    """
+    Test atlasaverage with an include mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_includemask")
     xsize, ysize, numslices = 6, 6, 4
@@ -1504,7 +2142,14 @@ def atlasaverage_includemask(debug=False):
 
 
 def atlasaverage_excludemask(debug=False):
-    """Test atlasaverage with an exclude mask."""
+    """
+    Test atlasaverage with an exclude mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_excludemask")
     xsize, ysize, numslices = 6, 6, 4
@@ -1563,7 +2208,14 @@ def atlasaverage_excludemask(debug=False):
 
 
 def atlasaverage_3d_maskedatlas_output(debug=False):
-    """Test that masked atlas is saved when include or exclude mask is used (3D)."""
+    """
+    Test that masked atlas is saved when include or exclude mask is used (3D).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("atlasaverage_3d_maskedatlas_output")
     xsize, ysize, numslices = 6, 6, 4
@@ -1592,9 +2244,40 @@ def atlasaverage_3d_maskedatlas_output(debug=False):
     )
 
     def mock_savetonifti(data, hdr, fname, **kwargs):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        hdr : object
+            Image header used by the helper.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         saved_data[fname] = data.copy()
 
     def mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         nonzero = data[data != 0]
         if len(nonzero) == 0:
             return [0.0] * len(fracs)
@@ -1698,18 +2381,48 @@ ATLASAVERAGE_CASES = [
 @pytest.mark.parametrize("case_func", PARSER_CASES, ids=lambda func: func.__name__)
 @pytest.mark.unit
 def test_atlasaverage_parser_cases(case_runner, case_func):
+    """
+    Verify atlasaverage parser cases.
+
+    Parameters
+    ----------
+    case_runner : callable
+        Run the selected test case with the test fixtures.
+    case_func : callable
+        Test case to execute.
+    """
     case_runner(case_func)
 
 
 @pytest.mark.parametrize("case_func", SUMMARIZEVOXELS_CASES, ids=lambda func: func.__name__)
 @pytest.mark.unit
 def test_atlasaverage_summarizevoxels_cases(case_runner, case_func):
+    """
+    Verify atlasaverage summarizevoxels cases.
+
+    Parameters
+    ----------
+    case_runner : callable
+        Run the selected test case with the test fixtures.
+    case_func : callable
+        Test case to execute.
+    """
     case_runner(case_func)
 
 
 @pytest.mark.parametrize("case_func", ATLASAVERAGE_CASES, ids=lambda func: func.__name__)
 @pytest.mark.slow
 def test_atlasaverage_workflow_cases(case_runner, case_func):
+    """
+    Verify atlasaverage workflow cases.
+
+    Parameters
+    ----------
+    case_runner : callable
+        Run the selected test case with the test fixtures.
+    case_func : callable
+        Test case to execute.
+    """
     case_runner(case_func)
 
 

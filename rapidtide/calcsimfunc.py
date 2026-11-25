@@ -432,6 +432,40 @@ def correlationpass(
 
     Parameters
     ----------
+    fmridata : NDArray
+        Voxel time series to correlate with the reference.
+    referencetc : NDArray
+        Reference time series used for comparison.
+    theCorrelator : object
+        Correlation calculator initialized with the reference series.
+    fmri_x : NDArray
+        Time coordinates of the original fMRI samples.
+    os_fmri_x : NDArray
+        Time coordinates on the oversampled fMRI grid.
+    lagmininpts : int
+        Lower lag limit in samples.
+    lagmaxinpts : int
+        Upper lag limit in samples.
+    corrout : NDArray
+        Output array for voxelwise correlation functions.
+    meanval : NDArray
+        Output array for mean voxel intensities.
+    nprocs : int, optional
+        Number of worker processes.
+    alwaysmultiproc : bool, optional
+        Use multiprocessing even when only one worker is requested.
+    oversampfactor : int, optional
+        Ratio of oversampled to original sampling frequency.
+    interptype : str, optional
+        Interpolation method for time-series resampling.
+    showprogressbar : bool, optional
+        Display processing progress.
+    chunksize : int, optional
+        Number of work items to submit to each worker at a time.
+    rt_floattype : np.dtype, optional
+        Floating-point data type used for intermediate computations.
+    debug : bool, optional
+        Enable diagnostic output.
     usegpu : bool, optional
         If True, call :func:`correlationpass_gpu`; otherwise call
         :func:`correlationpass_cpu`. Default is False.
@@ -443,6 +477,11 @@ def correlationpass(
     fallback_to_cpu : bool, optional
         If True, GPU path falls back to CPU when GPU backends are unavailable or
         unsupported for current options.
+
+    Returns
+    -------
+    tuple
+        Number of processed voxels, peak indices, and correlation scale.
     """
     if usegpu:
         return correlationpass_gpu(
@@ -517,6 +556,54 @@ def correlationpass_gpu(
     This implementation uses PyTorch to batch cross-correlation on GPU while
     preserving the same API and output structure as the CPU implementation.
     It supports CUDA, ROCm (via torch's CUDA device type), and Apple MPS.
+
+    Parameters
+    ----------
+    fmridata : NDArray
+        Voxel time series to correlate with the reference.
+    referencetc : NDArray
+        Reference time series used for comparison.
+    theCorrelator : object
+        Correlation calculator initialized with the reference series.
+    fmri_x : NDArray
+        Time coordinates of the original fMRI samples.
+    os_fmri_x : NDArray
+        Time coordinates on the oversampled fMRI grid.
+    lagmininpts : int
+        Lower lag limit in samples.
+    lagmaxinpts : int
+        Upper lag limit in samples.
+    corrout : NDArray
+        Output array for voxelwise correlation functions.
+    meanval : NDArray
+        Output array for mean voxel intensities.
+    nprocs : int, optional
+        Number of worker processes.
+    alwaysmultiproc : bool, optional
+        Use multiprocessing even when only one worker is requested.
+    oversampfactor : int, optional
+        Ratio of oversampled to original sampling frequency.
+    interptype : str, optional
+        Interpolation method for time-series resampling.
+    showprogressbar : bool, optional
+        Display processing progress.
+    chunksize : int, optional
+        Number of work items to submit to each worker at a time.
+    rt_floattype : np.dtype, optional
+        Floating-point data type used for intermediate computations.
+    debug : bool, optional
+        Enable diagnostic output.
+    device : str, optional
+        Device used for correlation batches.
+    batchsize : int, optional
+        Maximum number of voxel series to process in one device batch.
+    fallback_to_cpu : bool, optional
+        Allow CPU correlation when the GPU path is unavailable.
+
+    Returns
+    -------
+    tuple
+        Number of processed voxels, peak indices, and correlation scale.
 
     Notes
     -----
@@ -748,6 +835,16 @@ def correlationpass_gpu(
     preptime += time.perf_counter() - t0_pre
 
     def _run_gpu_batch(batch_np: NDArray, batch_voxels: NDArray) -> None:
+        """
+        Correlate a batch of voxel time series with the reference on the GPU.
+
+        Parameters
+        ----------
+        batch_np : NDArray
+            Batch of voxel time series to correlate.
+        batch_voxels : NDArray
+            Output voxel indices for the rows in the batch.
+        """
         nonlocal gputime, theglobalmaxlist
         t0 = time.perf_counter()
         batch_t = torch.as_tensor(batch_np, device=torch_device, dtype=torch.float32)

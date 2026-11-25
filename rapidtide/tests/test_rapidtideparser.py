@@ -28,7 +28,19 @@ global testlist
 
 
 def _resolve_examples_path(local=False):
-    """Return the examples path, falling back to databundle/ if src/ has no data."""
+    """
+    Return the examples path, falling back to databundle/ if src/ has no data.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+
+    Returns
+    -------
+    object
+        Value returned to the caller in this test case.
+    """
     epath = get_examples_path(local)
     test_file = os.path.join(epath, "sub-RAPIDTIDETEST.nii.gz")
     if not os.path.isfile(test_file):
@@ -44,6 +56,7 @@ def _resolve_examples_path(local=False):
 
 
 def setuptestlist():
+    """Set up ``setuptestlist`` for the test."""
     global testlist
     testlist = {}
     testlist["searchrange"] = {
@@ -187,6 +200,20 @@ def setuptestlist():
 
 
 def checktests(thetestvec, testlist, theargs, epsilon):
+    """
+    Check checktests in the test harness.
+
+    Parameters
+    ----------
+    thetestvec : object
+        Value supplied as ``thetestvec`` by the test case.
+    testlist : object
+        Value supplied as ``testlist`` by the test case.
+    theargs : object
+        Value supplied as ``theargs`` by the test case.
+    epsilon : object
+        Value supplied as ``epsilon`` by the test case.
+    """
     for thetest in thetestvec:
         for theresult in testlist[thetest]["results"]:
             print("testing", testlist[thetest]["command"], "effect on", theresult[0])
@@ -208,6 +235,20 @@ def checktests(thetestvec, testlist, theargs, epsilon):
 
 
 def checkavector(thetestvec, epsilon, debug=False, local=False):
+    """
+    Set up ``checkavector`` for the test.
+
+    Parameters
+    ----------
+    thetestvec : object
+        Value supplied as ``thetestvec`` by the test case.
+    epsilon : object
+        Value supplied as ``epsilon`` by the test case.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     global testlist
     if debug:
         print(testlist)
@@ -233,7 +274,21 @@ def checkavector(thetestvec, epsilon, debug=False, local=False):
 
 
 def _run_parser(extra_args=None, local=False):
-    """Run process_args with the standard test input file and optional extra arguments."""
+    """
+    Run process_args with the standard test input file and optional extra arguments.
+
+    Parameters
+    ----------
+    extra_args : list of str or None, optional
+        Arguments appended to the generated input filenames.
+    local : bool, optional
+        Use the local mode of the test harness.
+
+    Returns
+    -------
+    object
+        Value returned to the caller in this test case.
+    """
     exroot = _resolve_examples_path(local)
     ttroot = get_test_temp_path(local)
     arglist = [
@@ -246,6 +301,16 @@ def _run_parser(extra_args=None, local=False):
 
 
 def test_rapidtideparser(debug=False, local=False):
+    """
+    Verify rapidtideparser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     global testlist
     global exampleroot, testtemproot
 
@@ -303,7 +368,14 @@ def test_rapidtideparser(debug=False, local=False):
 
 
 def test_auto_defaults(local=False):
-    """When no preset or explicit flag is used, 'auto' parameters resolve to their original defaults."""
+    """
+    When no preset or explicit flag is used, 'auto' parameters resolve to their original defaults.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     args, _ = _run_parser(local=local)
 
     assert args["refineoffset"] is True
@@ -319,7 +391,14 @@ def test_auto_defaults(local=False):
 
 
 def test_explicit_flags_without_preset(local=False):
-    """User-explicit flags should set parameters correctly even without a preset."""
+    """
+    User-explicit flags should set parameters correctly even without a preset.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     # --nofitfilt sets zerooutbadfit to False
     args, _ = _run_parser(["--nofitfilt"], local=local)
     assert args["zerooutbadfit"] is False
@@ -358,7 +437,14 @@ def test_explicit_flags_without_preset(local=False):
 
 
 def test_delaymapping_user_overrides(local=False):
-    """User-explicit flags should override values that --delaymapping would set."""
+    """
+    User-explicit flags should override values that --delaymapping would set.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     # Override passes
     args, _ = _run_parser(["--delaymapping", "--passes", "7"], local=local)
     assert args["passes"] == 7
@@ -390,7 +476,14 @@ def test_delaymapping_user_overrides(local=False):
 
 
 def test_denoising_user_overrides(local=False):
-    """User-explicit flags should override values that --denoising would set."""
+    """
+    User-explicit flags should override values that --denoising would set.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     # Override passes
     args, _ = _run_parser(["--denoising", "--passes", "5"], local=local)
     assert args["passes"] == 5
@@ -415,7 +508,14 @@ def test_denoising_user_overrides(local=False):
 
 
 def test_cvr_user_overrides(local=False):
-    """User-explicit flags should override values that --CVR would set."""
+    """
+    User-explicit flags should override values that --CVR would set.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     exroot = _resolve_examples_path(local)
     regfile = f"{exroot}/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json:pass3"
 
@@ -442,7 +542,14 @@ def test_cvr_user_overrides(local=False):
 
 
 def test_globalpreselect_user_overrides(local=False):
-    """User-explicit flags should override values that --globalpreselect would set."""
+    """
+    User-explicit flags should override values that --globalpreselect would set.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     # Override passes
     args, _ = _run_parser(["--globalpreselect", "--passes", "3"], local=local)
     assert args["passes"] == 3
@@ -465,7 +572,14 @@ def test_globalpreselect_user_overrides(local=False):
 
 
 def test_venousrefine_macro(local=False):
-    """The --venousrefine macro should set the expected parameter values."""
+    """
+    The --venousrefine macro should set the expected parameter values.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     args, _ = _run_parser(["--venousrefine"], local=local)
 
     assert args["lagminthresh"] == 2.5
@@ -476,7 +590,14 @@ def test_venousrefine_macro(local=False):
 
 
 def test_nirs_macro(local=False):
-    """The --nirs macro should set the expected parameter values."""
+    """
+    The --nirs macro should set the expected parameter values.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     args, _ = _run_parser(["--nirs"], local=local)
 
     assert args["nothresh"] is True
@@ -490,7 +611,14 @@ def test_nirs_macro(local=False):
 
 
 def test_delaymapping_nofitfilt_interaction(local=False):
-    """--nofitfilt should persist when --delaymapping does not touch zerooutbadfit."""
+    """
+    --nofitfilt should persist when --delaymapping does not touch zerooutbadfit.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     args, _ = _run_parser(["--delaymapping", "--nofitfilt"], local=local)
     assert args["zerooutbadfit"] is False
     # delaymapping values should still hold
@@ -500,7 +628,14 @@ def test_delaymapping_nofitfilt_interaction(local=False):
 
 
 def test_denoising_preserves_unrelated_user_flags(local=False):
-    """User flags for parameters NOT set by --denoising should persist."""
+    """
+    User flags for parameters NOT set by --denoising should persist.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     args, _ = _run_parser(["--denoising", "--saveintermediatemaps"], local=local)
     assert args["saveintermediatemaps"] is True
 
@@ -512,7 +647,14 @@ def test_denoising_preserves_unrelated_user_flags(local=False):
 
 
 def test_nohistzero_follows_zerooutbadfit(local=False):
-    """nohistzero should be derived from zerooutbadfit after auto-resolution."""
+    """
+    Nohistzero should be derived from zerooutbadfit after auto-resolution.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     # Default: zerooutbadfit=True → nohistzero=False
     args, _ = _run_parser(local=local)
     assert args["zerooutbadfit"] is True
@@ -530,7 +672,14 @@ def test_nohistzero_follows_zerooutbadfit(local=False):
 
 
 def test_despeckle_thresh_activates_despeckle_passes(local=False):
-    """Setting --despecklethresh with despeckle_passes=0 should activate 1 pass."""
+    """
+    Setting --despecklethresh with despeckle_passes=0 should activate 1 pass.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     args, _ = _run_parser(
         ["--globalpreselect", "--despecklethresh", "3.0"],
         local=local,

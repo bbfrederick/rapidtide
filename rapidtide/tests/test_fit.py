@@ -30,7 +30,19 @@ import rapidtide.fit as tide_fit
 
 
 def _unwrap_jit(func):
-    """Get the original Python function from a numba JIT-compiled function."""
+    """
+    Get the original Python function from a numba JIT-compiled function.
+
+    Parameters
+    ----------
+    func : callable
+        Function to call with the supplied arguments.
+
+    Returns
+    -------
+    object
+        Value returned to the caller in this test case.
+    """
     return getattr(func, "py_func", func)
 
 
@@ -39,6 +51,7 @@ def _unwrap_jit(func):
 
 class TestGaussEval:
     def test_peak_at_center(self):
+        """Verify peak at center."""
         x = np.linspace(-5, 5, 101)
         p = np.array([2.0, 0.0, 1.0])
         y = tide_fit.gauss_eval(x, p)
@@ -46,6 +59,7 @@ class TestGaussEval:
         assert np.isclose(y[50], 2.0, atol=1e-10)
 
     def test_peak_at_offset(self):
+        """Verify peak at offset."""
         x = np.linspace(-5, 5, 1001)
         p = np.array([3.0, 1.5, 0.5])
         y = tide_fit.gauss_eval(x, p)
@@ -54,12 +68,14 @@ class TestGaussEval:
         assert np.isclose(y[peak_idx], 3.0, atol=0.01)
 
     def test_symmetry(self):
+        """Verify symmetry."""
         x = np.linspace(-5, 5, 101)
         p = np.array([1.0, 0.0, 1.0])
         y = tide_fit.gauss_eval(x, p)
         np.testing.assert_allclose(y[:50], y[50:][::-1][:-1], atol=1e-10)
 
     def test_width(self):
+        """Verify width."""
         x = np.linspace(-10, 10, 10001)
         sigma = 2.0
         p = np.array([1.0, 0.0, sigma])
@@ -71,6 +87,7 @@ class TestGaussEval:
         assert np.isclose(fwhm_measured, fwhm_expected, atol=0.01)
 
     def test_zero_amplitude(self):
+        """Verify zero amplitude."""
         x = np.linspace(-5, 5, 101)
         p = np.array([0.0, 0.0, 1.0])
         y = tide_fit.gauss_eval(x, p)
@@ -79,6 +96,7 @@ class TestGaussEval:
 
 class TestGaussSkEval:
     def test_zero_skewness_symmetric(self):
+        """Verify zero skewness symmetric."""
         x = np.linspace(-5, 5, 101)
         p = np.array([1.0, 0.0, 1.0, 0.0])
         y = tide_fit.gausssk_eval(x, p)
@@ -86,6 +104,7 @@ class TestGaussSkEval:
         assert len(y) == 101
 
     def test_positive_skewness(self):
+        """Verify positive skewness."""
         x = np.linspace(-5, 5, 1001)
         p = np.array([1.0, 0.0, 1.0, 5.0])
         y = tide_fit.gausssk_eval(x, p)
@@ -93,6 +112,7 @@ class TestGaussSkEval:
         assert x[peak_idx] > 0.0  # positive skew shifts peak right
 
     def test_negative_skewness(self):
+        """Verify negative skewness."""
         x = np.linspace(-5, 5, 1001)
         p = np.array([1.0, 0.0, 1.0, -5.0])
         y = tide_fit.gausssk_eval(x, p)
@@ -102,12 +122,14 @@ class TestGaussSkEval:
 
 class TestKaiserBesselEval:
     def test_peak_at_center(self):
+        """Verify peak at center."""
         x = np.linspace(-2, 2, 201)
         p = np.array([4.0, 1.0])
         y = tide_fit.kaiserbessel_eval(x, p)
         assert np.argmax(y) == 100  # center
 
     def test_zero_outside_support(self):
+        """Verify zero outside support."""
         x = np.array([2.0, 3.0, -2.0, -3.0])
         p = np.array([4.0, 1.0])
         y = tide_fit.kaiserbessel_eval(x, p)
@@ -115,6 +137,7 @@ class TestKaiserBesselEval:
         np.testing.assert_allclose(y[3], 0.0, atol=1e-10)
 
     def test_symmetry(self):
+        """Verify symmetry."""
         x = np.linspace(-1, 1, 101)
         p = np.array([4.0, 1.0])
         y = tide_fit.kaiserbessel_eval(x, p)
@@ -123,17 +146,20 @@ class TestKaiserBesselEval:
 
 class TestTrapezoidEval:
     def test_zero_before_start(self):
+        """Verify zero before start."""
         p = np.array([5.0, 2.0, 1.0, 1.0])  # start, amplitude, risetime, falltime
         result = tide_fit.trapezoid_eval(3.0, 2.0, p)
         assert result == 0.0
 
     def test_rising_phase(self):
+        """Verify rising phase."""
         p = np.array([0.0, 2.0, 1.0, 1.0])
         result = tide_fit.trapezoid_eval(0.5, 2.0, p)
         assert result > 0.0
         assert result < 2.0
 
     def test_falling_phase(self):
+        """Verify falling phase."""
         p = np.array([0.0, 2.0, 1.0, 1.0])
         result = tide_fit.trapezoid_eval(3.0, 1.0, p)
         assert result > 0.0
@@ -142,6 +168,7 @@ class TestTrapezoidEval:
 
 class TestTrapezoidEvalLoop:
     def test_matches_scalar(self):
+        """Verify matches scalar."""
         x = np.array([0.0, 0.5, 1.0, 2.0, 5.0])
         p = np.array([0.0, 2.0, 1.0, 1.0])
         toplength = 2.0
@@ -152,17 +179,20 @@ class TestTrapezoidEvalLoop:
 
 class TestRisetimeEval:
     def test_zero_before_start(self):
+        """Verify zero before start."""
         p = np.array([2.0, 1.0, 0.5])  # x0, amplitude, tau
         result = tide_fit.risetime_eval(1.0, p)
         assert result == 0.0
 
     def test_rises_after_start(self):
+        """Verify rises after start."""
         p = np.array([0.0, 1.0, 0.5])
         result = tide_fit.risetime_eval(1.0, p)
         assert result > 0.0
         assert result < 1.0
 
     def test_approaches_amplitude(self):
+        """Verify approaches amplitude."""
         p = np.array([0.0, 1.0, 0.5])
         result = tide_fit.risetime_eval(100.0, p)
         assert np.isclose(result, 1.0, atol=1e-5)
@@ -170,6 +200,7 @@ class TestRisetimeEval:
 
 class TestRisetimeEvalLoop:
     def test_matches_scalar(self):
+        """Verify matches scalar."""
         x = np.array([0.0, 0.5, 1.0, 2.0, 5.0])
         p = np.array([0.0, 1.0, 0.5])
         y = tide_fit.risetime_eval_loop(x, p)
@@ -179,11 +210,13 @@ class TestRisetimeEvalLoop:
 
 class TestGaussfunc:
     def test_peak_height(self):
+        """Verify peak height."""
         x = np.array([0.0])
         result = tide_fit.gaussfunc(x, height=3.0, loc=0.0, FWHM=2.0)
         assert np.isclose(result[0], 3.0)
 
     def test_fwhm(self):
+        """Verify fwhm."""
         FWHM = 2.0
         x = np.linspace(-10, 10, 10001)
         y = tide_fit.gaussfunc(x, height=1.0, loc=0.0, FWHM=FWHM)
@@ -194,11 +227,13 @@ class TestGaussfunc:
 
 class TestSincfunc:
     def test_peak_at_center(self):
+        """Verify peak at center."""
         x = np.array([2.0])
         result = tide_fit.sincfunc(x, height=1.0, loc=2.0, FWHM=1.0, baseline=0.0)
         assert np.isclose(result[0], 1.0, atol=1e-5)
 
     def test_baseline(self):
+        """Verify baseline."""
         x = np.array([100.0])  # far from peak
         result = tide_fit.sincfunc(x, height=1.0, loc=0.0, FWHM=1.0, baseline=5.0)
         assert np.isclose(result[0], 5.0, atol=0.1)
@@ -209,6 +244,7 @@ class TestSincfunc:
 
 class TestGaussResiduals:
     def test_zero_residuals_on_exact_data(self):
+        """Verify zero residuals on exact data."""
         x = np.linspace(-5, 5, 101)
         p = np.array([1.0, 0.0, 1.0])
         y = tide_fit.gauss_eval(x, p)
@@ -216,6 +252,7 @@ class TestGaussResiduals:
         np.testing.assert_allclose(residuals, 0.0, atol=1e-10)
 
     def test_nonzero_residuals_on_wrong_params(self):
+        """Verify nonzero residuals on wrong params."""
         x = np.linspace(-5, 5, 101)
         p_true = np.array([1.0, 0.0, 1.0])
         p_wrong = np.array([2.0, 0.0, 1.0])
@@ -226,6 +263,7 @@ class TestGaussResiduals:
 
 class TestGaussSkResiduals:
     def test_zero_residuals_on_exact_data(self):
+        """Verify zero residuals on exact data."""
         x = np.linspace(-5, 5, 101)
         p = np.array([1.0, 0.0, 1.0, 0.5])
         y = tide_fit.gausssk_eval(x, p)
@@ -235,6 +273,7 @@ class TestGaussSkResiduals:
 
 class TestTrapezoidResiduals:
     def test_zero_residuals_on_exact_data(self):
+        """Verify zero residuals on exact data."""
         x = np.linspace(0, 10, 100)
         p = np.array([1.0, 2.0, 1.0, 1.0])
         toplength = 3.0
@@ -245,6 +284,7 @@ class TestTrapezoidResiduals:
 
 class TestRisetimeResiduals:
     def test_zero_residuals_on_exact_data(self):
+        """Verify zero residuals on exact data."""
         x = np.linspace(0, 10, 100)
         p = np.array([1.0, 2.0, 0.5])
         y = tide_fit.risetime_eval_loop(x, p)
@@ -257,6 +297,7 @@ class TestRisetimeResiduals:
 
 class TestGaussfit:
     def test_recovers_parameters(self):
+        """Verify recovers parameters."""
         x = np.linspace(-5, 5, 201)
         p_true = np.array([2.0, 0.5, 1.0])
         y = tide_fit.gauss_eval(x, p_true)
@@ -268,6 +309,7 @@ class TestGaussfit:
 
 class TestGaussfit2:
     def test_recovers_parameters(self):
+        """Verify recovers parameters."""
         FWHM = 2.0
         x = np.linspace(-10, 10, 501)
         y = tide_fit.gaussfunc(x, height=3.0, loc=1.0, FWHM=FWHM)
@@ -279,6 +321,7 @@ class TestGaussfit2:
 
 class TestGaussfitsk:
     def test_recovers_parameters(self):
+        """Verify recovers parameters."""
         x = np.linspace(-5, 5, 201)
         p_true = np.array([1.0, 0.0, 1.0, 0.5])
         y = tide_fit.gausssk_eval(x, p_true)
@@ -292,6 +335,7 @@ class TestGaussfitsk:
 
 class TestSincfit:
     def test_recovers_parameters(self):
+        """Verify recovers parameters."""
         x = np.linspace(-10, 10, 501)
         y = tide_fit.sincfunc(x, height=2.0, loc=0.5, FWHM=1.5, baseline=0.1)
         popt, pcov = tide_fit.sincfit(1.5, 0.0, 1.0, 0.0, x, y)
@@ -303,6 +347,7 @@ class TestSincfit:
 
 class TestFindrisetimefunc:
     def test_recovers_parameters(self):
+        """Verify recovers parameters."""
         x = np.linspace(0, 20, 200)
         p_true = np.array([2.0, 3.0, 1.5])
         y = tide_fit.risetime_eval_loop(x, p_true)
@@ -315,6 +360,7 @@ class TestFindrisetimefunc:
         assert np.isclose(rise, 1.5, atol=0.5)
 
     def test_out_of_bounds_returns_zero(self):
+        """Verify out of bounds returns zero."""
         x = np.linspace(0, 20, 200)
         p_true = np.array([2.0, 3.0, 1.5])
         y = tide_fit.risetime_eval_loop(x, p_true)
@@ -326,6 +372,7 @@ class TestFindrisetimefunc:
 
 class TestFindtrapezoidfunc:
     def test_recovers_parameters(self):
+        """Verify recovers parameters."""
         x = np.linspace(0, 20, 200)
         toplength = 3.0
         p_true = np.array([2.0, 3.0, 1.5, 2.0])
@@ -343,12 +390,14 @@ class TestFindtrapezoidfunc:
 
 class TestTrendgen:
     def test_constant(self):
+        """Verify constant."""
         x = np.linspace(-2, 2, 101)
         coffs = np.array([5.0])  # constant
         y = tide_fit.trendgen(x, coffs, demean=True)
         np.testing.assert_allclose(y, 5.0, atol=1e-10)
 
     def test_linear(self):
+        """Verify linear."""
         x = np.linspace(-2, 2, 101)
         coffs = np.array([2.0, 1.0])  # 2*x + 1
         y = tide_fit.trendgen(x, coffs, demean=True)
@@ -356,6 +405,7 @@ class TestTrendgen:
         np.testing.assert_allclose(y, expected, atol=1e-10)
 
     def test_demean_false(self):
+        """Verify demean false."""
         x = np.linspace(-2, 2, 101)
         coffs = np.array([2.0, 1.0])
         y = tide_fit.trendgen(x, coffs, demean=False)
@@ -382,11 +432,13 @@ class TestDetrend:
         np.testing.assert_allclose(detrended, 5.0, atol=1e-3)
 
     def test_removes_constant(self):
+        """Verify removes constant."""
         data = np.ones(100) * 7.0
         detrended = tide_fit.detrend(data, order=0, demean=True)
         np.testing.assert_allclose(detrended, 0.0, atol=1e-10)
 
     def test_quadratic(self):
+        """Verify quadratic."""
         n = 200
         thetimepoints = np.arange(0.0, n, 1.0) - n / 2.0
         data = 0.01 * thetimepoints**2 + 2.0 * thetimepoints
@@ -394,6 +446,7 @@ class TestDetrend:
         np.testing.assert_allclose(detrended, 0.0, atol=1e-3)
 
     def test_preserves_length(self):
+        """Verify preserves length."""
         data = np.random.randn(100)
         detrended = tide_fit.detrend(data, order=1)
         assert len(detrended) == len(data)
@@ -404,18 +457,21 @@ class TestDetrend:
 
 class TestPrewhiten:
     def test_output_same_length(self):
+        """Verify output same length."""
         np.random.seed(42)
         series = np.random.randn(200)
         whitened = tide_fit.prewhiten(series, nlags=2)
         assert len(whitened) == len(series)
 
     def test_output_same_length_ARIMA(self):
+        """Verify output same length ARIMA."""
         np.random.seed(42)
         series = np.random.randn(200)
         whitened = tide_fit.prewhiten(series, nlags=None)
         assert len(whitened) == len(series)
 
     def test_produces_finite_output(self):
+        """Verify produces finite output."""
         np.random.seed(42)
         # create strongly autocorrelated series
         n = 1000
@@ -430,6 +486,7 @@ class TestPrewhiten:
 
 class TestPrewhiten2:
     def test_output_same_length(self):
+        """Verify output same length."""
         np.random.seed(42)
         series = np.random.randn(200)
         whitened = tide_fit.prewhiten2(series, nlags=3)
@@ -441,6 +498,7 @@ class TestPrewhiten2:
 
 class TestGasboxcar:
     def test_returns_none(self):
+        """Verify returns none."""
         data = np.random.rand(100)
         result = tide_fit.gasboxcar(data, 10.0, 1.0, 2.0, 3.0, 4.0)
         assert result is None
@@ -451,6 +509,7 @@ class TestGasboxcar:
 
 class TestRefinePeakQuad:
     def test_gaussian_peak(self):
+        """Verify gaussian peak."""
         x = np.linspace(-5, 5, 101)
         y = np.exp(-0.5 * x**2)
         peak_idx = np.argmax(y)
@@ -461,6 +520,7 @@ class TestRefinePeakQuad:
         assert badfit is False
 
     def test_edge_returns_badfit(self):
+        """Verify edge returns badfit."""
         x = np.linspace(-5, 5, 101)
         y = np.exp(-0.5 * x**2)
         # Use stride=2 so that peakindex=0 triggers boundary check (0 < 2-1 = 1)
@@ -468,6 +528,7 @@ class TestRefinePeakQuad:
         assert badfit is True
 
     def test_minimum(self):
+        """Verify minimum."""
         x = np.linspace(-5, 5, 101)
         y = -np.exp(-0.5 * x**2)
         min_idx = np.argmin(y)
@@ -475,6 +536,7 @@ class TestRefinePeakQuad:
         assert ismax is False
 
     def test_flat_region_badfit(self):
+        """Verify flat region badfit."""
         refinepeak_quad = _unwrap_jit(tide_fit.refinepeak_quad)
         x = np.linspace(-5, 5, 101)
         y = np.ones_like(x)
@@ -487,6 +549,7 @@ class TestRefinePeakQuad:
 
 class TestMaxindexNoedge:
     def test_finds_interior_max(self):
+        """Verify finds interior max."""
         x = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         y = np.array([0.1, 0.5, 0.8, 0.3, 0.2])
         idx, flip = tide_fit.maxindex_noedge(x, y)
@@ -494,6 +557,7 @@ class TestMaxindexNoedge:
         assert flip == 1.0
 
     def test_bipolar_negative(self):
+        """Verify bipolar negative."""
         x = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         y = np.array([0.1, 0.2, -0.9, 0.3, 0.2])
         idx, flip = tide_fit.maxindex_noedge(x, y, bipolar=True)
@@ -501,6 +565,7 @@ class TestMaxindexNoedge:
         assert flip == -1.0
 
     def test_avoids_edge(self):
+        """Verify avoids edge."""
         x = np.arange(5, dtype=float)
         y = np.array([0.9, 0.5, 0.3, 0.2, 0.1])
         idx, flip = tide_fit.maxindex_noedge(x, y)
@@ -513,11 +578,29 @@ class TestMaxindexNoedge:
 
 class TestFindmaxlagGauss:
     def _make_gauss_correlation(self, center=2.0, sigma=1.0, npts=201):
+        """
+        Create gauss correlation.
+
+        Parameters
+        ----------
+        center : float, optional
+            Value supplied as ``center`` by the test case.
+        sigma : float, optional
+            Value supplied as ``sigma`` by the test case.
+        npts : int, optional
+            Number of samples.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         x = np.linspace(-10, 10, npts)
         y = 0.8 * np.exp(-0.5 * ((x - center) / sigma) ** 2)
         return x, y
 
     def test_basic_no_refine(self):
+        """Verify basic no refine."""
         x, y = self._make_gauss_correlation(center=0.0, sigma=1.0)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = (
             tide_fit.findmaxlag_gauss(x, y, -5.0, 5.0, 3.0, refine=False)
@@ -527,6 +610,7 @@ class TestFindmaxlagGauss:
         assert np.isclose(maxval, 0.8, atol=0.1)
 
     def test_with_refine(self):
+        """Verify with refine."""
         x, y = self._make_gauss_correlation(center=1.0, sigma=1.0)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = (
             tide_fit.findmaxlag_gauss(x, y, -5.0, 5.0, 3.0, refine=True)
@@ -535,6 +619,7 @@ class TestFindmaxlagGauss:
         assert np.isclose(maxlag, 1.0, atol=0.2)
 
     def test_below_threshold(self):
+        """Verify below threshold."""
         x, y = self._make_gauss_correlation(center=0.0, sigma=1.0)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = (
             tide_fit.findmaxlag_gauss(x, y, -5.0, 5.0, 3.0, threshval=0.9, enforcethresh=True)
@@ -542,6 +627,7 @@ class TestFindmaxlagGauss:
         assert maskval == 0
 
     def test_out_of_range_lag(self):
+        """Verify out of range lag."""
         x, y = self._make_gauss_correlation(center=8.0, sigma=1.0)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = (
             tide_fit.findmaxlag_gauss(x, y, -5.0, 5.0, 3.0, refine=True, zerooutbadfit=True)
@@ -549,6 +635,7 @@ class TestFindmaxlagGauss:
         assert maskval == 0
 
     def test_fastgauss(self):
+        """Verify fastgauss."""
         x, y = self._make_gauss_correlation(center=0.0, sigma=1.0)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = (
             tide_fit.findmaxlag_gauss(x, y, -5.0, 5.0, 3.0, refine=True, fastgauss=True)
@@ -562,6 +649,7 @@ class TestFindmaxlagGauss:
 
 class TestGramSchmidt:
     def test_orthonormal_output(self):
+        """Verify orthonormal output."""
         vectors = np.array([[2.0, 1.0], [3.0, 4.0]])
         basis = tide_fit.gram_schmidt(vectors)
         assert basis.shape == (2, 2)
@@ -573,11 +661,13 @@ class TestGramSchmidt:
             assert np.isclose(np.linalg.norm(basis[i]), 1.0, atol=1e-10)
 
     def test_linearly_dependent(self):
+        """Verify linearly dependent."""
         vectors = np.array([[1.0, 0.0], [2.0, 0.0]])
         basis = tide_fit.gram_schmidt(vectors)
         assert basis.shape[0] == 1  # one dropped
 
     def test_three_vectors(self):
+        """Verify three vectors."""
         vectors = np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [1.0, 1.0, 1.0]])
         basis = tide_fit.gram_schmidt(vectors)
         assert basis.shape == (3, 3)
@@ -592,6 +682,7 @@ class TestGramSchmidt:
 
 class TestMlregress:
     def test_simple_linear(self):
+        """Verify simple linear."""
         X = np.array([[1.0], [2.0], [3.0], [4.0], [5.0]])
         y = np.array([2.0, 4.0, 6.0, 8.0, 10.0])
         coffs, R2 = tide_fit.mlregress(X, y)
@@ -600,6 +691,7 @@ class TestMlregress:
         assert np.isclose(coffs[0, 1], 2.0, atol=0.1)
 
     def test_with_intercept(self):
+        """Verify with intercept."""
         X = np.array([[1.0], [2.0], [3.0], [4.0], [5.0]])
         y = np.array([3.0, 5.0, 7.0, 9.0, 11.0])  # y = 2*x + 1
         coffs, R2 = tide_fit.mlregress(X, y, intercept=True)
@@ -608,6 +700,7 @@ class TestMlregress:
         assert np.isclose(coffs[0, 1], 2.0, atol=0.1)  # slope
 
     def test_multiple_features(self):
+        """Verify multiple features."""
         np.random.seed(42)
         X = np.random.randn(100, 3)
         y = 2.0 * X[:, 0] + 3.0 * X[:, 1] - 1.0 * X[:, 2] + 5.0
@@ -615,12 +708,14 @@ class TestMlregress:
         assert np.isclose(R2, 1.0, atol=1e-5)
 
     def test_shape_mismatch_transposed(self):
+        """Verify shape mismatch transposed."""
         X = np.array([[1.0, 2.0, 3.0]])  # 1x3, needs transpose
         y = np.array([2.0, 4.0, 6.0])
         coffs, R2 = tide_fit.mlregress(X, y)
         assert R2 > 0.9
 
     def test_incompatible_shapes_raises(self):
+        """Verify incompatible shapes raises."""
         X = np.array([[1.0, 2.0], [3.0, 4.0]])
         y = np.array([1.0, 2.0, 3.0])
         with pytest.raises(AttributeError):
@@ -629,6 +724,7 @@ class TestMlregress:
 
 class TestOlsregress:
     def test_simple_linear(self):
+        """Verify simple linear."""
         X = np.array([[1.0], [2.0], [3.0], [4.0], [5.0]])
         y = np.array([2.0, 4.0, 6.0, 8.0, 10.0])
         params, r = tide_fit.olsregress(X, y)
@@ -637,6 +733,7 @@ class TestOlsregress:
 
 class TestMlproject:
     def test_with_intercept(self):
+        """Verify with intercept."""
         thefit = np.array([1.0, 2.0, 3.0])
         theevs = [np.array([1.0, 2.0, 3.0]), np.array([4.0, 5.0, 6.0])]
         result = tide_fit.mlproject(thefit, theevs, intercept=True)
@@ -644,6 +741,7 @@ class TestMlproject:
         np.testing.assert_allclose(result, expected, atol=1e-10)
 
     def test_without_intercept(self):
+        """Verify without intercept."""
         thefit = np.array([2.0, 3.0])
         theevs = [np.array([1.0, 2.0, 3.0]), np.array([4.0, 5.0, 6.0])]
         result = tide_fit.mlproject(thefit, theevs, intercept=False)
@@ -659,6 +757,7 @@ class TestMlproject:
 
 class TestLinfitfilt:
     def test_removes_linear_component(self):
+        """Verify removes linear component."""
         linfitfilt = _unwrap_jit(tide_fit.linfitfilt)
         n = 100
         ev = np.linspace(0, 1, n).reshape(-1, 1)
@@ -669,6 +768,7 @@ class TestLinfitfilt:
         assert R2 > 0.99
 
     def test_2d_evs(self):
+        """Verify 2D evs."""
         linfitfilt = _unwrap_jit(tide_fit.linfitfilt)
         n = 100
         ev1 = np.linspace(0, 1, n)
@@ -683,6 +783,14 @@ class TestLinfitfilt:
 
 class TestExpandedlinfitfilt:
     def test_single_ev_ncomps1(self, monkeypatch):
+        """
+        Verify single ev ncomps1.
+
+        Parameters
+        ----------
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
+        """
         monkeypatch.setattr(tide_fit, "linfitfilt", _unwrap_jit(tide_fit.linfitfilt))
         expandedlinfitfilt = _unwrap_jit(tide_fit.expandedlinfitfilt)
         n = 100
@@ -692,6 +800,14 @@ class TestExpandedlinfitfilt:
         assert np.std(filtered) < 1e-5
 
     def test_polynomial_expansion(self, monkeypatch):
+        """
+        Verify polynomial expansion.
+
+        Parameters
+        ----------
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
+        """
         monkeypatch.setattr(tide_fit, "linfitfilt", _unwrap_jit(tide_fit.linfitfilt))
         expandedlinfitfilt = _unwrap_jit(tide_fit.expandedlinfitfilt)
         n = 100
@@ -703,6 +819,14 @@ class TestExpandedlinfitfilt:
 
 class TestDerivativelinfitfilt:
     def test_single_ev(self, monkeypatch):
+        """
+        Verify single ev.
+
+        Parameters
+        ----------
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
+        """
         monkeypatch.setattr(tide_fit, "linfitfilt", _unwrap_jit(tide_fit.linfitfilt))
         derivativelinfitfilt = _unwrap_jit(tide_fit.derivativelinfitfilt)
         n = 100
@@ -712,6 +836,14 @@ class TestDerivativelinfitfilt:
         assert len(filtered) == n
 
     def test_nderivs_zero(self, monkeypatch):
+        """
+        Verify nderivs zero.
+
+        Parameters
+        ----------
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
+        """
         monkeypatch.setattr(tide_fit, "linfitfilt", _unwrap_jit(tide_fit.linfitfilt))
         derivativelinfitfilt = _unwrap_jit(tide_fit.derivativelinfitfilt)
         n = 100
@@ -726,6 +858,7 @@ class TestDerivativelinfitfilt:
 
 class TestConfoundregress:
     def test_removes_regressors(self):
+        """Verify removes regressors."""
         confoundregress = _unwrap_jit(tide_fit.confoundregress)
         np.random.seed(42)
         n_voxels = 10
@@ -740,6 +873,7 @@ class TestConfoundregress:
             assert r2[i] > 0.99
 
     def test_output_shape(self):
+        """Verify output shape."""
         confoundregress = _unwrap_jit(tide_fit.confoundregress)
         np.random.seed(42)
         data = np.random.randn(5, 50)
@@ -754,6 +888,7 @@ class TestConfoundregress:
 
 class TestCalcexpandedregressors:
     def test_basic(self):
+        """Verify basic."""
         confounddict = {
             "a": np.array([1.0, 2.0, 3.0, 4.0, 5.0]),
             "b": np.array([5.0, 4.0, 3.0, 2.0, 1.0]),
@@ -763,6 +898,7 @@ class TestCalcexpandedregressors:
         assert labels == ["a", "b"]
 
     def test_with_derivatives(self):
+        """Verify with derivatives."""
         confounddict = {
             "a": np.array([1.0, 2.0, 3.0, 4.0, 5.0]),
         }
@@ -772,6 +908,7 @@ class TestCalcexpandedregressors:
         assert "a_deriv" in labels
 
     def test_with_higher_order(self):
+        """Verify with higher order."""
         confounddict = {
             "a": np.array([1.0, 2.0, 3.0, 4.0, 5.0]),
         }
@@ -780,6 +917,7 @@ class TestCalcexpandedregressors:
         assert "a^2" in labels
 
     def test_with_labels_filter(self):
+        """Verify with labels filter."""
         confounddict = {
             "a": np.array([1.0, 2.0, 3.0, 4.0, 5.0]),
             "b": np.array([5.0, 4.0, 3.0, 2.0, 1.0]),
@@ -791,6 +929,7 @@ class TestCalcexpandedregressors:
         assert labels == ["a"]
 
     def test_start_end_slicing(self):
+        """Verify start end slicing."""
         confounddict = {
             "a": np.array([1.0, 2.0, 3.0, 4.0, 5.0]),
         }
@@ -801,6 +940,7 @@ class TestCalcexpandedregressors:
         np.testing.assert_allclose(regressors[0], [2.0, 3.0, 4.0])
 
     def test_invalid_range_raises(self):
+        """Verify invalid range raises."""
         confounddict = {"a": np.array([1.0, 2.0, 3.0, 4.0, 5.0])}
         with pytest.raises(ValueError):
             tide_fit.calcexpandedregressors(confounddict, start=6, end=8)
@@ -810,6 +950,7 @@ class TestCalcexpandedregressors:
             tide_fit.calcexpandedregressors(confounddict, start=-1, end=2)
 
     def test_empty_labels_raises(self):
+        """Verify empty labels raises."""
         confounddict = {"a": np.array([1.0, 2.0, 3.0, 4.0, 5.0])}
         with pytest.raises(ValueError):
             tide_fit.calcexpandedregressors(confounddict, labels=[])
@@ -820,12 +961,14 @@ class TestCalcexpandedregressors:
 
 class TestGetpeaks:
     def test_finds_peaks(self):
+        """Verify finds peaks."""
         x = np.linspace(-10, 10, 1000)
         y = np.sin(x)
         peaks = tide_fit.getpeaks(x, y)
         assert len(peaks) > 0
 
     def test_bipolar(self):
+        """Verify bipolar."""
         x = np.linspace(-10, 10, 1000)
         y = np.sin(x)
         peaks = tide_fit.getpeaks(x, y, bipolar=True)
@@ -836,6 +979,7 @@ class TestGetpeaks:
         assert len(neg) > 0
 
     def test_xrange_filter(self):
+        """Verify xrange filter."""
         x = np.linspace(-10, 10, 1000)
         y = np.sin(x)
         peaks = tide_fit.getpeaks(x, y, xrange=(-2, 2))
@@ -845,21 +989,25 @@ class TestGetpeaks:
 
 class TestDatacheckPeakdetect:
     def test_with_x_axis(self):
+        """Verify with x axis."""
         x, y = tide_fit._datacheck_peakdetect(np.array([1, 2, 3]), np.array([4, 5, 6]))
         assert len(x) == 3
         assert len(y) == 3
 
     def test_without_x_axis(self):
+        """Verify without x axis."""
         x, y = tide_fit._datacheck_peakdetect(None, np.array([4, 5, 6]))
         np.testing.assert_array_equal(x, np.array([0, 1, 2]))
 
     def test_mismatched_raises(self):
+        """Verify mismatched raises."""
         with pytest.raises(ValueError):
             tide_fit._datacheck_peakdetect(np.array([1, 2]), np.array([4, 5, 6]))
 
 
 class TestPeakdetect:
     def test_finds_maxima_and_minima(self):
+        """Verify finds maxima and minima."""
         x = np.linspace(0, 4 * np.pi, 1000)
         y = np.sin(x)
         max_peaks, min_peaks = tide_fit.peakdetect(y, x, lookahead=50, delta=0.5)
@@ -867,10 +1015,12 @@ class TestPeakdetect:
         assert len(min_peaks) > 0
 
     def test_invalid_lookahead_raises(self):
+        """Verify invalid lookahead raises."""
         with pytest.raises(ValueError):
             tide_fit.peakdetect(np.array([1, 2, 3]), lookahead=0)
 
     def test_negative_delta_raises(self):
+        """Verify negative delta raises."""
         with pytest.raises(ValueError):
             tide_fit.peakdetect(np.array([1, 2, 3]), delta=-1.0)
 
@@ -881,11 +1031,13 @@ class TestPeakdetect:
 class TestAfscreetest:
     def test_returns_int(self):
         # Eigenvalues with a clear elbow at index 2
+        """Verify returns int."""
         eigenvals = np.array([10.0, 8.0, 2.0, 0.5, 0.2, 0.1, 0.05])
         result = tide_fit.afscreetest(eigenvals)
         assert isinstance(result, int)
 
     def test_monotonic(self):
+        """Verify monotonic."""
         eigenvals = np.array([100.0, 50.0, 10.0, 1.0, 0.1])
         result = tide_fit.afscreetest(eigenvals)
         assert isinstance(result, int)
@@ -893,12 +1045,14 @@ class TestAfscreetest:
 
 class TestOcscreetest:
     def test_basic(self):
+        """Verify basic."""
         eigenvals = np.array([10.0, 5.0, 0.5, 0.2, 0.1, 0.05])
         result = tide_fit.ocscreetest(eigenvals)
         assert isinstance(result, (int, np.integer))
         assert result >= 1
 
     def test_with_many_eigenvalues(self):
+        """Verify with many eigenvalues."""
         eigenvals = np.array([10.0, 8.0, 5.0, 3.0, 2.0, 1.5, 1.3, 1.1, 0.8, 0.5, 0.2, 0.1])
         result = tide_fit.ocscreetest(eigenvals)
         assert isinstance(result, (int, np.integer))
@@ -910,6 +1064,14 @@ class TestOcscreetest:
 
 class TestPhaseanalysis:
     def test_basic(self, capsys):
+        """
+        Verify basic.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         t = np.linspace(0, 1, 500)
         signal = np.sin(2 * np.pi * 5 * t)
         phase, amp, analytic = tide_fit.phaseanalysis(signal)
@@ -920,6 +1082,14 @@ class TestPhaseanalysis:
         assert np.mean(amp[50:-50]) > 0.8
 
     def test_phase_is_monotonic(self, capsys):
+        """
+        Verify phase is monotonic.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         t = np.linspace(0, 1, 500)
         signal = np.sin(2 * np.pi * 5 * t)
         phase, amp, analytic = tide_fit.phaseanalysis(signal)
@@ -936,11 +1106,31 @@ class TestPhaseanalysis:
 
 class TestSimfuncpeakfit:
     def _make_corrfunc(self, center=0.0, sigma=2.0, amp=0.8, n=1001):
+        """
+        Create corrfunc.
+
+        Parameters
+        ----------
+        center : float, optional
+            Value supplied as ``center`` by the test case.
+        sigma : float, optional
+            Value supplied as ``sigma`` by the test case.
+        amp : float, optional
+            Value supplied as ``amp`` by the test case.
+        n : int, optional
+            Value supplied as ``n`` by the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         t = np.linspace(-30, 30, n)
         corr = amp * np.exp(-0.5 * ((t - center) / sigma) ** 2)
         return corr, t
 
     def test_gauss_fit(self):
+        """Verify gauss fit."""
         corr, t = self._make_corrfunc(center=1.0, sigma=2.0, amp=0.7)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
             corr, t, peakfittype="gauss"
@@ -950,6 +1140,7 @@ class TestSimfuncpeakfit:
         assert np.isclose(maxval, 0.7, atol=0.2)
 
     def test_quad_fit(self):
+        """Verify quad fit."""
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.8)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
             corr, t, peakfittype="quad"
@@ -958,6 +1149,7 @@ class TestSimfuncpeakfit:
         assert np.isclose(maxlag, 0.0, atol=0.5)
 
     def test_fastgauss_fit(self):
+        """Verify fastgauss fit."""
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.8)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
             corr, t, peakfittype="fastgauss"
@@ -965,6 +1157,7 @@ class TestSimfuncpeakfit:
         assert maskval == 1
 
     def test_fastquad_fit(self):
+        """Verify fastquad fit."""
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.8)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
             corr, t, peakfittype="fastquad"
@@ -972,6 +1165,7 @@ class TestSimfuncpeakfit:
         assert maskval == 1
 
     def test_com_fit(self):
+        """Verify com fit."""
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.8)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
             corr, t, peakfittype="COM"
@@ -979,6 +1173,7 @@ class TestSimfuncpeakfit:
         assert maskval == 1
 
     def test_none_fit(self):
+        """Verify none fit."""
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.8)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
             corr, t, peakfittype="None"
@@ -994,6 +1189,7 @@ class TestSimfuncpeakfit:
         assert maskval == 0
 
     def test_bipolar(self):
+        """Verify bipolar."""
         t = np.linspace(-30, 30, 1001)
         corr = -0.8 * np.exp(-0.5 * ((t - 1.0) / 2.0) ** 2)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
@@ -1003,6 +1199,7 @@ class TestSimfuncpeakfit:
         assert maxval < 0.0
 
     def test_useguess(self):
+        """Verify useguess."""
         corr, t = self._make_corrfunc(center=2.0, sigma=2.0, amp=0.7)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
             corr, t, peakfittype="gauss", useguess=True, maxguess=2.0
@@ -1011,6 +1208,7 @@ class TestSimfuncpeakfit:
         assert np.isclose(maxlag, 2.0, atol=0.5)
 
     def test_mutualinfo_functype(self):
+        """Verify mutualinfo functype."""
         t = np.linspace(-30, 30, 1001)
         # mutual info has a nonzero baseline
         corr = 0.5 + 0.5 * np.exp(-0.5 * (t / 2.0) ** 2)
@@ -1026,6 +1224,7 @@ class TestSimfuncpeakfit:
 
 class TestMaxindexNoedgeInternal:
     def test_basic(self):
+        """Verify basic."""
         corrfunc = np.array([0.1, 0.5, 0.8, 0.3, 0.2])
         corrtimeaxis = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         idx, flip = tide_fit._maxindex_noedge(corrfunc, corrtimeaxis)
@@ -1033,6 +1232,7 @@ class TestMaxindexNoedgeInternal:
         assert flip == 1.0
 
     def test_bipolar(self):
+        """Verify bipolar."""
         corrfunc = np.array([0.1, 0.2, -0.9, 0.3, 0.2])
         corrtimeaxis = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
         idx, flip = tide_fit._maxindex_noedge(corrfunc, corrtimeaxis, bipolar=True)
@@ -1045,6 +1245,7 @@ class TestMaxindexNoedgeInternal:
 
 class TestTerritorydecomp:
     def test_basic_3d(self):
+        """Verify basic 3D."""
         np.random.seed(42)
         inputmap = np.random.rand(5, 5, 5)
         template = np.random.rand(5, 5, 5)
@@ -1055,6 +1256,7 @@ class TestTerritorydecomp:
         assert r2s.shape[0] == 1
 
     def test_multiple_territories(self):
+        """Verify multiple territories."""
         np.random.seed(42)
         inputmap = np.random.rand(6, 6, 6)
         template = np.random.rand(6, 6, 6)
@@ -1065,6 +1267,7 @@ class TestTerritorydecomp:
         assert coffs.shape[1] == 2  # 2 territories
 
     def test_fitorder_zero(self):
+        """Verify fitorder zero."""
         np.random.seed(42)
         inputmap = np.random.rand(5, 5, 5)
         template = np.random.rand(5, 5, 5)
@@ -1075,6 +1278,7 @@ class TestTerritorydecomp:
 
 class TestTerritorystats:
     def test_basic_3d(self):
+        """Verify basic 3D."""
         np.random.seed(42)
         inputmap = np.random.rand(5, 5, 5)
         atlas = np.ones((5, 5, 5), dtype=int)
@@ -1085,6 +1289,7 @@ class TestTerritorystats:
         assert means.shape == (1, 1)
 
     def test_multiple_territories(self):
+        """Verify multiple territories."""
         np.random.seed(42)
         inputmap = np.random.rand(6, 6, 6)
         atlas = np.zeros((6, 6, 6), dtype=int)
@@ -1095,6 +1300,7 @@ class TestTerritorystats:
         assert means.shape == (1, 2)
 
     def test_with_mask(self):
+        """Verify with mask."""
         np.random.seed(42)
         inputmap = np.random.rand(5, 5, 5)
         atlas = np.ones((5, 5, 5), dtype=int)
@@ -1113,6 +1319,7 @@ class TestGaussEvalPython:
     """Test gauss_eval Python fallback via _unwrap_jit."""
 
     def test_basic(self):
+        """Verify basic."""
         gauss_eval = _unwrap_jit(tide_fit.gauss_eval)
         x = np.linspace(-5, 5, 101)
         p = np.array([2.0, 0.0, 1.0])
@@ -1124,6 +1331,7 @@ class TestGaussResidualsPython:
     """Test gaussresiduals Python fallback via _unwrap_jit."""
 
     def test_zero_residuals(self):
+        """Verify zero residuals."""
         gaussresiduals = _unwrap_jit(tide_fit.gaussresiduals)
         x = np.linspace(-5, 5, 101)
         p = np.array([1.0, 0.0, 1.0])
@@ -1136,12 +1344,14 @@ class TestTrapezoidEvalPython:
     """Test trapezoid_eval Python fallback for all branches."""
 
     def test_before_start(self):
+        """Verify before start."""
         trapezoid_eval = _unwrap_jit(tide_fit.trapezoid_eval)
         p = np.array([5.0, 2.0, 1.0, 1.0])
         result = trapezoid_eval(3.0, 2.0, p)
         assert result == 0.0
 
     def test_rising_phase(self):
+        """Verify rising phase."""
         trapezoid_eval = _unwrap_jit(tide_fit.trapezoid_eval)
         p = np.array([0.0, 2.0, 1.0, 1.0])
         result = trapezoid_eval(0.5, 2.0, p)
@@ -1149,6 +1359,7 @@ class TestTrapezoidEvalPython:
         assert result < 2.0
 
     def test_falling_phase(self):
+        """Verify falling phase."""
         trapezoid_eval = _unwrap_jit(tide_fit.trapezoid_eval)
         p = np.array([0.0, 2.0, 1.0, 1.0])
         result = trapezoid_eval(3.0, 1.0, p)
@@ -1160,12 +1371,14 @@ class TestRisetimeEvalPython:
     """Test risetime_eval Python fallback for both branches."""
 
     def test_before_start(self):
+        """Verify before start."""
         risetime_eval = _unwrap_jit(tide_fit.risetime_eval)
         p = np.array([2.0, 1.0, 0.5])
         result = risetime_eval(1.0, p)
         assert result == 0.0
 
     def test_after_start(self):
+        """Verify after start."""
         risetime_eval = _unwrap_jit(tide_fit.risetime_eval)
         p = np.array([0.0, 1.0, 0.5])
         result = risetime_eval(1.0, p)
@@ -1178,6 +1391,7 @@ class TestRisetimeEvalPython:
 
 class TestTrendgenHigherOrder:
     def test_quadratic(self):
+        """Verify quadratic."""
         x = np.linspace(-2, 2, 101)
         coffs = np.array([1.0, 0.0, 3.0])  # 1*x^2 + 0*x + 3
         y = tide_fit.trendgen(x, coffs, demean=True)
@@ -1185,6 +1399,7 @@ class TestTrendgenHigherOrder:
         np.testing.assert_allclose(y, expected, atol=1e-10)
 
     def test_quadratic_no_demean(self):
+        """Verify quadratic no demean."""
         x = np.linspace(-2, 2, 101)
         coffs = np.array([1.0, 2.0, 5.0])  # 1*x^2 + 2*x + 5
         y = tide_fit.trendgen(x, coffs, demean=False)
@@ -1197,6 +1412,7 @@ class TestTrendgenHigherOrder:
 
 class TestPrewhiten2Sel:
     def test_sel_true(self):
+        """Verify sel true."""
         np.random.seed(42)
         n = 200
         series = np.zeros(n)
@@ -1213,6 +1429,7 @@ class TestPrewhiten2Sel:
 
 class TestFindtrapezoidfuncDefaults:
     def test_default_initguess(self):
+        """Verify default initguess."""
         x = np.linspace(0, 20, 200)
         p_true = np.array([2.0, 3.0, 1.5, 2.0])
         toplength = 3.0
@@ -1222,6 +1439,7 @@ class TestFindtrapezoidfuncDefaults:
         assert isinstance(success, (int, np.integer))
 
     def test_out_of_bounds(self):
+        """Verify out of bounds."""
         x = np.linspace(0, 20, 200)
         p_true = np.array([2.0, 3.0, 1.5, 2.0])
         toplength = 3.0
@@ -1234,6 +1452,7 @@ class TestFindtrapezoidfuncDefaults:
 
 class TestFindrisetimefuncDefaults:
     def test_default_initguess(self):
+        """Verify default initguess."""
         x = np.linspace(0, 20, 200)
         p_true = np.array([2.0, 3.0, 1.5])
         y = tide_fit.risetime_eval_loop(x, p_true)
@@ -1246,6 +1465,7 @@ class TestFindrisetimefuncDefaults:
 
 class TestTerritorydecomp4D:
     def test_4d_input(self):
+        """Verify 4D input."""
         np.random.seed(42)
         inputmap = np.random.rand(5, 5, 5, 3)
         template = np.random.rand(5, 5, 5)
@@ -1255,6 +1475,7 @@ class TestTerritorydecomp4D:
         assert coffs.shape[0] == 3  # nummaps
 
     def test_4d_input_with_mask(self):
+        """Verify 4D input with mask."""
         np.random.seed(42)
         inputmap = np.random.rand(5, 5, 5, 2)
         template = np.random.rand(5, 5, 5)
@@ -1271,6 +1492,7 @@ class TestTerritorydecomp4D:
 
 class TestTerritorystats4D:
     def test_4d_input(self):
+        """Verify 4D input."""
         np.random.seed(42)
         inputmap = np.random.rand(5, 5, 5, 3)
         atlas = np.ones((5, 5, 5), dtype=int)
@@ -1279,6 +1501,7 @@ class TestTerritorystats4D:
         assert means.shape == (3, 1)
 
     def test_4d_input_with_mask(self):
+        """Verify 4D input with mask."""
         np.random.seed(42)
         inputmap = np.random.rand(5, 5, 5, 2)
         atlas = np.ones((5, 5, 5), dtype=int)
@@ -1289,6 +1512,7 @@ class TestTerritorystats4D:
         assert means.shape == (2, 1)
 
     def test_custom_entropy_range(self):
+        """Verify custom entropy range."""
         np.random.seed(42)
         inputmap = np.random.rand(5, 5, 5)
         atlas = np.ones((5, 5, 5), dtype=int)
@@ -1301,11 +1525,31 @@ class TestTerritorystats4D:
 
 class TestFindmaxlagGaussEdgeCases:
     def _make_gauss(self, center=0.0, sigma=1.0, amp=0.8, npts=201):
+        """
+        Create gauss.
+
+        Parameters
+        ----------
+        center : float, optional
+            Value supplied as ``center`` by the test case.
+        sigma : float, optional
+            Value supplied as ``sigma`` by the test case.
+        amp : float, optional
+            Value supplied as ``amp`` by the test case.
+        npts : int, optional
+            Number of samples.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         x = np.linspace(-10, 10, npts)
         y = amp * np.exp(-0.5 * ((x - center) / sigma) ** 2)
         return x, y
 
     def test_useguess(self):
+        """Verify useguess."""
         x, y = self._make_gauss(center=1.0, sigma=1.0)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, fs, fe = (
             tide_fit.findmaxlag_gauss(
@@ -1316,6 +1560,7 @@ class TestFindmaxlagGaussEdgeCases:
         assert np.isclose(maxlag, 1.0, atol=0.5)
 
     def test_tweaklims(self):
+        """Verify tweaklims."""
         x, y = self._make_gauss(center=0.0, sigma=1.0)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, fs, fe = (
             tide_fit.findmaxlag_gauss(x, y, -5.0, 5.0, 3.0, refine=True, tweaklims=True)
@@ -1323,6 +1568,7 @@ class TestFindmaxlagGaussEdgeCases:
         assert maskval == 1
 
     def test_amplitude_above_one(self):
+        """Verify amplitude above one."""
         x, y = self._make_gauss(center=0.0, sigma=1.0, amp=1.5)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, fs, fe = (
             tide_fit.findmaxlag_gauss(x, y, -5.0, 5.0, 3.0, refine=False)
@@ -1331,6 +1577,7 @@ class TestFindmaxlagGaussEdgeCases:
         assert failreason & 0x02
 
     def test_negative_amplitude(self):
+        """Verify negative amplitude."""
         x = np.linspace(-10, 10, 201)
         y = -0.5 * np.exp(-0.5 * (x / 1.0) ** 2)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, fs, fe = (
@@ -1374,11 +1621,31 @@ class TestFindmaxlagGaussEdgeCases:
 
 class TestSimfuncpeakfitEdgeCases:
     def _make_corrfunc(self, center=0.0, sigma=2.0, amp=0.8, n=1001):
+        """
+        Create corrfunc.
+
+        Parameters
+        ----------
+        center : float, optional
+            Value supplied as ``center`` by the test case.
+        sigma : float, optional
+            Value supplied as ``sigma`` by the test case.
+        amp : float, optional
+            Value supplied as ``amp`` by the test case.
+        n : int, optional
+            Value supplied as ``n`` by the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         t = np.linspace(-30, 30, n)
         corr = amp * np.exp(-0.5 * ((t - center) / sigma) ** 2)
         return corr, t
 
     def test_hardlimit_false(self):
+        """Verify hardlimit false."""
         corr, t = self._make_corrfunc(center=0.0, sigma=2.0, amp=0.7)
         maxindex, maxlag, maxval, maxsigma, maskval, failreason, ps, pe = tide_fit.simfuncpeakfit(
             corr, t, peakfittype="gauss", hardlimit=False
@@ -1502,6 +1769,7 @@ class TestSimfuncpeakfitEdgeCases:
         assert failreason > 0
 
     def test_mutualinfo_com_not_shifted_by_baseline(self):
+        """Verify mutualinfo com not shifted by baseline."""
         t = np.linspace(-5, 5, 1001)
         baseline = 10.0
         corr = baseline + np.exp(-0.5 * ((t - 2.0) / 0.3) ** 2)
@@ -1511,6 +1779,7 @@ class TestSimfuncpeakfitEdgeCases:
         assert np.isclose(maxlag, 2.0, atol=0.2)
 
     def test_mutualinfo_gauss_amplitude_not_double_counted(self):
+        """Verify mutualinfo gauss amplitude not double counted."""
         t = np.linspace(-5, 5, 1001)
         baseline = 10.0
         peakamp = 1.0
@@ -1603,18 +1872,21 @@ class TestTrendgenPython:
     """
 
     def test_zeroth_order_includes_the_constant(self):
+        """Verify zeroth order includes the constant."""
         thetrendgen = _unwrap_jit(tide_fit.trendgen)
         xvals = np.linspace(0.0, 10.0, 51)
         result = thetrendgen(xvals, np.array([3.0]), True)
         np.testing.assert_allclose(result, np.full_like(xvals, 3.0), atol=1e-12)
 
     def test_zeroth_order_excluding_the_constant_is_flat_zero(self):
+        """Verify zeroth order excluding the constant is flat zero."""
         thetrendgen = _unwrap_jit(tide_fit.trendgen)
         xvals = np.linspace(0.0, 10.0, 51)
         result = thetrendgen(xvals, np.array([3.0]), False)
         np.testing.assert_allclose(result, np.zeros_like(xvals), atol=1e-12)
 
     def test_first_order_without_constant(self):
+        """Verify first order without constant."""
         thetrendgen = _unwrap_jit(tide_fit.trendgen)
         xvals = np.linspace(0.0, 10.0, 51)
         # [slope, constant]; with demean False only the slope term contributes
@@ -1622,12 +1894,14 @@ class TestTrendgenPython:
         np.testing.assert_allclose(result, 1.0 * xvals, atol=1e-10)
 
     def test_first_order_with_constant(self):
+        """Verify first order with constant."""
         thetrendgen = _unwrap_jit(tide_fit.trendgen)
         xvals = np.linspace(0.0, 10.0, 51)
         result = thetrendgen(xvals, np.array([1.0, 2.0]), True)
         np.testing.assert_allclose(result, 1.0 * xvals + 2.0, atol=1e-10)
 
     def test_second_order_matches_the_documented_example(self):
+        """Verify second order matches the documented example."""
         thetrendgen = _unwrap_jit(tide_fit.trendgen)
         xvals = np.linspace(0.0, 1.0, 5)
         coeffs = np.array([1.0, 0.0, 1.0])  # x^2 + 1
@@ -1639,6 +1913,7 @@ class TestRefinePeakQuadPython:
     """The Python body of the jitted quadratic peak refiner."""
 
     def test_refines_a_parabolic_maximum(self):
+        """Verify refines a parabolic maximum."""
         therefiner = _unwrap_jit(tide_fit.refinepeak_quad)
         x = np.linspace(-5.0, 5.0, 101)
         # a parabola peaking between two samples
@@ -1651,6 +1926,7 @@ class TestRefinePeakQuadPython:
         assert peakval == pytest.approx(4.0, abs=0.05)
 
     def test_identifies_a_minimum(self):
+        """Verify identifies a minimum."""
         therefiner = _unwrap_jit(tide_fit.refinepeak_quad)
         x = np.linspace(-5.0, 5.0, 101)
         y = (x - 0.1) ** 2
@@ -1663,6 +1939,7 @@ class TestLinfitfiltPython:
     """The Python body of the jitted single-regressor linear filter."""
 
     def test_removes_a_scaled_regressor(self):
+        """Verify removes a scaled regressor."""
         thefilt = _unwrap_jit(tide_fit.linfitfilt)
         npts = 200
         theev = _broadbandsignal(npts, seed=1)
@@ -1675,6 +1952,14 @@ class TestLinfitfiltPython:
         assert np.std(filtered) < 1e-8 * np.std(thedata)
 
     def test_debug_path(self, capsys):
+        """
+        Verify debug path.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         thefilt = _unwrap_jit(tide_fit.linfitfilt)
         npts = 100
         theev = _broadbandsignal(npts, seed=2)
@@ -1686,6 +1971,7 @@ class TestExpandedLinfitfiltPython:
     """The Python body of the jitted polynomial-expansion linear filter."""
 
     def test_single_component_matches_plain_fit(self):
+        """Verify single component matches plain fit."""
         thefilt = _unwrap_jit(tide_fit.expandedlinfitfilt)
         npts = 200
         theev = _broadbandsignal(npts, seed=3)
@@ -1694,6 +1980,7 @@ class TestExpandedLinfitfiltPython:
         assert R2 == pytest.approx(1.0, abs=1e-8)
 
     def test_multiple_components(self):
+        """Verify multiple components."""
         thefilt = _unwrap_jit(tide_fit.expandedlinfitfilt)
         npts = 200
         theev = _broadbandsignal(npts, seed=4)
@@ -1726,6 +2013,7 @@ class TestDerivativeLinfitfiltPython:
     """The Python body of the jitted derivative-expansion linear filter."""
 
     def test_zero_derivatives(self):
+        """Verify zero derivatives."""
         thefilt = _unwrap_jit(tide_fit.derivativelinfitfilt)
         npts = 200
         theev = _broadbandsignal(npts, seed=5)
@@ -1734,6 +2022,7 @@ class TestDerivativeLinfitfiltPython:
         assert R2 == pytest.approx(1.0, abs=1e-8)
 
     def test_one_derivative(self):
+        """Verify one derivative."""
         thefilt = _unwrap_jit(tide_fit.derivativelinfitfilt)
         npts = 200
         theev = _broadbandsignal(npts, seed=6)
@@ -1764,6 +2053,7 @@ class TestConfoundregressPython:
     """The Python body of the jitted confound regression helper in fit."""
 
     def test_removes_confounds_from_every_row(self):
+        """Verify removes confounds from every row."""
         theregress = _unwrap_jit(tide_fit.confoundregress)
         npts, nvox = 120, 5
         rng = np.random.RandomState(7)
@@ -1777,6 +2067,14 @@ class TestConfoundregressPython:
         assert np.all(r2values > 0.999)
 
     def test_debug_path(self, capsys):
+        """
+        Verify debug path.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         theregress = _unwrap_jit(tide_fit.confoundregress)
         npts = 80
         regressors = np.vstack([_broadbandsignal(npts, seed=20)])
@@ -1792,6 +2090,7 @@ class TestFitPlottingPaths:
     """Diagnostic plot paths, run under a headless backend."""
 
     def test_getpeaks_displayplots(self):
+        """Verify getpeaks displayplots."""
         x = np.linspace(0.0, 20.0, 400)
         y = np.sin(x) * np.exp(-x / 20.0)
         peaks = tide_fit.getpeaks(x, y, displayplots=True)
@@ -1799,6 +2098,7 @@ class TestFitPlottingPaths:
         plt.close("all")
 
     def test_ocscreetest_displayplots(self):
+        """Verify ocscreetest displayplots."""
         rng = np.random.RandomState(11)
         eigenvals = np.sort(rng.uniform(0.1, 10.0, 20))[::-1]
         result = tide_fit.ocscreetest(eigenvals, displayplots=True, debug=True)
@@ -1806,6 +2106,7 @@ class TestFitPlottingPaths:
         plt.close("all")
 
     def test_afscreetest_displayplots(self):
+        """Verify afscreetest displayplots."""
         rng = np.random.RandomState(12)
         eigenvals = np.sort(rng.uniform(0.1, 10.0, 20))[::-1]
         result = tide_fit.afscreetest(eigenvals, displayplots=True)
@@ -1813,10 +2114,18 @@ class TestFitPlottingPaths:
         plt.close("all")
 
     def test_phaseanalysis_displayplots(self, tmp_path, monkeypatch):
-        """The plot path also writes a hardcoded jpg into the working directory.
+        """
+        The plot path also writes a hardcoded jpg into the working directory.
 
         ``phaseanalysis`` saves "phaseanalysistest.jpg" to the cwd whenever plotting is on,
         so run from a temporary directory to keep the artifact out of the source tree.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
         """
         monkeypatch.chdir(tmp_path)
         npts = 200
@@ -1840,6 +2149,7 @@ class TestDetrendEdgeCases:
         assert np.all(np.isfinite(result))
 
     def test_demean_removes_the_mean(self):
+        """Verify demean removes the mean."""
         thedata = _broadbandsignal(100, seed=13) + 25.0
         result = tide_fit.detrend(thedata, order=0, demean=True)
         assert abs(np.mean(result)) < 1e-10
@@ -1862,6 +2172,21 @@ class TestPrewhitenFailurePaths:
         calls = {"n": 0}
 
         def _failsfirst(*args, **kwargs):
+            """
+            Provide the ``_failsfirst`` test substitute.
+
+            Parameters
+            ----------
+            *args : object
+                Arguments passed to the test helper.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            object
+                Value returned to the caller in this test case.
+            """
             calls["n"] += 1
             if calls["n"] == 1:
                 raise ValueError("first order unavailable")
@@ -1905,7 +2230,14 @@ class TestSimfuncpeakfitReporting:
     """Verbose and plotting paths through simfuncpeakfit."""
 
     def test_debug_reporting_runs(self, capsys):
-        """The debug path narrates each stage of the fit."""
+        """
+        The debug path narrates each stage of the fit.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         corr, t = _corrfunc()
         result = tide_fit.simfuncpeakfit(corr, t, peakfittype="gauss", debug=True)
         theoutput = capsys.readouterr().out
@@ -1920,7 +2252,14 @@ class TestSimfuncpeakfitReporting:
         plt.close("all")
 
     def test_missing_time_axis_exits(self, capsys):
-        """A similarity function with no lag axis cannot be fit."""
+        """
+        A similarity function with no lag axis cannot be fit.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         corr, t = _corrfunc()
         with pytest.raises(SystemExit):
             tide_fit.simfuncpeakfit(corr, None, peakfittype="gauss")
@@ -2017,7 +2356,23 @@ class TestFindmaxlagGaussReporting:
     """Verbose, plotting, and failure paths through findmaxlag_gauss."""
 
     def _broadbandpair(self, npts=400, delay=5, seed=3):
-        """Build a pair of broadband signals offset by a known delay."""
+        """
+        Build a pair of broadband signals offset by a known delay.
+
+        Parameters
+        ----------
+        npts : int, optional
+            Number of samples.
+        delay : float, optional
+            Time shift applied to the test signal in seconds.
+        seed : int, optional
+            Random seed for reproducible test data.
+
+        Returns
+        -------
+        numpy.ndarray
+            The ``sig1`` value supplied to the caller.
+        """
         rng = np.random.RandomState(seed)
         t = np.arange(npts, dtype=float)
         sig1 = np.zeros(npts)
@@ -2035,7 +2390,14 @@ class TestFindmaxlagGaussReporting:
                 tide_fit.findmaxlag_gauss(t, corr, -20.0, 20.0, 5.0, searchfrac=badfrac)
 
     def test_debug_reporting_runs(self, capsys):
-        """The debug path reports the fit parameters it settled on."""
+        """
+        The debug path reports the fit parameters it settled on.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         corr, t = _corrfunc(center=2.0, sigma=3.0, amp=0.7)
         result = tide_fit.findmaxlag_gauss(t, corr, -20.0, 20.0, 5.0, debug=True)
         assert len(capsys.readouterr().out) > 0

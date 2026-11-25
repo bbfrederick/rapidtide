@@ -56,7 +56,25 @@ def _pad_and_view(
     kernel_shape: tuple[int, ...],
     np_pad_mode: str,
 ) -> tuple[NDArray, NDArray]:
-    """Pad data and mask, then return sliding-window views."""
+    """
+    Pad data and mask, then return sliding-window views.
+
+    Parameters
+    ----------
+    data : NDArray
+        Input data to filter.
+    mask : NDArray
+        Mask identifying included pixels or voxels.
+    kernel_shape : tuple[int, ...]
+        Dimensions of the sliding neighborhood.
+    np_pad_mode : str
+        Boundary padding mode passed to NumPy.
+
+    Returns
+    -------
+    tuple of numpy.ndarray
+        Sliding data and mask windows over the padded arrays.
+    """
     pad_widths = tuple((k // 2, k // 2) for k in kernel_shape)
     padded_data = np.pad(data.astype(np.float64), pad_widths, mode=np_pad_mode)
     padded_mask = np.pad(np.asarray(mask, dtype=np.bool_), pad_widths, mode=np_pad_mode)
@@ -72,7 +90,27 @@ def _nanmedian_chunk(
     start: int,
     end: int,
 ) -> NDArray:
-    """Compute nanmedian for a contiguous slice of flattened voxels."""
+    """
+    Compute nanmedian for a contiguous slice of flattened voxels.
+
+    Parameters
+    ----------
+    windows : NDArray
+        Sliding windows of the input data.
+    mask_windows : NDArray
+        Sliding windows of the validity mask.
+    n_kernel : int
+        Number of elements in each filter neighborhood.
+    start : int
+        Starting index of the block or coordinate axis.
+    end : int
+        Exclusive ending index of this chunk.
+
+    Returns
+    -------
+    numpy.ndarray
+        Median of valid neighbors for each item in this chunk.
+    """
     flat_w = windows.reshape(-1, n_kernel)[start:end]
     flat_m = mask_windows.reshape(-1, n_kernel)[start:end]
     masked = np.where(flat_m, flat_w, np.nan)
@@ -156,7 +194,8 @@ def recorddelaymetrics(
     corrscale: Optional[NDArray] = None,
     LGR: Optional[Any] = None,
 ) -> None:
-    """Record delay map quality metrics for this pass into optiondict.
+    """
+    Record delay map quality metrics for this pass into optiondict.
 
     Every optimisation decision in the delay repair work was made by recomputing
     these numbers offline from the saved maps, which needs the maps shipped around
@@ -211,6 +250,33 @@ def recorddelaymetrics(
             structure from a fitting error.  Note this is the single-run analogue
             of the paired-arm measurement: the map going in has already been
             resolved on earlier passes, so it understates the cumulative effect.
+
+    Parameters
+    ----------
+    optiondict : dict
+        Processing options and metadata.
+    thepass : int
+        Number of the current processing pass.
+    lagtimes : NDArray
+        Voxelwise lag estimates in seconds.
+    fitmask : NDArray
+        Mask of voxels with acceptable correlation fits.
+    validvoxels : NDArray
+        Indices of voxels included in the analysis.
+    nativespaceshape : tuple
+        Dimensions of the analysis grid before flattening.
+    numspatiallocs : int
+        Number of spatial locations in the analysis grid.
+    despeckle_thresh : float
+        Threshold for detecting isolated lag values.
+    preresolvelags : Optional[NDArray]
+        Voxel lag values before delay resolution.
+    corrout : Optional[NDArray]
+        Output array for voxelwise correlation functions.
+    corrscale : Optional[NDArray]
+        Scaling factor for the correlation metrics.
+    LGR : Optional[Any]
+        Logger receiving the computed metrics.
     """
     try:
         thesuffix = f"_pass{thepass}"

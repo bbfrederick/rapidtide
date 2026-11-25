@@ -21,6 +21,7 @@ import rapidtide.workflows.showhist as theworkflow
 
 
 def entrypoint():
+    """Run the `showhist` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.showhist)
 
 

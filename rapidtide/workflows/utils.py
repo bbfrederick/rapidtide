@@ -41,6 +41,19 @@ class ContextFilter(logging.Filter):
     NAMES = {"TIMING", "MEMORY"}
 
     def filter(self, record: logging.LogRecord) -> bool:
+        """
+        Decide whether to emit the log record.
+
+        Parameters
+        ----------
+        record : logging.LogRecord
+            Candidate log record.
+
+        Returns
+        -------
+        bool
+            Whether to emit the record.
+        """
         if not any([n in record.name for n in self.NAMES]):
             return True
         return False
@@ -204,8 +217,6 @@ def setup_logger(
 
         Parameters
         ----------
-        self : logging.Logger
-            The logger instance calling this method.
         message : str
             The message to be logged. This message may contain placeholders
             for additional arguments.

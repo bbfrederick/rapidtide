@@ -34,10 +34,26 @@ import rapidtide.voxelData as tide_voxelData
 
 class DummyHdr(dict):
     def get_xyzt_units(self):
+        """
+        Set up ``get_xyzt_units`` for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return ("mm", "sec")
 
 
 def datavolume_tests(debug=False):
+    """
+    Check datavolume tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("datavolume_tests")
     d3 = tide_voxelData.dataVolume((2, 3, 4), shared=False, dtype=np.float64, thepid=0)
@@ -54,6 +70,14 @@ def datavolume_tests(debug=False):
 
 
 def load_branch_tests(debug=False):
+    """
+    Check load branch tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("load_branch_tests")
 
@@ -124,6 +148,14 @@ def load_branch_tests(debug=False):
 
 
 def voxeldata_readdata_nifti_tests(debug=False):
+    """
+    Check voxeldata readdata NIfTI tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("voxeldata_readdata_nifti_tests")
 
@@ -174,6 +206,14 @@ def voxeldata_readdata_nifti_tests(debug=False):
 
 
 def voxeldata_readdata_text_and_cifti_tests(debug=False):
+    """
+    Check voxeldata readdata text and CIFTI tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("voxeldata_readdata_text_and_cifti_tests")
 
@@ -228,6 +268,14 @@ def voxeldata_readdata_text_and_cifti_tests(debug=False):
 
 
 def smooth_tests(debug=False):
+    """
+    Check smooth tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("smooth_tests")
 
@@ -284,6 +332,16 @@ def smooth_tests(debug=False):
 
 
 def test_voxelData(debug=False, displayplots=False):
+    """
+    Verify voxelData.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     np.random.seed(12345)
     datavolume_tests(debug=debug)
     load_branch_tests(debug=debug)

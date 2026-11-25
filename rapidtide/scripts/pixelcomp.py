@@ -21,6 +21,7 @@ import rapidtide.workflows.pixelcomp as theworkflow
 
 
 def entrypoint():
+    """Run the `pixelcomp` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.pixelcomp)
 
 

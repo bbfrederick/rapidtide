@@ -21,6 +21,7 @@ import rapidtide.workflows.tp2rt as theworkflow
 
 
 def entrypoint():
+    """Run the `tp2rt` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.main)
 
 

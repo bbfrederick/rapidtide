@@ -206,6 +206,14 @@ html_static_path = ["_static"]
 
 # https://github.com/rtfd/sphinx_rtd_theme/issues/117
 def setup(app):
+    """
+    Register the documentation configuration with Sphinx.
+
+    Parameters
+    ----------
+    app : sphinx.application.Sphinx
+        Sphinx application receiving the custom stylesheet.
+    """
     app.add_css_file("theme_overrides.css")
 
 

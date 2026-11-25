@@ -151,8 +151,14 @@ def transformmaps(
         List of fMRI map names to transform. If None, no fMRI maps are processed.
     theanatmaps : Optional[Any], default=None
         List of anatomical map names to transform. If None, no anatomical maps are processed.
-    preponly : bool, default=False
+    preponly : bool, default=False, optional
         If True, only print the commands without executing them.
+    outputtag : str, optional
+        Tag appended to the transformed output names.
+    xformdir : Optional[str]
+        Directory storing the spatial transforms.
+    aligntohires : bool, optional
+        Apply the transformation into high-resolution anatomical space.
 
     Returns
     -------

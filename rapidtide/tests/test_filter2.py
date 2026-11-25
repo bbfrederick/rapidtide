@@ -63,13 +63,32 @@ PADLEN = 20
 
 
 def _make_test_signal():
-    """Generate a signal with known frequency content: 5 Hz + 25 Hz."""
+    """
+    Generate a signal with known frequency content: 5 Hz + 25 Hz.
+
+    Returns
+    -------
+    object
+        Value returned to the caller in this test case.
+    """
     t = np.arange(NPOINTS) / FS
     return np.sin(2 * np.pi * 5.0 * t) + 0.5 * np.sin(2 * np.pi * 25.0 * t)
 
 
 def _make_broadband_signal(seed=42):
-    """Generate broadband noise for filter testing."""
+    """
+    Generate broadband noise for filter testing.
+
+    Parameters
+    ----------
+    seed : int, optional
+        Random seed for reproducible test data.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array supplied to the test or its caller.
+    """
     rng = np.random.RandomState(seed)
     return rng.randn(NPOINTS)
 
@@ -78,7 +97,14 @@ def _make_broadband_signal(seed=42):
 
 
 def padvec_reflect(debug=False):
-    """Test padvec with reflect padding."""
+    """
+    Test padvec with reflect padding.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("padvec_reflect")
     data = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
@@ -89,7 +115,14 @@ def padvec_reflect(debug=False):
 
 
 def padvec_zero(debug=False):
-    """Test padvec with zero padding."""
+    """
+    Test padvec with zero padding.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("padvec_zero")
     data = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
@@ -103,7 +136,14 @@ def padvec_zero(debug=False):
 
 
 def padvec_cyclic(debug=False):
-    """Test padvec with cyclic padding."""
+    """
+    Test padvec with cyclic padding.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("padvec_cyclic")
     data = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
@@ -118,7 +158,14 @@ def padvec_cyclic(debug=False):
 
 
 def padvec_constant(debug=False):
-    """Test padvec with constant padding."""
+    """
+    Test padvec with constant padding.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("padvec_constant")
     data = np.array([3.0, 2.0, 1.0, 4.0, 5.0])
@@ -130,7 +177,14 @@ def padvec_constant(debug=False):
 
 
 def padvec_constant_plus(debug=False):
-    """Test padvec with constant+ padding uses average."""
+    """
+    Test padvec with constant+ padding uses average.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("padvec_constant_plus")
     data = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
@@ -142,7 +196,14 @@ def padvec_constant_plus(debug=False):
 
 
 def padvec_zero_padlen(debug=False):
-    """Test padvec with padlen=0 returns original data."""
+    """
+    Test padvec with padlen=0 returns original data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("padvec_zero_padlen")
     data = np.array([1.0, 2.0, 3.0])
@@ -151,7 +212,14 @@ def padvec_zero_padlen(debug=False):
 
 
 def padvec_padlen_too_large(debug=False):
-    """Test padvec raises RuntimeError when padlen > data length."""
+    """
+    Test padvec raises RuntimeError when padlen > data length.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("padvec_padlen_too_large")
     data = np.array([1.0, 2.0, 3.0])
@@ -160,7 +228,14 @@ def padvec_padlen_too_large(debug=False):
 
 
 def padvec_invalid_padtype(debug=False):
-    """Test padvec raises ValueError for invalid padtype."""
+    """
+    Test padvec raises ValueError for invalid padtype.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("padvec_invalid_padtype")
     data = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
@@ -172,7 +247,14 @@ def padvec_invalid_padtype(debug=False):
 
 
 def unpadvec_basic(debug=False):
-    """Test unpadvec removes padding from both ends."""
+    """
+    Test unpadvec removes padding from both ends.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("unpadvec_basic")
     data = np.array([0.0, 0.0, 1.0, 2.0, 3.0, 0.0, 0.0])
@@ -181,7 +263,14 @@ def unpadvec_basic(debug=False):
 
 
 def unpadvec_zero_padlen(debug=False):
-    """Test unpadvec with padlen=0 returns original."""
+    """
+    Test unpadvec with padlen=0 returns original.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("unpadvec_zero_padlen")
     data = np.array([1.0, 2.0, 3.0])
@@ -190,7 +279,14 @@ def unpadvec_zero_padlen(debug=False):
 
 
 def unpadvec_roundtrip(debug=False):
-    """Test padvec/unpadvec roundtrip preserves data."""
+    """
+    Test padvec/unpadvec roundtrip preserves data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("unpadvec_roundtrip")
     data = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
@@ -204,7 +300,14 @@ def unpadvec_roundtrip(debug=False):
 
 
 def ssmooth_basic(debug=False):
-    """Test spatial smoothing on 3D data."""
+    """
+    Test spatial smoothing on 3D data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ssmooth_basic")
     data = np.zeros((10, 10, 10))
@@ -218,7 +321,14 @@ def ssmooth_basic(debug=False):
 
 
 def ssmooth_anisotropic(debug=False):
-    """Test spatial smoothing with different voxel sizes."""
+    """
+    Test spatial smoothing with different voxel sizes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ssmooth_anisotropic")
     data = np.zeros((10, 10, 10))
@@ -233,7 +343,14 @@ def ssmooth_anisotropic(debug=False):
 
 
 def dolpfiltfilt_basic(debug=False):
-    """Test Butterworth lowpass filter attenuates high frequencies."""
+    """
+    Test Butterworth lowpass filter attenuates high frequencies.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dolpfiltfilt_basic")
     sig = _make_test_signal()
@@ -251,7 +368,14 @@ def dolpfiltfilt_basic(debug=False):
 
 
 def dohpfiltfilt_basic(debug=False):
-    """Test Butterworth highpass filter attenuates low frequencies."""
+    """
+    Test Butterworth highpass filter attenuates low frequencies.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dohpfiltfilt_basic")
     sig = _make_test_signal()
@@ -267,7 +391,14 @@ def dohpfiltfilt_basic(debug=False):
 
 
 def dobpfiltfilt_basic(debug=False):
-    """Test Butterworth bandpass filter."""
+    """
+    Test Butterworth bandpass filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dobpfiltfilt_basic")
     sig = _make_test_signal()
@@ -285,7 +416,14 @@ def dobpfiltfilt_basic(debug=False):
 
 
 def getlpfftfunc_basic(debug=False):
-    """Test brickwall LP transfer function shape."""
+    """
+    Test brickwall LP transfer function shape.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getlpfftfunc_basic")
     data = np.zeros(100)
@@ -298,7 +436,14 @@ def getlpfftfunc_basic(debug=False):
 
 
 def dolpbrickwall_basic(debug=False):
-    """Test FFT brickwall lowpass filter."""
+    """
+    Test FFT brickwall lowpass filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dolpbrickwall_basic")
     sig = _make_test_signal()
@@ -311,7 +456,14 @@ def dolpbrickwall_basic(debug=False):
 
 
 def dohpbrickwall_basic(debug=False):
-    """Test FFT brickwall highpass filter."""
+    """
+    Test FFT brickwall highpass filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dohpbrickwall_basic")
     sig = _make_test_signal()
@@ -324,7 +476,14 @@ def dohpbrickwall_basic(debug=False):
 
 
 def dobpbrickwall_basic(debug=False):
-    """Test FFT brickwall bandpass filter."""
+    """
+    Test FFT brickwall bandpass filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dobpbrickwall_basic")
     sig = _make_test_signal()
@@ -338,7 +497,14 @@ def dobpbrickwall_basic(debug=False):
 
 
 def getlptrapfftfunc_basic(debug=False):
-    """Test trapezoidal LP transfer function has smooth transition."""
+    """
+    Test trapezoidal LP transfer function has smooth transition.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getlptrapfftfunc_basic")
     data = np.zeros(200)
@@ -353,7 +519,14 @@ def getlptrapfftfunc_basic(debug=False):
 
 
 def dolptrapfftfilt_basic(debug=False):
-    """Test trapezoidal lowpass FFT filter."""
+    """
+    Test trapezoidal lowpass FFT filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dolptrapfftfilt_basic")
     sig = _make_test_signal()
@@ -364,7 +537,14 @@ def dolptrapfftfilt_basic(debug=False):
 
 
 def dohptrapfftfilt_basic(debug=False):
-    """Test trapezoidal highpass FFT filter."""
+    """
+    Test trapezoidal highpass FFT filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dohptrapfftfilt_basic")
     sig = _make_test_signal()
@@ -375,7 +555,14 @@ def dohptrapfftfilt_basic(debug=False):
 
 
 def dobptrapfftfilt_basic(debug=False):
-    """Test trapezoidal bandpass FFT filter."""
+    """
+    Test trapezoidal bandpass FFT filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dobptrapfftfilt_basic")
     sig = _make_test_signal()
@@ -396,7 +583,14 @@ def dobptrapfftfilt_basic(debug=False):
 
 
 def transferfuncfilt_basic(debug=False):
-    """Test direct transfer function filtering."""
+    """
+    Test direct transfer function filtering.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("transferfuncfilt_basic")
     sig = _make_test_signal()
@@ -408,7 +602,14 @@ def transferfuncfilt_basic(debug=False):
 
 
 def transferfuncfilt_zeros(debug=False):
-    """Test transfer function with zeros kills signal."""
+    """
+    Test transfer function with zeros kills signal.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("transferfuncfilt_zeros")
     sig = _make_test_signal()
@@ -421,7 +622,14 @@ def transferfuncfilt_zeros(debug=False):
 
 
 def getlptransfunc_brickwall(debug=False):
-    """Test LP transfer function brickwall type."""
+    """
+    Test LP transfer function brickwall type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getlptransfunc_brickwall")
     data = np.zeros(200)
@@ -433,7 +641,14 @@ def getlptransfunc_brickwall(debug=False):
 
 
 def getlptransfunc_gaussian(debug=False):
-    """Test LP transfer function Gaussian type."""
+    """
+    Test LP transfer function Gaussian type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getlptransfunc_gaussian")
     data = np.zeros(200)
@@ -446,7 +661,14 @@ def getlptransfunc_gaussian(debug=False):
 
 
 def getlptransfunc_trapezoidal(debug=False):
-    """Test LP transfer function trapezoidal type."""
+    """
+    Test LP transfer function trapezoidal type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getlptransfunc_trapezoidal")
     data = np.zeros(200)
@@ -456,7 +678,14 @@ def getlptransfunc_trapezoidal(debug=False):
 
 
 def gethptransfunc_brickwall(debug=False):
-    """Test HP transfer function brickwall type."""
+    """
+    Test HP transfer function brickwall type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("gethptransfunc_brickwall")
     data = np.zeros(200)
@@ -467,7 +696,14 @@ def gethptransfunc_brickwall(debug=False):
 
 
 def gethptransfunc_trapezoidal(debug=False):
-    """Test HP transfer function trapezoidal type."""
+    """
+    Test HP transfer function trapezoidal type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("gethptransfunc_trapezoidal")
     data = np.zeros(200)
@@ -480,7 +716,14 @@ def gethptransfunc_trapezoidal(debug=False):
 
 
 def dolptransfuncfilt_basic(debug=False):
-    """Test LP transfer function filter."""
+    """
+    Test LP transfer function filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dolptransfuncfilt_basic")
     sig = _make_test_signal()
@@ -489,7 +732,14 @@ def dolptransfuncfilt_basic(debug=False):
 
 
 def dolptransfuncfilt_gaussian(debug=False):
-    """Test LP transfer function filter with Gaussian."""
+    """
+    Test LP transfer function filter with Gaussian.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dolptransfuncfilt_gaussian")
     sig = _make_test_signal()
@@ -498,7 +748,14 @@ def dolptransfuncfilt_gaussian(debug=False):
 
 
 def dohptransfuncfilt_basic(debug=False):
-    """Test HP transfer function filter."""
+    """
+    Test HP transfer function filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dohptransfuncfilt_basic")
     sig = _make_test_signal()
@@ -507,7 +764,14 @@ def dohptransfuncfilt_basic(debug=False):
 
 
 def dobptransfuncfilt_basic(debug=False):
-    """Test BP transfer function filter."""
+    """
+    Test BP transfer function filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dobptransfuncfilt_basic")
     sig = _make_test_signal()
@@ -518,7 +782,14 @@ def dobptransfuncfilt_basic(debug=False):
 
 
 def dobptransfuncfilt_trapezoidal(debug=False):
-    """Test BP transfer function filter with trapezoidal."""
+    """
+    Test BP transfer function filter with trapezoidal.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dobptransfuncfilt_trapezoidal")
     sig = _make_test_signal()
@@ -539,7 +810,14 @@ def dobptransfuncfilt_trapezoidal(debug=False):
 
 
 def wiener_deconvolution_basic(debug=False):
-    """Test Wiener deconvolution returns correct length."""
+    """
+    Test Wiener deconvolution returns correct length.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("wiener_deconvolution_basic")
     sig = np.array([0.0, 0.0, 1.0, 2.0, 3.0, 2.0, 1.0, 0.0, 0.0, 0.0])
@@ -549,7 +827,14 @@ def wiener_deconvolution_basic(debug=False):
 
 
 def wiener_deconvolution_identity(debug=False):
-    """Test deconvolution with identity kernel recovers signal approximately."""
+    """
+    Test deconvolution with identity kernel recovers signal approximately.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("wiener_deconvolution_identity")
     sig = np.zeros(64)
@@ -563,7 +848,14 @@ def wiener_deconvolution_identity(debug=False):
 
 
 def pspec_basic(debug=False):
-    """Test power spectrum computation."""
+    """
+    Test power spectrum computation.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("pspec_basic")
     sig = _make_test_signal()
@@ -573,7 +865,14 @@ def pspec_basic(debug=False):
 
 
 def spectralflatness_white_noise(debug=False):
-    """Test spectral flatness of white noise is close to 1."""
+    """
+    Test spectral flatness of white noise is close to 1.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spectralflatness_white_noise")
     rng = np.random.RandomState(42)
@@ -584,7 +883,14 @@ def spectralflatness_white_noise(debug=False):
 
 
 def spectralflatness_tonal(debug=False):
-    """Test spectral flatness of tonal signal is low."""
+    """
+    Test spectral flatness of tonal signal is low.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spectralflatness_tonal")
     spectrum_arr = np.zeros(1000)
@@ -595,7 +901,14 @@ def spectralflatness_tonal(debug=False):
 
 
 def spectrum_power_mode(debug=False):
-    """Test spectrum function in power mode."""
+    """
+    Test spectrum function in power mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spectrum_power_mode")
     sig = _make_test_signal()
@@ -606,7 +919,14 @@ def spectrum_power_mode(debug=False):
 
 
 def spectrum_mag_mode(debug=False):
-    """Test spectrum in magnitude mode."""
+    """
+    Test spectrum in magnitude mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spectrum_mag_mode")
     sig = _make_test_signal()
@@ -615,7 +935,14 @@ def spectrum_mag_mode(debug=False):
 
 
 def spectrum_complex_mode(debug=False):
-    """Test spectrum in complex mode."""
+    """
+    Test spectrum in complex mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spectrum_complex_mode")
     sig = _make_test_signal()
@@ -624,7 +951,14 @@ def spectrum_complex_mode(debug=False):
 
 
 def spectrum_phase_mode(debug=False):
-    """Test spectrum in phase mode."""
+    """
+    Test spectrum in phase mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spectrum_phase_mode")
     sig = _make_test_signal()
@@ -633,7 +967,14 @@ def spectrum_phase_mode(debug=False):
 
 
 def spectrum_real_mode(debug=False):
-    """Test spectrum in real mode."""
+    """
+    Test spectrum in real mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spectrum_real_mode")
     sig = _make_test_signal()
@@ -642,7 +983,14 @@ def spectrum_real_mode(debug=False):
 
 
 def spectrum_imag_mode(debug=False):
-    """Test spectrum in imag mode."""
+    """
+    Test spectrum in imag mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spectrum_imag_mode")
     sig = _make_test_signal()
@@ -651,7 +999,14 @@ def spectrum_imag_mode(debug=False):
 
 
 def spectrum_untrimmed(debug=False):
-    """Test spectrum with trim=False returns full FFT."""
+    """
+    Test spectrum with trim=False returns full FFT.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spectrum_untrimmed")
     sig = _make_test_signal()
@@ -660,7 +1015,14 @@ def spectrum_untrimmed(debug=False):
 
 
 def spectrum_illegal_mode(debug=False):
-    """Test spectrum with illegal mode raises RuntimeError."""
+    """
+    Test spectrum with illegal mode raises RuntimeError.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spectrum_illegal_mode")
     sig = _make_test_signal()
@@ -672,7 +1034,14 @@ def spectrum_illegal_mode(debug=False):
 
 
 def ncfilter_init_none(debug=False):
-    """Test NoncausalFilter with type None."""
+    """
+    Test NoncausalFilter with type None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_init_none")
     filt = NoncausalFilter(filtertype="None")
@@ -683,7 +1052,14 @@ def ncfilter_init_none(debug=False):
 
 
 def ncfilter_init_lfo(debug=False):
-    """Test NoncausalFilter with LFO type has correct frequency range."""
+    """
+    Test NoncausalFilter with LFO type has correct frequency range.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_init_lfo")
     filt = NoncausalFilter(filtertype="lfo")
@@ -696,7 +1072,14 @@ def ncfilter_init_lfo(debug=False):
 
 
 def ncfilter_settype(debug=False):
-    """Test settype changes the filter type."""
+    """
+    Test settype changes the filter type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_settype")
     filt = NoncausalFilter(filtertype="lfo")
@@ -707,7 +1090,14 @@ def ncfilter_settype(debug=False):
 
 
 def ncfilter_setfreqs(debug=False):
-    """Test setfreqs with arbitrary frequencies."""
+    """
+    Test setfreqs with arbitrary frequencies.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_setfreqs")
     filt = NoncausalFilter(filtertype="arb")
@@ -720,7 +1110,14 @@ def ncfilter_setfreqs(debug=False):
 
 
 def ncfilter_gettype(debug=False):
-    """Test gettype returns correct type."""
+    """
+    Test gettype returns correct type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_gettype")
     filt = NoncausalFilter(filtertype="resp")
@@ -728,7 +1125,14 @@ def ncfilter_gettype(debug=False):
 
 
 def ncfilter_setbutterorder(debug=False):
-    """Test setbutterorder changes order."""
+    """
+    Test setbutterorder changes order.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_setbutterorder")
     filt = NoncausalFilter()
@@ -739,7 +1143,14 @@ def ncfilter_setbutterorder(debug=False):
 
 
 def ncfilter_setdebug(debug=False):
-    """Test setdebug changes debug flag."""
+    """
+    Test setdebug changes debug flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_setdebug")
     filt = NoncausalFilter()
@@ -750,7 +1161,14 @@ def ncfilter_setdebug(debug=False):
 
 
 def ncfilter_padtime(debug=False):
-    """Test set/get padtime."""
+    """
+    Test set/get padtime.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_padtime")
     filt = NoncausalFilter()
@@ -759,7 +1177,14 @@ def ncfilter_padtime(debug=False):
 
 
 def ncfilter_padtype(debug=False):
-    """Test set/get padtype."""
+    """
+    Test set/get padtype.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_padtype")
     filt = NoncausalFilter()
@@ -768,7 +1193,14 @@ def ncfilter_padtype(debug=False):
 
 
 def ncfilter_settransferfunc(debug=False):
-    """Test settransferfunc."""
+    """
+    Test settransferfunc.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_settransferfunc")
     filt = NoncausalFilter()
@@ -777,7 +1209,14 @@ def ncfilter_settransferfunc(debug=False):
 
 
 def ncfilter_apply_lfo(debug=False):
-    """Test applying LFO filter to a long broadband signal."""
+    """
+    Test applying LFO filter to a long broadband signal.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_apply_lfo")
     # Need a long signal for LFO band (0.01-0.15 Hz)
@@ -790,7 +1229,14 @@ def ncfilter_apply_lfo(debug=False):
 
 
 def ncfilter_apply_arb_bandpass(debug=False):
-    """Test applying arbitrary bandpass filter."""
+    """
+    Test applying arbitrary bandpass filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_apply_arb_bandpass")
     filt = NoncausalFilter(
@@ -807,7 +1253,14 @@ def ncfilter_apply_arb_bandpass(debug=False):
 
 
 def ncfilter_apply_arb_stop(debug=False):
-    """Test applying arbitrary stopband filter."""
+    """
+    Test applying arbitrary stopband filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_apply_arb_stop")
     filt = NoncausalFilter(
@@ -830,7 +1283,14 @@ def ncfilter_apply_arb_stop(debug=False):
 
 
 def ncfilter_apply_butterworth(debug=False):
-    """Test applying filter with butterworth transfer function."""
+    """
+    Test applying filter with butterworth transfer function.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_apply_butterworth")
     filt = NoncausalFilter(
@@ -848,7 +1308,14 @@ def ncfilter_apply_butterworth(debug=False):
 
 
 def ncfilter_apply_ringstop(debug=False):
-    """Test ringstop filter type."""
+    """
+    Test ringstop filter type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_apply_ringstop")
     filt = NoncausalFilter(filtertype="ringstop", padtime=5.0)
@@ -858,7 +1325,14 @@ def ncfilter_apply_ringstop(debug=False):
 
 
 def ncfilter_allphysio_types(debug=False):
-    """Test that all physiological filter types can be initialized."""
+    """
+    Test that all physiological filter types can be initialized.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_allphysio_types")
     types = [
@@ -895,7 +1369,14 @@ def ncfilter_allphysio_types(debug=False):
 
 
 def ncfilter_correctfreq(debug=False):
-    """Test correctfreq adjusts out-of-range frequencies."""
+    """
+    Test correctfreq adjusts out-of-range frequencies.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ncfilter_correctfreq")
     # Create a filter with frequencies that would exceed Nyquist for a low Fs
@@ -917,7 +1398,14 @@ def ncfilter_correctfreq(debug=False):
 
 
 def setnotchfilter_basic(debug=False):
-    """Test setnotchfilter configures filter correctly."""
+    """
+    Test setnotchfilter configures filter correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("setnotchfilter_basic")
     filt = NoncausalFilter()
@@ -929,7 +1417,14 @@ def setnotchfilter_basic(debug=False):
 
 
 def harmonicnotchfilter_basic(debug=False):
-    """Test harmonic notch filter removes fundamental and harmonics."""
+    """
+    Test harmonic notch filter removes fundamental and harmonics.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("harmonicnotchfilter_basic")
     npts = 10000  # Long signal to support default padtime=30s
@@ -948,7 +1443,14 @@ def harmonicnotchfilter_basic(debug=False):
 
 
 def harmonicnotchfilter_none_pct(debug=False):
-    """Test harmonicnotchfilter with None notchpct returns unchanged data."""
+    """
+    Test harmonicnotchfilter with None notchpct returns unchanged data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("harmonicnotchfilter_none_pct")
     sig = _make_test_signal()
@@ -961,7 +1463,14 @@ def harmonicnotchfilter_none_pct(debug=False):
 
 
 def savgolsmooth_basic(debug=False):
-    """Test Savitzky-Golay smoothing."""
+    """
+    Test Savitzky-Golay smoothing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savgolsmooth_basic")
     sig = _make_test_signal()
@@ -977,7 +1486,14 @@ def savgolsmooth_basic(debug=False):
 
 
 def csdfilter_basic(debug=False):
-    """Test cross spectral density filter."""
+    """
+    Test cross spectral density filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("csdfilter_basic")
     rng = np.random.RandomState(42)
@@ -991,7 +1507,14 @@ def csdfilter_basic(debug=False):
 
 
 def arb_pass_lowpass_trapezoidal(debug=False):
-    """Test arb_pass as lowpass with trapezoidal filter."""
+    """
+    Test arb_pass as lowpass with trapezoidal filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("arb_pass_lowpass_trapezoidal")
     sig = _make_test_signal()
@@ -1009,7 +1532,14 @@ def arb_pass_lowpass_trapezoidal(debug=False):
 
 
 def arb_pass_highpass_trapezoidal(debug=False):
-    """Test arb_pass as highpass with trapezoidal filter."""
+    """
+    Test arb_pass as highpass with trapezoidal filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("arb_pass_highpass_trapezoidal")
     sig = _make_test_signal()
@@ -1027,7 +1557,14 @@ def arb_pass_highpass_trapezoidal(debug=False):
 
 
 def arb_pass_bandpass_trapezoidal(debug=False):
-    """Test arb_pass as bandpass with trapezoidal filter."""
+    """
+    Test arb_pass as bandpass with trapezoidal filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("arb_pass_bandpass_trapezoidal")
     sig = _make_test_signal()
@@ -1045,7 +1582,14 @@ def arb_pass_bandpass_trapezoidal(debug=False):
 
 
 def arb_pass_bandpass_butterworth(debug=False):
-    """Test arb_pass as bandpass with butterworth filter."""
+    """
+    Test arb_pass as bandpass with butterworth filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("arb_pass_bandpass_butterworth")
     sig = _make_test_signal()
@@ -1063,7 +1607,14 @@ def arb_pass_bandpass_butterworth(debug=False):
 
 
 def arb_pass_bandpass_brickwall(debug=False):
-    """Test arb_pass as bandpass with brickwall filter."""
+    """
+    Test arb_pass as bandpass with brickwall filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("arb_pass_bandpass_brickwall")
     sig = _make_test_signal()
@@ -1081,7 +1632,14 @@ def arb_pass_bandpass_brickwall(debug=False):
 
 
 def arb_pass_lowpass_butterworth(debug=False):
-    """Test arb_pass as lowpass with butterworth."""
+    """
+    Test arb_pass as lowpass with butterworth.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("arb_pass_lowpass_butterworth")
     sig = _make_test_signal()
@@ -1099,7 +1657,14 @@ def arb_pass_lowpass_butterworth(debug=False):
 
 
 def arb_pass_highpass_butterworth(debug=False):
-    """Test arb_pass as highpass with butterworth."""
+    """
+    Test arb_pass as highpass with butterworth.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("arb_pass_highpass_butterworth")
     sig = _make_test_signal()
@@ -1120,7 +1685,14 @@ def arb_pass_highpass_butterworth(debug=False):
 
 
 def getfilterbandfreqs_all_bands(debug=False):
-    """Test getfilterbandfreqs for all known bands."""
+    """
+    Test getfilterbandfreqs for all known bands.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getfilterbandfreqs_all_bands")
     bands = [
@@ -1146,7 +1718,14 @@ def getfilterbandfreqs_all_bands(debug=False):
 
 
 def getfilterbandfreqs_asrange(debug=False):
-    """Test getfilterbandfreqs with asrange=True returns string."""
+    """
+    Test getfilterbandfreqs with asrange=True returns string.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getfilterbandfreqs_asrange")
     result = getfilterbandfreqs("lfo", asrange=True)
@@ -1157,7 +1736,14 @@ def getfilterbandfreqs_asrange(debug=False):
 
 
 def getfilterbandfreqs_transitionfrac(debug=False):
-    """Test getfilterbandfreqs with custom transition fraction."""
+    """
+    Test getfilterbandfreqs with custom transition fraction.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getfilterbandfreqs_transitionfrac")
     lp1, up1, ls1, us1 = getfilterbandfreqs("lfo", transitionfrac=0.05)
@@ -1171,7 +1757,14 @@ def getfilterbandfreqs_transitionfrac(debug=False):
 
 
 def polarfft_roundtrip(debug=False):
-    """Test polarfft -> ifftfrompolar roundtrip recovers original signal."""
+    """
+    Test polarfft -> ifftfrompolar roundtrip recovers original signal.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("polarfft_roundtrip")
     sig = _make_test_signal()
@@ -1183,7 +1776,14 @@ def polarfft_roundtrip(debug=False):
 
 
 def polarfft_magnitude(debug=False):
-    """Test polarfft magnitude is non-negative."""
+    """
+    Test polarfft magnitude is non-negative.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("polarfft_magnitude")
     sig = _make_test_signal()
@@ -1192,7 +1792,14 @@ def polarfft_magnitude(debug=False):
 
 
 def ifftfrompolar_basic(debug=False):
-    """Test ifftfrompolar with known values."""
+    """
+    Test ifftfrompolar with known values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ifftfrompolar_basic")
     r = np.array([4.0, 0.0, 0.0, 0.0])
@@ -1206,7 +1813,14 @@ def ifftfrompolar_basic(debug=False):
 
 
 def blackmanharris_basic(debug=False):
-    """Test Blackman-Harris window properties."""
+    """
+    Test Blackman-Harris window properties.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("blackmanharris_basic")
     w = blackmanharris(64)
@@ -1218,7 +1832,14 @@ def blackmanharris_basic(debug=False):
 
 
 def blackmanharris_cache(debug=False):
-    """Test that blackmanharris caches results."""
+    """
+    Test that blackmanharris caches results.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("blackmanharris_cache")
     w1 = blackmanharris(32)
@@ -1227,7 +1848,14 @@ def blackmanharris_cache(debug=False):
 
 
 def hann_basic(debug=False):
-    """Test Hann window properties."""
+    """
+    Test Hann window properties.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("hann_basic")
     w = hann(64)
@@ -1239,7 +1867,14 @@ def hann_basic(debug=False):
 
 
 def hann_cache(debug=False):
-    """Test that hann caches results."""
+    """
+    Test that hann caches results.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("hann_cache")
     w1 = hann(48)
@@ -1248,7 +1883,14 @@ def hann_cache(debug=False):
 
 
 def hamming_basic(debug=False):
-    """Test Hamming window properties."""
+    """
+    Test Hamming window properties.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("hamming_basic")
     w = hamming(64)
@@ -1258,7 +1900,14 @@ def hamming_basic(debug=False):
 
 
 def hamming_cache(debug=False):
-    """Test that hamming caches results."""
+    """
+    Test that hamming caches results.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("hamming_cache")
     w1 = hamming(56)
@@ -1267,7 +1916,14 @@ def hamming_cache(debug=False):
 
 
 def rect_basic(debug=False):
-    """Test rectangular window."""
+    """
+    Test rectangular window.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("rect_basic")
     w = rect(10, 4)
@@ -1281,7 +1937,14 @@ def rect_basic(debug=False):
 
 
 def mRect_basic(debug=False):
-    """Test modified rectangular window."""
+    """
+    Test modified rectangular window.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("mRect_basic")
     w = mRect(100)
@@ -1291,7 +1954,14 @@ def mRect_basic(debug=False):
 
 
 def mRect_custom_params(debug=False):
-    """Test mRect with custom parameters."""
+    """
+    Test mRect with custom parameters.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("mRect_custom_params")
     w = mRect(100, alpha=0.3, omegac=0.05, phi=np.pi / 4)
@@ -1300,7 +1970,14 @@ def mRect_custom_params(debug=False):
 
 
 def windowfunction_hamming(debug=False):
-    """Test windowfunction with hamming type."""
+    """
+    Test windowfunction with hamming type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("windowfunction_hamming")
     w = windowfunction(64, type="hamming")
@@ -1309,7 +1986,14 @@ def windowfunction_hamming(debug=False):
 
 
 def windowfunction_hann(debug=False):
-    """Test windowfunction with hann type."""
+    """
+    Test windowfunction with hann type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("windowfunction_hann")
     w = windowfunction(64, type="hann")
@@ -1318,7 +2002,14 @@ def windowfunction_hann(debug=False):
 
 
 def windowfunction_blackmanharris(debug=False):
-    """Test windowfunction with blackmanharris type."""
+    """
+    Test windowfunction with blackmanharris type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("windowfunction_blackmanharris")
     w = windowfunction(64, type="blackmanharris")
@@ -1327,7 +2018,14 @@ def windowfunction_blackmanharris(debug=False):
 
 
 def windowfunction_none(debug=False):
-    """Test windowfunction with None type returns ones."""
+    """
+    Test windowfunction with None type returns ones.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("windowfunction_none")
     w = windowfunction(64, type="None")
@@ -1339,6 +2037,14 @@ def windowfunction_none(debug=False):
 
 def test_filter2(debug=False):
     # padvec tests
+    """
+    Verify filter2.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("Running padvec tests")
     padvec_reflect(debug=debug)

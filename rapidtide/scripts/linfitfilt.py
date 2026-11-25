@@ -20,6 +20,7 @@ import rapidtide.workflows.linfitfilt as linfitfilt_workflow
 
 
 def entrypoint():
+    """Run the `linfitfilt` command."""
     linfitfilt_workflow.main()
 
 

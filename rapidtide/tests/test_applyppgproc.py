@@ -35,7 +35,19 @@ from rapidtide.workflows.applyppgproc import (
 
 
 def _make_args(**overrides):
-    """Create a default argparse.Namespace for procppg."""
+    """
+    Create a default argparse.Namespace for procppg.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         infileroot="testdata",
         outfileroot="testout",
@@ -51,9 +63,26 @@ def _make_args(**overrides):
 
 
 def _make_mock_ppg_data(npoints=500, fs=25.0, hr_bpm=72.0, rng=None):
-    """Create synthetic PPG-like data for testing.
+    """
+    Create synthetic PPG-like data for testing.
 
     Returns (t, Fs, dlfiltered, cardiacfromfmri, pleth, missing_indices).
+
+    Parameters
+    ----------
+    npoints : int, optional
+        Value supplied as ``npoints`` by the test case.
+    fs : float, optional
+        Value supplied as ``fs`` by the test case.
+    hr_bpm : float, optional
+        Value supplied as ``hr_bpm`` by the test case.
+    rng : numpy.random.Generator, optional
+        Random number generator for test data.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     if rng is None:
         rng = np.random.RandomState(42)
@@ -71,10 +100,27 @@ def _make_mock_ppg_data(npoints=500, fs=25.0, hr_bpm=72.0, rng=None):
 
 
 def _make_mock_tide_ppg(npoints=500, fs=25.0, hr_bpm=72.0, num_peaks=10):
-    """Set up all tide_ppg mock objects for a procppg call.
+    """
+    Set up all tide_ppg mock objects for a procppg call.
 
     Returns a dict of (patch_target -> configured mock) plus some
     reference arrays for assertions.
+
+    Parameters
+    ----------
+    npoints : int, optional
+        Value supplied as ``npoints`` by the test case.
+    fs : float, optional
+        Value supplied as ``fs`` by the test case.
+    hr_bpm : float, optional
+        Value supplied as ``hr_bpm`` by the test case.
+    num_peaks : int, optional
+        Value supplied as ``num_peaks`` by the test case.
+
+    Returns
+    -------
+    dict
+        Values supplied together for the test case.
     """
     rng = np.random.RandomState(42)
     t, Fs, dlfiltered, cardiacfromfmri, pleth, missing_indices = _make_mock_ppg_data(
@@ -155,9 +201,22 @@ def _make_mock_tide_ppg(npoints=500, fs=25.0, hr_bpm=72.0, num_peaks=10):
 
 
 def _run_procppg_with_mocks(args, mock_data):
-    """Run procppg with fully mocked tide_ppg, tide_filt, and plt.
+    """
+    Run procppg with fully mocked tide_ppg, tide_filt, and plt.
 
     Returns the result tuple from procppg.
+
+    Parameters
+    ----------
+    args : object
+        Arguments passed to the test helper.
+    mock_data : object
+        Test substitute for ``data``.
+
+    Returns
+    -------
+    object
+        Output values supplied to the caller.
     """
     # Build mock objects
     mock_ekf_instance = MagicMock()
@@ -218,7 +277,14 @@ def _run_procppg_with_mocks(args, mock_data):
 
 
 def test_get_parser_returns_parser(debug=False):
-    """Test that _get_parser returns an ArgumentParser."""
+    """
+    Test that _get_parser returns an ArgumentParser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
     if debug:
@@ -226,14 +292,28 @@ def test_get_parser_returns_parser(debug=False):
 
 
 def test_get_parser_required_args(debug=False):
-    """Test that parser requires both positional arguments."""
+    """
+    Test that parser requires both positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args([])
 
 
 def test_get_parser_with_valid_args(debug=False):
-    """Test parser with valid positional arguments and check defaults."""
+    """
+    Test parser with valid positional arguments and check defaults.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["input_root", "output_root"])
     assert args.infileroot == "input_root"
@@ -250,7 +330,14 @@ def test_get_parser_with_valid_args(debug=False):
 
 
 def test_get_parser_optional_flags(debug=False):
-    """Test parser with all optional flags set."""
+    """
+    Test parser with all optional flags set.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(
         [
@@ -280,14 +367,28 @@ def test_get_parser_optional_flags(debug=False):
 
 
 def test_get_parser_invalid_float(debug=False):
-    """Test that non-float values for float arguments cause an error."""
+    """
+    Test that non-float values for float arguments cause an error.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args(["infile", "outfile", "--process_noise", "notanumber"])
 
 
 def test_get_parser_missing_outfileroot(debug=False):
-    """Test that missing outfileroot causes an error."""
+    """
+    Test that missing outfileroot causes an error.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args(["infile_only"])
@@ -297,7 +398,14 @@ def test_get_parser_missing_outfileroot(debug=False):
 
 
 def test_procppg_basic_return_structure(debug=False):
-    """Test that procppg returns the correct number and types of outputs."""
+    """
+    Test that procppg returns the correct number and types of outputs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     mock_data = _make_mock_tide_ppg()
 
@@ -320,7 +428,14 @@ def test_procppg_basic_return_structure(debug=False):
 
 
 def test_procppg_ppginfo_keys(debug=False):
-    """Test that ppginfo dict contains all expected metric keys."""
+    """
+    Test that ppginfo dict contains all expected metric keys.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     mock_data = _make_mock_tide_ppg()
 
@@ -352,7 +467,14 @@ def test_procppg_ppginfo_keys(debug=False):
 
 
 def test_procppg_ppginfo_values_reasonable(debug=False):
-    """Test that ppginfo values are reasonable and finite."""
+    """
+    Test that ppginfo values are reasonable and finite.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     mock_data = _make_mock_tide_ppg(hr_bpm=72.0)
 
@@ -374,7 +496,14 @@ def test_procppg_ppginfo_values_reasonable(debug=False):
 
 
 def test_procppg_return_arrays_correct(debug=False):
-    """Test that returned arrays match mock data."""
+    """
+    Test that returned arrays match mock data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     npoints = 500
     mock_data = _make_mock_tide_ppg(npoints=npoints)
@@ -415,7 +544,14 @@ def test_procppg_return_arrays_correct(debug=False):
 
 
 def test_procppg_ekf_params_passed(debug=False):
-    """Test that EKF is constructed with correct parameters from args."""
+    """
+    Test that EKF is constructed with correct parameters from args.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(
         hr_estimate=80.0,
         process_noise=0.005,
@@ -483,7 +619,14 @@ def test_procppg_ekf_params_passed(debug=False):
 
 
 def test_procppg_hr_extractor_called_correctly(debug=False):
-    """Test that HeartRateExtractor methods are called with correct params."""
+    """
+    Test that HeartRateExtractor methods are called with correct params.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     mock_data = _make_mock_tide_ppg(fs=25.0)
 
@@ -552,7 +695,14 @@ def test_procppg_hr_extractor_called_correctly(debug=False):
 
 
 def test_procppg_quality_assessor_called_twice(debug=False):
-    """Test that quality assessor is called twice (cardiacfromfmri and dlfiltered)."""
+    """
+    Test that quality assessor is called twice (cardiacfromfmri and dlfiltered).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     mock_data = _make_mock_tide_ppg()
 
@@ -613,7 +763,14 @@ def test_procppg_quality_assessor_called_twice(debug=False):
 
 
 def test_procppg_pipeline_processor_called(debug=False):
-    """Test that RobustPPGProcessor is constructed and called correctly."""
+    """
+    Test that RobustPPGProcessor is constructed and called correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(hr_estimate=80.0, process_noise=0.005, qual_thresh=0.7)
     mock_data = _make_mock_tide_ppg(fs=25.0)
 
@@ -678,7 +835,14 @@ def test_procppg_pipeline_processor_called(debug=False):
 
 
 def test_procppg_hrv_features_with_enough_peaks(debug=False):
-    """Test that HRV features are extracted when > 5 peaks detected."""
+    """
+    Test that HRV features are extracted when > 5 peaks detected.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     mock_data = _make_mock_tide_ppg(num_peaks=10)  # > 5
 
@@ -696,7 +860,14 @@ def test_procppg_hrv_features_with_enough_peaks(debug=False):
 
 
 def test_procppg_no_hrv_with_few_peaks(debug=False):
-    """Test that HRV features are NOT extracted when <= 5 peaks detected."""
+    """
+    Test that HRV features are NOT extracted when <= 5 peaks detected.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     mock_data = _make_mock_tide_ppg(num_peaks=3)  # <= 5
 
@@ -757,7 +928,14 @@ def test_procppg_no_hrv_with_few_peaks(debug=False):
 
 
 def test_procppg_morphology_with_peaks(debug=False):
-    """Test that morphology features are extracted when peaks exist."""
+    """
+    Test that morphology features are extracted when peaks exist.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     mock_data = _make_mock_tide_ppg(num_peaks=10)
 
@@ -773,7 +951,14 @@ def test_procppg_morphology_with_peaks(debug=False):
 
 
 def test_procppg_no_morphology_with_zero_peaks(debug=False):
-    """Test that morphology is NOT extracted when no peaks detected."""
+    """
+    Test that morphology is NOT extracted when no peaks detected.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     mock_data = _make_mock_tide_ppg(num_peaks=0)
     # Override peak_indices to be empty
@@ -837,7 +1022,14 @@ def test_procppg_no_morphology_with_zero_peaks(debug=False):
 
 
 def test_procppg_spo2_always_computed(debug=False):
-    """Test that SpO2 proxy is always computed regardless of peaks."""
+    """
+    Test that SpO2 proxy is always computed regardless of peaks.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     mock_data = _make_mock_tide_ppg(num_peaks=0)
     mock_data["peak_indices"] = np.array([], dtype=int)
@@ -896,7 +1088,14 @@ def test_procppg_spo2_always_computed(debug=False):
 
 
 def test_procppg_read_happy_ppg_called_with_infileroot(debug=False):
-    """Test that read_happy_ppg is called with args.infileroot."""
+    """
+    Test that read_happy_ppg is called with args.infileroot.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(infileroot="/data/my_happy_output")
     mock_data = _make_mock_tide_ppg()
 
@@ -954,7 +1153,14 @@ def test_procppg_read_happy_ppg_called_with_infileroot(debug=False):
 
 
 def test_procppg_signal_normalization(debug=False):
-    """Test that dlfiltered and cardiacfromfmri signals are normalized to unit variance."""
+    """
+    Test that dlfiltered and cardiacfromfmri signals are normalized to unit variance.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     rng = np.random.RandomState(42)
     npoints = 500
@@ -1030,7 +1236,14 @@ def test_procppg_signal_normalization(debug=False):
 
 
 def test_procppg_debug_flag(debug=False):
-    """Test that debug=True doesn't crash and prints extra info."""
+    """
+    Test that debug=True doesn't crash and prints extra info.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(debug=True)
     mock_data = _make_mock_tide_ppg()
 
@@ -1043,7 +1256,14 @@ def test_procppg_debug_flag(debug=False):
 
 
 def test_procppg_mse_calculation(debug=False):
-    """Test that MSE is computed correctly between dlfiltered and filtered_ekf."""
+    """
+    Test that MSE is computed correctly between dlfiltered and filtered_ekf.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     npoints = 500
     fs = 25.0
@@ -1074,7 +1294,14 @@ def test_procppg_mse_calculation(debug=False):
 
 
 def test_procppg_filter_setup(debug=False):
-    """Test that NoncausalFilter is created with correct parameters."""
+    """
+    Test that NoncausalFilter is created with correct parameters.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     mock_data = _make_mock_tide_ppg()
 
@@ -1135,7 +1362,14 @@ def test_procppg_filter_setup(debug=False):
 
 
 def test_procppg_num_detected_peaks(debug=False):
-    """Test that num_detected_peaks is correctly set from peak_indices length."""
+    """
+    Test that num_detected_peaks is correctly set from peak_indices length.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     for num_peaks in [0, 3, 10, 50]:
         mock_data = _make_mock_tide_ppg(npoints=1000, num_peaks=num_peaks)
@@ -1208,7 +1442,14 @@ def test_procppg_num_detected_peaks(debug=False):
 
 
 def test_applyppgproc(debug=False):
-    """Run all applyppgproc sub-tests."""
+    """
+    Run all applyppgproc sub-tests.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # _get_parser tests
     test_get_parser_returns_parser(debug=debug)
     test_get_parser_required_args(debug=debug)

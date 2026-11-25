@@ -21,6 +21,7 @@ import rapidtide.workflows.physiofreq as theworkflow
 
 
 def entrypoint():
+    """Run the `physiofreq` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.physiofreq)
 
 

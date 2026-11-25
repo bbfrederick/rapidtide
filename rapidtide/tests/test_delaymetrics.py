@@ -22,7 +22,19 @@ from rapidtide.workflows.fitSimFuncMap import recorddelaymetrics
 
 
 def _makecase(shape=(16, 16, 16)):
-    """A mask with a planted outlier, a planted long-delay blob, and a planted jump."""
+    """
+    A mask with a planted outlier, a planted long-delay blob, and a planted jump.
+
+    Parameters
+    ----------
+    shape : tuple of int, optional
+        Dimensions of the test array.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     themask = np.zeros(shape, dtype=bool)
     themask[2:14, 2:14, 2:14] = True
     thetau = np.where(themask, 1.0, 0.0)
@@ -40,6 +52,14 @@ def _makecase(shape=(16, 16, 16)):
 
 
 def test_recorddelaymetrics_records_expected_keys(debug=False):
+    """
+    Verify recorddelaymetrics records expected keys.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     thetau, themask, thevalidvoxels, thelagtimes, thefitmask = _makecase()
     theoptiondict = {"lagmin": -10.0, "lagmax": 40.0}
     recorddelaymetrics(
@@ -87,8 +107,15 @@ def test_recorddelaymetrics_records_expected_keys(debug=False):
 
 
 def test_recorddelaymetrics_selectivity_direction(debug=False):
-    """With resolution changing every scattered long voxel and no coherent one,
-    selectivity must come out high; the reverse must come out low."""
+    """
+    With resolution changing every scattered long voxel and no coherent one,
+    selectivity must come out high; the reverse must come out low.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     thetau, themask, thevalidvoxels, dummy, thefitmask = _makecase()
 
     # scatter some isolated long voxels far from the coherent blob.  Note that the
@@ -151,8 +178,15 @@ def test_recorddelaymetrics_selectivity_direction(debug=False):
 
 
 def test_recorddelaymetrics_survives_bad_input(debug=False):
-    """Instrumentation must never take down a run.  A shape mismatch is a bug, but it
-    has to be a logged bug, not a crash seven minutes into processing."""
+    """
+    Instrumentation must never take down a run.  A shape mismatch is a bug, but it
+    has to be a logged bug, not a crash seven minutes into processing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theoptiondict = {}
     recorddelaymetrics(
         theoptiondict,

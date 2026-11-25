@@ -30,6 +30,18 @@ from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
 def dumplists(results, targets, failflags):
+    """
+    Set up ``dumplists`` for the test.
+
+    Parameters
+    ----------
+    results : object
+        Value supplied as ``results`` by the test case.
+    targets : object
+        Value supplied as ``targets`` by the test case.
+    failflags : object
+        Value supplied as ``failflags`` by the test case.
+    """
     print("assertion failed - dumping lists")
     if (len(results) != len(targets)) or (len(results) != len(failflags)):
         print("array lengths do not match")
@@ -42,6 +54,31 @@ def dumplists(results, targets, failflags):
 def eval_fml_result(
     absmin, absmax, testvalues, foundvalues, failflags, tolerance=0.0001, debug=False
 ):
+    """
+    Evaluate fml result.
+
+    Parameters
+    ----------
+    absmin : object
+        Value supplied as ``absmin`` by the test case.
+    absmax : object
+        Value supplied as ``absmax`` by the test case.
+    testvalues : object
+        Value supplied as ``testvalues`` by the test case.
+    foundvalues : object
+        Value supplied as ``foundvalues`` by the test case.
+    failflags : object
+        Value supplied as ``failflags`` by the test case.
+    tolerance : float, optional
+        Value supplied as ``tolerance`` by the test case.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+
+    Returns
+    -------
+    bool
+        Value returned to the caller in this test case.
+    """
     if debug:
         print(f"{absmin=}, {absmax=}, {tolerance=}")
         print(f"{testvalues=}")
@@ -70,6 +107,18 @@ def eval_fml_result(
 
 def test_findmaxlag(displayplots=False, local=False, debug=False):
     # set input and output directories
+    """
+    Verify findmaxlag.
+
+    Parameters
+    ----------
+    displayplots : bool, optional
+        Display plots from the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     exampleroot = get_examples_path(local)
     testtemproot = get_test_temp_path(local)
 

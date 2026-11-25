@@ -636,20 +636,16 @@ class OrthoImageItem(QtWidgets.QWidget):
         underlying data, mask, and background map if available. It also updates the
         position lines in each view to reflect the current voxel coordinates.
 
+        Returns
+        -------
+        None
+            This function does not return any value.
+
         Notes
         -----
         The function handles both 2D and 3D data depending on the value of `self.tdim`.
         If `self.tdim == 1`, the data is treated as 2D; otherwise, it is treated as 3D
         with a time dimension.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        None
-            This function does not return any value.
 
         Examples
         --------
@@ -802,11 +798,6 @@ class OrthoImageItem(QtWidgets.QWidget):
         This method enables the main button and displays all three view components
         (axial, coronal, and sagittal) by setting their visibility to True.
 
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the view components and button.
-
         Returns
         -------
         None
@@ -893,11 +884,6 @@ class OrthoImageItem(QtWidgets.QWidget):
         This method converts voxel coordinates to pixel coordinates for each view
         and updates the corresponding cursor lines in the axial, coronal, and
         sagittal views.
-
-        Parameters
-        ----------
-        self : object
-            The instance containing the cursor update functionality
 
         Returns
         -------
@@ -1319,11 +1305,6 @@ class OrthoImageItem(QtWidgets.QWidget):
         current position coordinates. The method handles both 3D and 4D data arrays
         by checking the time dimension.
 
-        Parameters
-        ----------
-        self : object
-            The instance containing the data and position attributes.
-
         Returns
         -------
         float
@@ -1465,25 +1446,6 @@ class OrthoImageItem(QtWidgets.QWidget):
         display limits to a text file. The saved images are composed using the
         `saveandcomposite` method, and the colorbar is generated using `newColorbar`.
 
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing this method. Expected to have attributes:
-            - `verbose`: int, controls verbosity of output.
-            - `map`: object with attributes:
-                - `namebase`: str, base name for output files.
-                - `name`: str, name of the map.
-                - `theLUT`: lookup table for color mapping.
-                - `dispmin`: float, minimum display value.
-                - `dispmax`: float, maximum display value.
-            - `impixpervoxx`, `impixpervoxy`, `impixpervoxz`: float, voxel sizes in each dimension.
-            - `xdim`, `ydim`, `zdim`: int, dimensions of the image in each axis.
-            - `xsize`, `ysize`, `zsize`: float, physical size per voxel in each axis.
-            - `axviewwin`, `axviewbgwin`, `corviewwin`, `corviewbgwin`, `sagviewwin`, `sagviewbgwin`:
-              ImageItem objects for the respective views.
-            - `applyLUT`: method to apply lookup table to data.
-            - `saveandcomposite`: method to composite and save image views.
-
         Returns
         -------
         None
@@ -1605,6 +1567,10 @@ class OrthoImageItem(QtWidgets.QWidget):
         used to validate or prepare the item for further processing. When a map is
         associated with the item, it may perform additional operations or validation.
 
+        See Also
+        --------
+        OrthoImageItem : Main class for orthoimage items
+
         Notes
         -----
         The method currently contains a placeholder implementation that only checks
@@ -1617,10 +1583,6 @@ class OrthoImageItem(QtWidgets.QWidget):
         >>> item = OrthoImageItem()
         >>> item.summarize()
         # Performs summary operation on the item
-
-        See Also
-        --------
-        OrthoImageItem : Main class for orthoimage items
         """
         if self.map is not None:
             # print('OrthoImageItem[', self.map.name, ']: map is set')

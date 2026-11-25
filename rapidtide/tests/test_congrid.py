@@ -26,11 +26,40 @@ from rapidtide.tests.utils import mse
 
 
 def funcvalue2(x, frequency=1.0, phase=0.0, amplitude=1.5):
+    """
+    Set up ``funcvalue2`` for the test.
+
+    Parameters
+    ----------
+    x : object
+        Value supplied as ``x`` by the test case.
+    frequency : float, optional
+        Value supplied as ``frequency`` by the test case.
+    phase : float, optional
+        Value supplied as ``phase`` by the test case.
+    amplitude : float, optional
+        Value supplied as ``amplitude`` by the test case.
+
+    Returns
+    -------
+    object
+        Value returned to the caller in this test case.
+    """
     return amplitude * np.sin(2.0 * np.pi * frequency * x + phase)
 
 
 def test_congrid(debug=False, displayplots=False):
     # make the source axis
+    """
+    Verify congrid.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     starttime = 0.0
     endtime = 1.0
     sourcelen = 1000

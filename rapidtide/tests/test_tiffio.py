@@ -16,6 +16,20 @@ tifffile = pytest.importorskip("tifffile")
     "axis,frames", [(None, None), ("time", 1), ("time", 7), ("lag", 7), ("frequency", 7)]
 )
 def test_tiff_roundtrip(tmp_path, compression, axis, frames):
+    """
+    Verify TIFF roundtrip.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    compression : object
+        Value supplied as ``compression`` by the test case.
+    axis : object
+        Value supplied as ``axis`` by the test case.
+    frames : object
+        Value supplied as ``frames`` by the test case.
+    """
     shape = (3, 5) if frames is None else (3, 5, frames)
     native = np.arange(np.prod(shape), dtype=np.float32).reshape(shape)
     native.reshape(-1)[:5] = [np.nan, np.inf, -np.inf, -0.0, -1.25]
@@ -58,6 +72,16 @@ def test_tiff_roundtrip(tmp_path, compression, axis, frames):
 
 
 def test_bigtiff_without_large_allocation(tmp_path, monkeypatch):
+    """
+    Verify bigtiff without large allocation.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     import rapidtide.tiffio as module
 
     assert needs_bigtiff((2048, 1024, 1024))
@@ -70,6 +94,16 @@ def test_bigtiff_without_large_allocation(tmp_path, monkeypatch):
 
 
 def test_no_lossy_compression_or_incomplete_replacement(tmp_path, monkeypatch):
+    """
+    Verify no lossy compression or incomplete replacement.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     path = tmp_path / "result.tif"
     path.write_bytes(b"previous result")
     data = np.ones((5, 3, 1))
@@ -78,6 +112,16 @@ def test_no_lossy_compression_or_incomplete_replacement(tmp_path, monkeypatch):
         save_map(path, data, header, {}, compression="jpeg")
 
     def fail(*args, **kwargs):
+        """
+        Raise ``OSError`` to exercise the error path.
+
+        Parameters
+        ----------
+        *args : object
+            Arguments passed to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         raise OSError("write failed")
 
     monkeypatch.setattr(tifffile, "imwrite", fail)

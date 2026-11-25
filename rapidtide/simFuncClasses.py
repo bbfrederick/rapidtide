@@ -987,11 +987,11 @@ class SimilarityFunctionFitter:
             Modulus for lag values. Default is 1000.0.
         enforcethresh : bool, optional
             If True, enforce threshold constraints. Default is True.
+        displayplots : bool, optional
+            If True, display plots during fitting. Default is False.
         corrtolerance : float, optional
             Amount by which the magnitude of a correlation can exceed 1.0 (in a case with
             almost no noise) and not be flagged as an error. Default is 1e-6.
-        displayplots : bool, optional
-            If True, display plots during fitting. Default is False.
         functype : str, optional
             Type of function to fit. Either "correlation" or "mutualinfo". Default is "correlation".
         peakfittype : str, optional

@@ -21,6 +21,7 @@ import rapidtide.workflows.showxy as theworkflow
 
 
 def entrypoint():
+    """Run the `showxy` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.showxy)
 
 

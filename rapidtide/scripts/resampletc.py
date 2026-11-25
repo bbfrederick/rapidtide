@@ -21,6 +21,7 @@ import rapidtide.workflows.resampletc as theworkflow
 
 
 def entrypoint():
+    """Run the `resampletc` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.resampletc)
 
 

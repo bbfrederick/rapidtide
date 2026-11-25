@@ -396,6 +396,16 @@ def fitcorr(
     if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments
         def fitcorr_consumer(inQ, outQ):
+            """
+            Fit correlation peaks for queued voxels.
+
+            Parameters
+            ----------
+            inQ : queue-like
+                Queue supplying work items.
+            outQ : queue-like
+                Queue receiving processed results.
+            """
             while True:
                 try:
                     # get a new message

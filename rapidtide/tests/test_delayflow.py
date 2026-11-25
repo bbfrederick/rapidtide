@@ -28,11 +28,30 @@ import rapidtide.workflows.delayflow as df
 
 
 def _make_radial_dataset(tmpdir, shape=(32, 32, 28), voxdim=2.0, truespeed=5.0, noise=0.05):
-    """Make a synthetic delay map with an analytically known flow field.
+    """
+    Make a synthetic delay map with an analytically known flow field.
 
     Radial outflow from a point source at constant speed c gives tau = r / c, so
     grad(tau) = rhat / c, the speed is c everywhere, and the flow direction is
     radially outward.  Every quantity delayflow computes has a closed form here.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    shape : tuple of int, optional
+        Dimensions of the test array.
+    voxdim : float, optional
+        Value supplied as ``voxdim`` by the test case.
+    truespeed : float, optional
+        Value supplied as ``truespeed`` by the test case.
+    noise : float, optional
+        Value supplied as ``noise`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     rng = np.random.RandomState(1234)
     thecenter = [(thedim - 1) / 2.0 for thedim in shape]
@@ -63,6 +82,21 @@ def _make_radial_dataset(tmpdir, shape=(32, 32, 28), voxdim=2.0, truespeed=5.0, 
 
 
 def _baseargs(delayfile, outputroot):
+    """
+    Set up ``_baseargs`` for the test.
+
+    Parameters
+    ----------
+    delayfile : object
+        Value supplied as ``delayfile`` by the test case.
+    outputroot : object
+        Value supplied as ``outputroot`` by the test case.
+
+    Returns
+    -------
+    object
+        The ``args`` value supplied to the caller.
+    """
     args = df._get_parser().parse_args([delayfile, outputroot])
     args.showprogressbar = False
     args.debug = False
@@ -73,7 +107,14 @@ def _baseargs(delayfile, outputroot):
 
 
 def test_priorityflood(debug=False):
-    """Filling should remove interior local minima but leave a monotone surface alone."""
+    """
+    Filling should remove interior local minima but leave a monotone surface alone.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     themask = np.ones((8, 8, 8), dtype=np.uint16)
     thegrids = np.indices((8, 8, 8)).astype(float)
 
@@ -91,7 +132,14 @@ def test_priorityflood(debug=False):
 
 
 def test_estimategradient(debug=False):
-    """A known linear ramp must give back its own slope."""
+    """
+    A known linear ramp must give back its own slope.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (16, 16, 16)
     voxdims = (2.0, 3.0, 4.0)
     themask = np.ones(theshape, dtype=np.uint16)
@@ -118,8 +166,15 @@ def test_estimategradient(debug=False):
 
 
 def test_samplealongstreamlines(debug=False):
-    """Sampling must not blend in the zeros outside the mask, and must not
-    interpolate categorical labels."""
+    """
+    Sampling must not blend in the zeros outside the mask, and must not
+    interpolate categorical labels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (20, 10, 10)
     themask = np.zeros(theshape, dtype=np.uint16)
     themask[2:18, 2:8, 2:8] = 1
@@ -169,7 +224,14 @@ def test_samplealongstreamlines(debug=False):
 
 
 def test_labelterritories(debug=False):
-    """Two separated sources should give two territories."""
+    """
+    Two separated sources should give two territories.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (20, 8, 8)
     themask = np.ones(theshape, dtype=np.uint16)
     thegrids = np.indices(theshape).astype(float)
@@ -187,7 +249,14 @@ def test_labelterritories(debug=False):
 
 
 def delayflow_integration(debug=False):
-    """Run delayflow end to end and check it recovers the known flow field."""
+    """
+    Run delayflow end to end and check it recovers the known flow field.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("delayflow_integration")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -270,7 +339,14 @@ def delayflow_integration(debug=False):
 
 
 def delayflow_speedceiling(debug=False):
-    """Flow faster than the resolvable limit must be flagged, not silently reported."""
+    """
+    Flow faster than the resolvable limit must be flagged, not silently reported.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("delayflow_speedceiling")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -296,6 +372,14 @@ def delayflow_speedceiling(debug=False):
 
 
 def test_delayflow(debug=False):
+    """
+    Verify delayflow.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     test_priorityflood(debug=debug)
     test_estimategradient(debug=debug)
     test_samplealongstreamlines(debug=debug)

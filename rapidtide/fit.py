@@ -1426,115 +1426,113 @@ def findmaxlag_gauss(
     displayplots: bool = False,
 ) -> Tuple[int, np.float64, np.float64, np.float64, np.uint16, np.uint16, int, int]:
     """
-        Find the maximum lag in a cross-correlation function by fitting a Gaussian curve to the peak.
+    Find the maximum lag in a cross-correlation function by fitting a Gaussian curve to the peak.
 
-        This function locates the peak in a cross-correlation function and optionally fits a Gaussian
-        curve to determine the precise lag time, amplitude, and width. It includes extensive error
-        checking and validation to ensure robust results.
+    This function locates the peak in a cross-correlation function and optionally fits a Gaussian
+    curve to determine the precise lag time, amplitude, and width. It includes extensive error
+    checking and validation to ensure robust results.
 
-        Parameters
-        ----------
-        thexcorr_x : NDArray[np.floating[Any]]
-            X-axis values (lag times) of the cross-correlation function.
-        thexcorr_y : NDArray[np.floating[Any]]
-            Y-axis values (correlation coefficients) of the cross-correlation function.
-        lagmin : float
-            Minimum allowable lag value in seconds.
-        lagmax : float
-            Maximum allowable lag value in seconds.
-        widthmax : float
-            Maximum allowable width of the Gaussian peak in seconds.
-        edgebufferfrac : float, optional
-            Fraction of array length to exclude from each edge during search. Default is 0.0.
-        threshval : float, optional
-            Minimum correlation threshold for a valid peak. Default is 0.0.
-        uthreshval : float, optional
-            Upper threshold value (currently unused). Default is 30.0.
-        debug : bool, optional
-            Enable debug output showing initial vs final parameter values. Default is False.
-        tweaklims : bool, optional
-            Automatically adjust search limits to avoid edge artifacts. Default is True.
-        zerooutbadfit : bool, optional
-            Set output to zero when fit fails rather than using initial guess. Default is True.
-        refine : bool, optional
-            Perform least-squares refinement of the Gaussian fit. Default is False.
-        maxguess : float, optional
-            Initial guess for maximum lag position. Used when useguess=True. Default is 0.0.
-        useguess : bool, optional
-            Use the provided maxguess instead of finding peak automatically. Default is False.
-        searchfrac : float, optional
-            Fraction of peak height used to determine initial width estimate. Default is 0.5.
-        fastgauss : bool, optional
-            Use fast non-iterative Gaussian fitting (less accurate). Default is False.
-        lagmod : float, optional
-            Modulus for lag values to handle wraparound. Default is 1000.0.
-        enforcethresh : bool, optional
-            Enforce minimum threshold requirements. Default is True.
-        absmaxsigma : float, optional
-            Absolute maximum allowed sigma (width) value. Default is 1000.0.
-        absminsigma : float, optional
-            Absolute minimum allowed sigma (width) value. Default is 0.1.
-        displayplots : bool, optional
-            Show matplotlib plots of data and fitted curve. Default is False.
+    Parameters
+    ----------
+    thexcorr_x : NDArray[np.floating[Any]]
+        X-axis values (lag times) of the cross-correlation function.
+    thexcorr_y : NDArray[np.floating[Any]]
+        Y-axis values (correlation coefficients) of the cross-correlation function.
+    lagmin : float
+        Minimum allowable lag value in seconds.
+    lagmax : float
+        Maximum allowable lag value in seconds.
+    widthmax : float
+        Maximum allowable width of the Gaussian peak in seconds.
+    edgebufferfrac : float, optional
+        Fraction of array length to exclude from each edge during search. Default is 0.0.
+    threshval : float, optional
+        Minimum correlation threshold for a valid peak. Default is 0.0.
+    debug : bool, optional
+        Enable debug output showing initial vs final parameter values. Default is False.
+    tweaklims : bool, optional
+        Automatically adjust search limits to avoid edge artifacts. Default is True.
+    zerooutbadfit : bool, optional
+        Set output to zero when fit fails rather than using initial guess. Default is True.
+    refine : bool, optional
+        Perform least-squares refinement of the Gaussian fit. Default is False.
+    maxguess : float, optional
+        Initial guess for maximum lag position. Used when useguess=True. Default is 0.0.
+    useguess : bool, optional
+        Use the provided maxguess instead of finding peak automatically. Default is False.
+    searchfrac : float, optional
+        Fraction of peak height used to determine initial width estimate. Default is 0.5.
+    fastgauss : bool, optional
+        Use fast non-iterative Gaussian fitting (less accurate). Default is False.
+    lagmod : float, optional
+        Modulus for lag values to handle wraparound. Default is 1000.0.
+    enforcethresh : bool, optional
+        Enforce minimum threshold requirements. Default is True.
+    absmaxsigma : float, optional
+        Absolute maximum allowed sigma (width) value. Default is 1000.0.
+    absminsigma : float, optional
+        Absolute minimum allowed sigma (width) value. Default is 0.1.
+    displayplots : bool, optional
+        Show matplotlib plots of data and fitted curve. Default is False.
 
-        Returns
-        -------
-        maxindex : int
-            Array index of the maximum correlation value.
-        maxlag : numpy.float64
-            Time lag at maximum correlation in seconds.
-        maxval : numpy.float64
-            Maximum correlation coefficient value.
-        maxsigma : numpy.float64
-            Width (sigma) of the fitted Gaussian peak.
-        maskval : numpy.uint16
-            Validity mask (1 = valid fit, 0 = invalid fit).
-        failreason : numpy.uint16
-            Bitwise failure reason code. Possible values:
-            - 0x01: Correlation amplitude below threshold
-            - 0x02: Correlation amplitude above maximum (>1.0)
-            - 0x04: Search window too narrow (<3 points)
-            - 0x08: Fitted width exceeds widthmax
-            - 0x10: Fitted lag outside [lagmin, lagmax] range
-            - 0x20: Peak found at edge of search range
-            - 0x40: Fitting procedure failed
-            - 0x80: Initial parameter estimation failed
-        fitstart : int
-            Starting index used for fitting.
-        fitend : int
-            Ending index used for fitting.
+    Returns
+    -------
+    maxindex : int
+        Array index of the maximum correlation value.
+    maxlag : numpy.float64
+        Time lag at maximum correlation in seconds.
+    maxval : numpy.float64
+        Maximum correlation coefficient value.
+    maxsigma : numpy.float64
+        Width (sigma) of the fitted Gaussian peak.
+    maskval : numpy.uint16
+        Validity mask (1 = valid fit, 0 = invalid fit).
+    failreason : numpy.uint16
+        Bitwise failure reason code. Possible values:
+        - 0x01: Correlation amplitude below threshold
+        - 0x02: Correlation amplitude above maximum (>1.0)
+        - 0x04: Search window too narrow (<3 points)
+        - 0x08: Fitted width exceeds widthmax
+        - 0x10: Fitted lag outside [lagmin, lagmax] range
+        - 0x20: Peak found at edge of search range
+        - 0x40: Fitting procedure failed
+        - 0x80: Initial parameter estimation failed
+    fitstart : int
+        Starting index used for fitting.
+    fitend : int
+        Ending index used for fitting.
 
-        Notes
-        -----
-        - The function assumes cross-correlation data where Y-values represent correlation
-          coefficients (typically in range [-1, 1]).
-        - When refine=False, uses simple peak-finding based on maximum value.
-        - When refine=True, performs least-squares Gaussian fit for sub-bin precision.
-        - All time-related parameters (lagmin, lagmax, widthmax) should be in the same
-          units as thexcorr_x.
-        - The fastgauss option provides faster but less accurate non-iterative fitting.
+    Notes
+    -----
+    - The function assumes cross-correlation data where Y-values represent correlation
+      coefficients (typically in range [-1, 1]).
+    - When refine=False, uses simple peak-finding based on maximum value.
+    - When refine=True, performs least-squares Gaussian fit for sub-bin precision.
+    - All time-related parameters (lagmin, lagmax, widthmax) should be in the same
+      units as thexcorr_x.
+    - The fastgauss option provides faster but less accurate non-iterative fitting.
 
-        Examples
-        --------
-        Basic usage without refinement:
+    Examples
+    --------
+    Basic usage without refinement:
 
-        >>> maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = \\
-        ...     findmaxlag_gauss(lag_times, correlations, -10.0, 10.0, 5.0)
-        >>> if maskval == 1:
-        ...     print(f"Peak found at lag: {maxlag:.3f} s, correlation: {maxval:.3f}")
+    >>> maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = \\
+    ...     findmaxlag_gauss(lag_times, correlations, -10.0, 10.0, 5.0)
+    >>> if maskval == 1:
+    ...     print(f"Peak found at lag: {maxlag:.3f} s, correlation: {maxval:.3f}")
 
-        Advanced usage with refinement:
+    Advanced usage with refinement:
 
-        >>> maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = \\
-        ...     findmaxlag_gauss(lag_times, correlations, -5.0, 5.0, 2.0,
-        ...                      refine=True, threshval=0.1, displayplots=True)
+    >>> maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = \\
+    ...     findmaxlag_gauss(lag_times, correlations, -5.0, 5.0, 2.0,
+    ...                      refine=True, threshval=0.1, displayplots=True)
 
-        Using an initial guess:
+    Using an initial guess:
 
-        >>> maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = \\
-        ...     findmaxlag_gauss(lag_times, correlations, -10.0, 10.0, 3.0,
-        ...                      useguess=True, maxguess=2.5, refine=True)
-        """
+    >>> maxindex, maxlag, maxval, maxsigma, maskval, failreason, fitstart, fitend = \\
+    ...     findmaxlag_gauss(lag_times, correlations, -10.0, 10.0, 3.0,
+    ...                      useguess=True, maxguess=2.5, refine=True)
+    """
     """
     Find the maximum lag in a cross-correlation function by fitting a Gaussian curve to the peak.
 
@@ -2041,14 +2039,16 @@ def gaussfit2(
 
     Parameters
     ----------
-    x : array_like
-        Input values for which to compute the Gaussian function
     height : float
         Height (amplitude) of the Gaussian peak
     loc : float
         Location (mean) of the Gaussian peak
-    FWHM : float
+    width : float
         Full Width at Half Maximum of the Gaussian peak
+    xvals : array_like
+        Input values for which to compute the Gaussian function
+    yvals : NDArray
+        Observed values to fit at the supplied coordinates.
 
     Returns
     -------
@@ -2132,16 +2132,18 @@ def sincfit(
 
     Parameters
     ----------
-    x : ndarray
-        Array of x-values where the function is evaluated.
     height : float
         Height of the sinc function peak.
     loc : float
         Location (center) of the sinc function peak.
-    FWHM : float
+    width : float
         Full Width at Half Maximum of the sinc function.
     baseline : float
         Baseline offset added to the sinc function.
+    xvals : ndarray
+        Array of x-values where the function is evaluated.
+    yvals : NDArray
+        Observed values to fit at the supplied coordinates.
 
     Returns
     -------
@@ -2789,8 +2791,6 @@ def linfitfilt(
     theevs : NDArray
         NxP array of explanatory variables to be fit. If 1D, treated as a single
         explanatory variable.
-    returnintercept : bool, optional
-        If True, also return the intercept term from the regression. Default is False.
     debug : bool, optional
         If True, print debugging information during execution. Default is False.
 

@@ -44,10 +44,27 @@ DELAY = 2.0
 
 
 def _make_broadband_signals(samplerate=SAMPLERATE, duration=DURATION, delay=DELAY, noise=3.0):
-    """Generate broadband LFO signals with a known time delay.
+    """
+    Generate broadband LFO signals with a known time delay.
 
     Uses sum of sinusoids at LFO frequencies (0.01-0.2 Hz) with random
     phases to produce a single Gaussian-shaped cross-correlation peak.
+
+    Parameters
+    ----------
+    samplerate : float, optional
+        Sampling rate in Hz.
+    duration : object, optional
+        Value supplied as ``duration`` by the test case.
+    delay : float, optional
+        Time shift applied to the test signal in seconds.
+    noise : float, optional
+        Value supplied as ``noise`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     npoints = int(samplerate * duration)
     t = np.arange(npoints) / samplerate
@@ -67,15 +84,41 @@ def _make_broadband_signals(samplerate=SAMPLERATE, duration=DURATION, delay=DELA
 
 
 def _write_test_file(filepath, data):
-    """Write a 1D signal array to a text file."""
+    """
+    Write a 1D signal array to a text file.
+
+    Parameters
+    ----------
+    filepath : path-like
+        Path to the test input or output file.
+    data : array-like
+        Data passed to the test helper.
+    """
     np.savetxt(filepath, data)
 
 
 def _make_default_args(tmpdir, signal1=None, signal2=None, **overrides):
-    """Create a default args Namespace for showxcorrx.
+    """
+    Create a default args Namespace for showxcorrx.
 
     Writes signal data to temp files and constructs an args namespace
     with all required attributes.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    signal1 : object or None, optional
+        Value supplied as ``signal1`` by the test case.
+    signal2 : object or None, optional
+        Value supplied as ``signal2`` by the test case.
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    object
+        The ``args`` value supplied to the caller.
     """
     if signal1 is None or signal2 is None:
         signal1, signal2 = _make_broadband_signals()
@@ -157,7 +200,8 @@ def _make_default_args(tmpdir, signal1=None, signal2=None, **overrides):
 
 @contextmanager
 def _showxcorrx_run(**overrides):
-    """Build args in a temporary directory, execute showxcorrx, and yield context.
+    """
+    Build args in a temporary directory, execute showxcorrx, and yield context.
 
     The run happens with the temporary directory as the working directory.  That is
     not cosmetic: with --debug, showxcorrx sets dumpfiltered and writes
@@ -165,6 +209,16 @@ def _showxcorrx_run(**overrides):
     MI_filtereddata*.txt using bare relative names, so they land wherever pytest
     happened to be invoked from and are left behind.  Running from the temporary
     directory means they are cleaned up with it.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Yields
+    ------
+    tuple
+        Values supplied together for the test case.
     """
     with tempfile.TemporaryDirectory() as tmpdir:
         run_overrides = dict(overrides)
@@ -186,7 +240,14 @@ def _showxcorrx_run(**overrides):
 
 
 def parser_defaults(debug=False):
-    """Test _get_parser returns parser with correct defaults."""
+    """
+    Test _get_parser returns parser with correct defaults.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     parser = _get_parser()
@@ -213,7 +274,14 @@ def parser_defaults(debug=False):
 
 
 def parser_samplerate(debug=False):
-    """Test parser with explicit samplerate."""
+    """
+    Test parser with explicit samplerate.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_samplerate")
     parser = _get_parser()
@@ -222,7 +290,14 @@ def parser_samplerate(debug=False):
 
 
 def parser_sampletime(debug=False):
-    """Test parser with sampletime (inverted to samplerate)."""
+    """
+    Test parser with sampletime (inverted to samplerate).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_sampletime")
     parser = _get_parser()
@@ -231,7 +306,14 @@ def parser_sampletime(debug=False):
 
 
 def parser_searchrange(debug=False):
-    """Test parser with explicit search range."""
+    """
+    Test parser with explicit search range.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_searchrange")
     parser = _get_parser()
@@ -241,7 +323,14 @@ def parser_searchrange(debug=False):
 
 
 def parser_detrendorder(debug=False):
-    """Test parser with detrendorder option."""
+    """
+    Test parser with detrendorder option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_detrendorder")
     parser = _get_parser()
@@ -250,7 +339,14 @@ def parser_detrendorder(debug=False):
 
 
 def parser_corrweighting(debug=False):
-    """Test parser with correlation weighting options."""
+    """
+    Test parser with correlation weighting options.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_corrweighting")
     parser = _get_parser()
@@ -260,7 +356,14 @@ def parser_corrweighting(debug=False):
 
 
 def parser_similaritymetric(debug=False):
-    """Test parser with similarity metric options."""
+    """
+    Test parser with similarity metric options.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_similaritymetric")
     parser = _get_parser()
@@ -270,7 +373,14 @@ def parser_similaritymetric(debug=False):
 
 
 def parser_sigma_limits(debug=False):
-    """Test parser with sigmamax and sigmamin options."""
+    """
+    Test parser with sigmamax and sigmamin options.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_sigma_limits")
     parser = _get_parser()
@@ -282,7 +392,14 @@ def parser_sigma_limits(debug=False):
 
 
 def parser_output_options(debug=False):
-    """Test parser output-related options."""
+    """
+    Test parser output-related options.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_output_options")
     parser = _get_parser()
@@ -305,7 +422,14 @@ def parser_output_options(debug=False):
 
 
 def parser_preprocessing(debug=False):
-    """Test parser preprocessing options."""
+    """
+    Test parser preprocessing options.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_preprocessing")
     parser = _get_parser()
@@ -325,7 +449,14 @@ def parser_preprocessing(debug=False):
 
 
 def parser_additional_calcs(debug=False):
-    """Test parser additional calculation options."""
+    """
+    Test parser additional calculation options.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_additional_calcs")
     parser = _get_parser()
@@ -338,7 +469,14 @@ def parser_additional_calcs(debug=False):
 
 
 def parser_nodisplay(debug=False):
-    """Test parser --nodisplay option."""
+    """
+    Test parser --nodisplay option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_nodisplay")
     parser = _get_parser()
@@ -347,7 +485,14 @@ def parser_nodisplay(debug=False):
 
 
 def parser_nprocs(debug=False):
-    """Test parser --nprocs option."""
+    """
+    Test parser --nprocs option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_nprocs")
     parser = _get_parser()
@@ -359,7 +504,14 @@ def parser_nprocs(debug=False):
 
 
 def printthresholds_basic(debug=False):
-    """Test printthresholds prints formatted output."""
+    """
+    Test printthresholds prints formatted output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("printthresholds_basic")
     pcts = [0.5, 0.6, 0.7]
@@ -369,14 +521,28 @@ def printthresholds_basic(debug=False):
 
 
 def printthresholds_single(debug=False):
-    """Test printthresholds with single entry."""
+    """
+    Test printthresholds with single entry.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("printthresholds_single")
     printthresholds([0.42], [0.95], "Single threshold:")
 
 
 def printthresholds_empty(debug=False):
-    """Test printthresholds with empty lists."""
+    """
+    Test printthresholds with empty lists.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("printthresholds_empty")
     printthresholds([], [], "Empty thresholds:")
@@ -386,7 +552,14 @@ def printthresholds_empty(debug=False):
 
 
 def showxcorrx_correlation_default(debug=False):
-    """Test showxcorrx basic correlation workflow with default settings."""
+    """
+    Test showxcorrx basic correlation workflow with default settings.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_correlation_default")
     with _showxcorrx_run():
@@ -394,7 +567,14 @@ def showxcorrx_correlation_default(debug=False):
 
 
 def showxcorrx_finds_correct_delay(debug=False):
-    """Test that showxcorrx finds approximately correct delay."""
+    """
+    Test that showxcorrx finds approximately correct delay.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_finds_correct_delay")
     with _showxcorrx_run(summarymode=True, resoutputfile="results.txt") as (tmpdir, args):
@@ -410,7 +590,14 @@ def showxcorrx_finds_correct_delay(debug=False):
 
 
 def showxcorrx_correlation_summarymode(debug=False):
-    """Test showxcorrx with summarymode output."""
+    """
+    Test showxcorrx with summarymode output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_correlation_summarymode")
     with _showxcorrx_run(summarymode=True, resoutputfile="summary.txt") as (_tmpdir, args):
@@ -422,7 +609,14 @@ def showxcorrx_correlation_summarymode(debug=False):
 
 
 def showxcorrx_correlation_labelline(debug=False):
-    """Test showxcorrx with label line output."""
+    """
+    Test showxcorrx with label line output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_correlation_labelline")
     with _showxcorrx_run(
@@ -441,7 +635,14 @@ def showxcorrx_correlation_labelline(debug=False):
 
 
 def showxcorrx_correlation_invert(debug=False):
-    """Test showxcorrx with inverted second timecourse."""
+    """
+    Test showxcorrx with inverted second timecourse.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_correlation_invert")
     with _showxcorrx_run(invert=True):
@@ -449,7 +650,14 @@ def showxcorrx_correlation_invert(debug=False):
 
 
 def showxcorrx_correlation_trimdata(debug=False):
-    """Test showxcorrx with trimdata option for unequal length signals."""
+    """
+    Test showxcorrx with trimdata option for unequal length signals.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_correlation_trimdata")
     sig1, sig2 = _make_broadband_signals()
@@ -460,7 +668,14 @@ def showxcorrx_correlation_trimdata(debug=False):
 
 
 def showxcorrx_auto_samplerate(debug=False):
-    """Test showxcorrx with auto samplerate (defaults to 1.0)."""
+    """
+    Test showxcorrx with auto samplerate (defaults to 1.0).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_auto_samplerate")
     # Generate signals for samplerate=1.0
@@ -470,7 +685,14 @@ def showxcorrx_auto_samplerate(debug=False):
 
 
 def showxcorrx_corroutputfile(debug=False):
-    """Test showxcorrx saves correlation function to file."""
+    """
+    Test showxcorrx saves correlation function to file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_corroutputfile")
     with _showxcorrx_run(corroutputfile="corrfunc.txt") as (_tmpdir, args):
@@ -478,7 +700,14 @@ def showxcorrx_corroutputfile(debug=False):
 
 
 def showxcorrx_detrendorder_zero(debug=False):
-    """Test showxcorrx with no detrending."""
+    """
+    Test showxcorrx with no detrending.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_detrendorder_zero")
     with _showxcorrx_run(detrendorder=0):
@@ -486,7 +715,14 @@ def showxcorrx_detrendorder_zero(debug=False):
 
 
 def showxcorrx_detrendorder_high(debug=False):
-    """Test showxcorrx with higher order detrending."""
+    """
+    Test showxcorrx with higher order detrending.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_detrendorder_high")
     with _showxcorrx_run(detrendorder=3):
@@ -494,7 +730,14 @@ def showxcorrx_detrendorder_high(debug=False):
 
 
 def showxcorrx_hann_window(debug=False):
-    """Test showxcorrx with hann window function."""
+    """
+    Test showxcorrx with hann window function.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_hann_window")
     with _showxcorrx_run(windowfunc="hann"):
@@ -502,7 +745,14 @@ def showxcorrx_hann_window(debug=False):
 
 
 def showxcorrx_no_window(debug=False):
-    """Test showxcorrx with no windowing."""
+    """
+    Test showxcorrx with no windowing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_no_window")
     with _showxcorrx_run(windowfunc="None"):
@@ -510,7 +760,14 @@ def showxcorrx_no_window(debug=False):
 
 
 def showxcorrx_phat_weighting(debug=False):
-    """Test showxcorrx with PHAT cross-correlation weighting."""
+    """
+    Test showxcorrx with PHAT cross-correlation weighting.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_phat_weighting")
     with _showxcorrx_run(corrweighting="phat"):
@@ -518,7 +775,14 @@ def showxcorrx_phat_weighting(debug=False):
 
 
 def showxcorrx_liang_weighting(debug=False):
-    """Test showxcorrx with Liang cross-correlation weighting."""
+    """
+    Test showxcorrx with Liang cross-correlation weighting.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_liang_weighting")
     with _showxcorrx_run(corrweighting="liang"):
@@ -526,7 +790,14 @@ def showxcorrx_liang_weighting(debug=False):
 
 
 def showxcorrx_eckart_weighting(debug=False):
-    """Test showxcorrx with Eckart cross-correlation weighting."""
+    """
+    Test showxcorrx with Eckart cross-correlation weighting.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_eckart_weighting")
     with _showxcorrx_run(corrweighting="eckart"):
@@ -534,7 +805,14 @@ def showxcorrx_eckart_weighting(debug=False):
 
 
 def showxcorrx_zero_delay(debug=False):
-    """Test showxcorrx with zero delay between signals."""
+    """
+    Test showxcorrx with zero delay between signals.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_zero_delay")
     sig1, sig2 = _make_broadband_signals(delay=0.0)
@@ -553,7 +831,14 @@ def showxcorrx_zero_delay(debug=False):
 
 
 def showxcorrx_narrow_search_range(debug=False):
-    """Test showxcorrx with narrow search range centered on true delay."""
+    """
+    Test showxcorrx with narrow search range centered on true delay.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_narrow_search_range")
     with _showxcorrx_run(lag_extrema=(-5.0, 5.0)):
@@ -561,7 +846,14 @@ def showxcorrx_narrow_search_range(debug=False):
 
 
 def showxcorrx_cepstral(debug=False):
-    """Test showxcorrx with cepstral delay estimation."""
+    """
+    Test showxcorrx with cepstral delay estimation.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_cepstral")
     with _showxcorrx_run(cepstral=True):
@@ -569,7 +861,14 @@ def showxcorrx_cepstral(debug=False):
 
 
 def showxcorrx_calccoherence(debug=False):
-    """Test showxcorrx with coherence calculation (no display)."""
+    """
+    Test showxcorrx with coherence calculation (no display).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_calccoherence")
     with _showxcorrx_run(calccoherence=True):
@@ -577,7 +876,14 @@ def showxcorrx_calccoherence(debug=False):
 
 
 def showxcorrx_calccsd(debug=False):
-    """Test showxcorrx with cross-spectral density calculation."""
+    """
+    Test showxcorrx with cross-spectral density calculation.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_calccsd")
     with _showxcorrx_run(calccsd=True):
@@ -585,7 +891,14 @@ def showxcorrx_calccsd(debug=False):
 
 
 def showxcorrx_mutualinfo(debug=False):
-    """Test showxcorrx with mutual information metric."""
+    """
+    Test showxcorrx with mutual information metric.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_mutualinfo")
     with _showxcorrx_run(similaritymetric="mutualinfo"):
@@ -593,7 +906,14 @@ def showxcorrx_mutualinfo(debug=False):
 
 
 def showxcorrx_mutualinfo_summarymode(debug=False):
-    """Test showxcorrx with mutual info in summarymode."""
+    """
+    Test showxcorrx with mutual info in summarymode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_mutualinfo_summarymode")
     with _showxcorrx_run(
@@ -605,7 +925,14 @@ def showxcorrx_mutualinfo_summarymode(debug=False):
 
 
 def showxcorrx_hybrid(debug=False):
-    """Test showxcorrx with hybrid similarity metric."""
+    """
+    Test showxcorrx with hybrid similarity metric.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_hybrid")
     with _showxcorrx_run(similaritymetric="hybrid"):
@@ -613,7 +940,14 @@ def showxcorrx_hybrid(debug=False):
 
 
 def showxcorrx_with_lfo_filter(debug=False):
-    """Test showxcorrx with LFO bandpass filtering."""
+    """
+    Test showxcorrx with LFO bandpass filtering.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_with_lfo_filter")
     with _showxcorrx_run(filterband="lfo"):
@@ -621,7 +955,14 @@ def showxcorrx_with_lfo_filter(debug=False):
 
 
 def showxcorrx_timerange(debug=False):
-    """Test showxcorrx with explicit time range."""
+    """
+    Test showxcorrx with explicit time range.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_timerange")
     # Use first 1500 samples (0 to 1499)
@@ -630,7 +971,14 @@ def showxcorrx_timerange(debug=False):
 
 
 def showxcorrx_sigma_limits(debug=False):
-    """Test showxcorrx with custom sigma limits."""
+    """
+    Test showxcorrx with custom sigma limits.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_sigma_limits")
     with _showxcorrx_run(absmaxsigma=500.0, absminsigma=0.5):
@@ -638,7 +986,14 @@ def showxcorrx_sigma_limits(debug=False):
 
 
 def showxcorrx_zeropadding(debug=False):
-    """Test showxcorrx with zero padding enabled."""
+    """
+    Test showxcorrx with zero padding enabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_zeropadding")
     with _showxcorrx_run(zeropadding=100):
@@ -646,7 +1001,14 @@ def showxcorrx_zeropadding(debug=False):
 
 
 def showxcorrx_butterworth_filter(debug=False):
-    """Test showxcorrx with butterworth filter type."""
+    """
+    Test showxcorrx with butterworth filter type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_butterworth_filter")
     with _showxcorrx_run(filterband="lfo", filtertype="butterworth"):
@@ -689,6 +1051,19 @@ def _make_confounded_signals(sharedseed=3, confoundseed=9, thegain=3.0):
     """
 
     def thebroadband(theseed):
+        """
+        Provide the ``thebroadband`` test substitute.
+
+        Parameters
+        ----------
+        theseed : object
+            Value supplied as ``theseed`` by the test case.
+
+        Returns
+        -------
+        numpy.ndarray
+            The ``theresult`` value supplied to the caller.
+        """
         therng = np.random.RandomState(theseed)
         thetimes = np.arange(NPOINTS) / SAMPLERATE
         theresult = np.zeros(NPOINTS)
@@ -744,13 +1119,19 @@ def _readsummary(tmpdir, signal1, signal2, controlvariable=None):
 
 
 def showxcorrx_partialcorr_removes_the_control_variable(debug=False):
-    """--partialcorr has to actually partial the control variable out.
+    """
+    --partialcorr has to actually partial the control variable out.
 
     Two things used to stop that happening.  The control variable file was read with
     tide_io.readnpvecs, which does not exist, so the option raised AttributeError
     before reading anything.  And the regression against it was computed and then
     discarded, so even reaching it left the data untouched and the reported
     correlation was an ordinary one.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("showxcorrx_partialcorr_removes_the_control_variable")
@@ -792,9 +1173,16 @@ def showxcorrx_partialcorr_removes_the_control_variable(debug=False):
 
 
 def showxcorrx_partialcorr_leaves_an_unrelated_control_alone(debug=False):
-    """Partialling out something the signals do not contain must barely move the
+    """
+    Partialling out something the signals do not contain must barely move the
     answer.  Without this a fix that simply zeroed the data would pass the test
-    above."""
+    above.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_partialcorr_leaves_an_unrelated_control_alone")
 
@@ -817,8 +1205,15 @@ def showxcorrx_partialcorr_leaves_an_unrelated_control_alone(debug=False):
 
 
 def showxcorrx_partialcorr_accepts_several_control_variables(debug=False):
-    """The option takes the columns of a file, so more than one control variable has
-    to be handled - each with its own coefficient."""
+    """
+    The option takes the columns of a file, so more than one control variable has
+    to be handled - each with its own coefficient.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_partialcorr_accepts_several_control_variables")
 
@@ -844,9 +1239,16 @@ def showxcorrx_partialcorr_accepts_several_control_variables(debug=False):
 
 
 def showxcorrx_partialcorr_rejects_a_short_control_file(debug=False):
-    """The control variables have to span the data.  A file that is too short would
+    """
+    The control variables have to span the data.  A file that is too short would
     otherwise be silently broadcast or truncated against the timecourses, which is a
-    quietly wrong answer rather than an error."""
+    quietly wrong answer rather than an error.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_partialcorr_rejects_a_short_control_file")
 
@@ -869,9 +1271,16 @@ def showxcorrx_partialcorr_rejects_a_short_control_file(debug=False):
 
 
 def showxcorrx_null_distribution_sets_thresholds(debug=False):
-    """--numestreps builds a null distribution by permutation and reports the
+    """
+    --numestreps builds a null distribution by permutation and reports the
     correlation values that clear it.  Those thresholds are what turn a correlation
-    into a significance statement, so they have to appear and be ordered."""
+    into a significance statement, so they have to appear and be ordered.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_null_distribution_sets_thresholds")
 
@@ -903,7 +1312,8 @@ def showxcorrx_null_distribution_sets_thresholds(debug=False):
 
 
 def showxcorrx_mutualinfo_with_numestreps_is_unsupported(debug=False):
-    """--similaritymetric mutualinfo combined with --numestreps currently crashes.
+    """
+    --similaritymetric mutualinfo combined with --numestreps currently crashes.
 
     The null distribution block references thexsimfuncfitter, which is only built in
     the non-mutualinfo branch, and it feeds theCorrelator - which the mutualinfo path
@@ -912,6 +1322,11 @@ def showxcorrx_mutualinfo_with_numestreps_is_unsupported(debug=False):
     combination is pinned as unsupported rather than guessed at.  If this test starts
     failing, the combination has been implemented and the test should assert on the
     thresholds instead.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("showxcorrx_mutualinfo_with_numestreps_is_unsupported")
@@ -934,8 +1349,15 @@ def showxcorrx_mutualinfo_with_numestreps_is_unsupported(debug=False):
 
 
 def showxcorrx_mismatched_sample_rates_are_rejected(debug=False):
-    """Two timecourses sampled at different rates cannot be correlated point for
-    point, so the run has to stop rather than silently comparing mismatched axes."""
+    """
+    Two timecourses sampled at different rates cannot be correlated point for
+    point, so the run has to stop rather than silently comparing mismatched axes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_mismatched_sample_rates_are_rejected")
 
@@ -960,8 +1382,15 @@ def showxcorrx_mismatched_sample_rates_are_rejected(debug=False):
 
 
 def showxcorrx_verbose_and_debug_reporting(debug=False):
-    """The verbose and debug branches run inside the workflow and print derived
-    quantities; a stale f-string in one of them takes the whole run down."""
+    """
+    The verbose and debug branches run inside the workflow and print derived
+    quantities; a stale f-string in one of them takes the whole run down.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_verbose_and_debug_reporting")
 
@@ -970,9 +1399,16 @@ def showxcorrx_verbose_and_debug_reporting(debug=False):
 
 
 def showxcorrx_dumpfiltered_writes_the_preprocessed_timecourses(debug=False):
-    """--debug turns on dumpfiltered, which writes the preprocessed timecourses out
+    """
+    --debug turns on dumpfiltered, which writes the preprocessed timecourses out
     for inspection.  They are written with bare relative names, so the harness runs
-    from a temporary directory and they go away with it."""
+    from a temporary directory and they go away with it.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_dumpfiltered_writes_the_preprocessed_timecourses")
 
@@ -987,11 +1423,17 @@ def showxcorrx_dumpfiltered_writes_the_preprocessed_timecourses(debug=False):
 
 
 def showxcorrx_does_not_hardcode_a_backend(debug=False):
-    """The module must not pin an interactive matplotlib backend.
+    """
+    The module must not pin an interactive matplotlib backend.
 
     It used to call mpl.use("TkAgg") inside the display block, which made --display
     fail outright on any headless machine - a cluster, a container, CI.  Choosing the
     backend belongs to the caller's environment, not to the tool.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("showxcorrx_does_not_hardcode_a_backend")
@@ -1008,9 +1450,16 @@ def showxcorrx_does_not_hardcode_a_backend(debug=False):
 
 
 def showxcorrx_display_paths_run(debug=False):
-    """--display draws the similarity function and, optionally, a styled plot.  The
+    """
+    --display draws the similarity function and, optionally, a styled plot.  The
     drawing code is a large block that never runs in a headless test otherwise, and
-    it is where a mismatched colour or legend list shows up."""
+    it is where a mismatched colour or legend list shows up.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showxcorrx_display_paths_run")
 
@@ -1055,6 +1504,14 @@ def _rundisplaycases():
 
 def test_showxcorrx(debug=False):
     # Parser tests
+    """
+    Verify showxcorrx.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("Running parser tests")
     parser_defaults(debug=debug)

@@ -42,13 +42,47 @@ from rapidtide.tests.utils import create_dir, get_test_temp_path
 
 
 def create_sine_wave(length=100, freq=1.0, samplerate=10.0, phase=0.0):
-    """Create a simple sine wave for testing."""
+    """
+    Create a simple sine wave for testing.
+
+    Parameters
+    ----------
+    length : int, optional
+        Value supplied as ``length`` by the test case.
+    freq : float, optional
+        Value supplied as ``freq`` by the test case.
+    samplerate : float, optional
+        Sampling rate in Hz.
+    phase : float, optional
+        Value supplied as ``phase`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     t = np.arange(length) / samplerate
     return t, np.sin(2 * np.pi * freq * t + phase)
 
 
 def create_test_timecourse_file(filepath, length=100, samplerate=10.0):
-    """Create a test BIDS TSV timecourse file."""
+    """
+    Create a test BIDS TSV timecourse file.
+
+    Parameters
+    ----------
+    filepath : path-like
+        Path to the test input or output file.
+    length : int, optional
+        Value supplied as ``length`` by the test case.
+    samplerate : float, optional
+        Sampling rate in Hz.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     t, data = create_sine_wave(length=length, samplerate=samplerate)
     tide_io.writebidstsv(
         filepath,
@@ -248,7 +282,14 @@ class TestFastResampler:
         assert inv_step == pytest.approx(1.0 / resampler.initstep)
 
     def test_info(self, capsys):
-        """Test the info method."""
+        """
+        Test the info method.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         timeaxis = np.linspace(0, 10, 100)
         timecourse = np.sin(2 * np.pi * 0.5 * timeaxis)
 
@@ -265,7 +306,14 @@ class TestFastResampler:
         assert "method" in captured.out
 
     def test_info_with_prefix(self, capsys):
-        """Test the info method with prefix."""
+        """
+        Test the info method with prefix.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         timeaxis = np.linspace(0, 10, 100)
         timecourse = np.sin(2 * np.pi * 0.5 * timeaxis)
 
@@ -280,7 +328,14 @@ class TestFastResampler:
         assert "  self.upsampleratio" in captured.out
 
     def test_save(self, tmp_path):
-        """Test the save method."""
+        """
+        Test the save method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         timeaxis = np.linspace(0, 10, 100)
         timecourse = np.sin(2 * np.pi * 0.5 * timeaxis)
 
@@ -337,7 +392,14 @@ class TestFastResamplerFromFile:
     """Tests for the FastResamplerFromFile function."""
 
     def test_from_file_basic(self, tmp_path):
-        """Test creating FastResampler from a BIDS TSV file."""
+        """
+        Test creating FastResampler from a BIDS TSV file.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_timecourse")
         t, data = create_test_timecourse_file(filepath, length=100, samplerate=10.0)
 
@@ -352,7 +414,14 @@ class TestFastResamplerFromFile:
         assert resampler.hires_y is not None
 
     def test_from_file_with_kwargs(self, tmp_path):
-        """Test FastResamplerFromFile with additional kwargs."""
+        """
+        Test FastResamplerFromFile with additional kwargs.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_timecourse2")
         t, data = create_test_timecourse_file(filepath, length=100, samplerate=10.0)
 
@@ -1027,13 +1096,27 @@ class TestCongridEdgeCases:
                 tide_resample.congrid(xaxis, 5.0, 1.0, badwidth, kernel="kaiser", cache=False)
 
     def test_out_of_range_location_noncyclic(self, capsys):
-        """A location off the end of a noncyclic axis is reported."""
+        """
+        A location off the end of a noncyclic axis is reported.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         xaxis = np.linspace(0.0, 10.0, 101)
         tide_resample.congrid(xaxis, 50.0, 1.0, 2.5, kernel="kaiser", cyclic=False, cache=False)
         assert "not in range" in capsys.readouterr().out
 
     def test_kernel_change_reinitializes_cache(self, capsys):
-        """Switching kernel or width discards the cached kernel values."""
+        """
+        Switching kernel or width discards the cached kernel values.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         xaxis = np.linspace(0.0, 10.0, 101)
         tide_resample.congrid(xaxis, 5.0, 1.0, 2.5, kernel="kaiser", debug=True)
         tide_resample.congrid(
@@ -1073,7 +1156,14 @@ class TestCongridEdgeCases:
             )
 
     def test_old_kernel_debug_reporting(self, capsys):
-        """The legacy kernel path also reports its indices and weights when verbose."""
+        """
+        The legacy kernel path also reports its indices and weights when verbose.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         xaxis = np.linspace(0.0, 10.0, 101)
         tide_resample.congrid(
             xaxis, 5.3, 1.0, 2.0, kernel="old", cache=False, debug=True, onlykeynotices=False
@@ -1099,7 +1189,14 @@ class TestCongridEdgeCases:
         assert len(vals) == len(weights) == len(indices)
 
     def test_debug_reporting(self, capsys):
-        """The verbose reporting path prints the computed indices and weights."""
+        """
+        The verbose reporting path prints the computed indices and weights.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         xaxis = np.linspace(0.0, 10.0, 101)
         tide_resample.congrid(
             xaxis, 5.27, 1.0, 2.5, kernel="kaiser", cache=False, debug=True, onlykeynotices=False
@@ -1111,14 +1208,28 @@ class TestFastResamplerEdgeCases:
     """Reporting and failure paths in FastResampler."""
 
     def test_constructor_debug(self, capsys):
-        """The constructor reports its axis configuration when asked."""
+        """
+        The constructor reports its axis configuration when asked.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         timeaxis = np.linspace(0.0, 10.0, 101)
         data = np.sin(timeaxis)
         tide_resample.FastResampler(timeaxis, data, debug=True)
         assert "FastResampler __init__:" in capsys.readouterr().out
 
     def test_yfromx_debug(self, capsys):
-        """yfromx reports the axis limits it is working between."""
+        """
+        Yfromx reports the axis limits it is working between.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         timeaxis = np.linspace(0.0, 10.0, 101)
         resampler = tide_resample.FastResampler(timeaxis, np.sin(timeaxis))
         resampler.yfromx(np.linspace(1.0, 9.0, 50), debug=True)
@@ -1136,7 +1247,14 @@ class TestFastResamplerFromFileErrors:
     """Input validation in FastResamplerFromFile."""
 
     def test_multicolumn_file_rejected(self, tmp_path):
-        """A file with more than one column is ambiguous and is rejected."""
+        """
+        A file with more than one column is ambiguous and is rejected.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "twocol")
         samplerate, npoints = 10.0, 100
         t = np.arange(npoints) / samplerate
@@ -1151,10 +1269,16 @@ class TestFastResamplerFromFileErrors:
             tide_resample.FastResamplerFromFile(actual_file)
 
     def test_missing_column_names_rejected(self, tmp_path):
-        """A file the reader returns no column names for is rejected.
+        """
+        A file the reader returns no column names for is rejected.
 
         The reader synthesizes an index when a sidecar simply omits the column list, so this
         guard is exercised by stubbing the reader rather than by writing a malformed file.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
         """
         filepath = str(tmp_path / "nocols")
         create_test_timecourse_file(filepath, length=100, samplerate=10.0)
@@ -1163,6 +1287,21 @@ class TestFastResamplerFromFileErrors:
             actual_file = filepath + ".tsv"
 
         def _nocolumns(*args, **kwargs):
+            """
+            Provide the ``_nocolumns`` test substitute.
+
+            Parameters
+            ----------
+            *args : object
+                Arguments passed to the test helper.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            tuple
+                Values supplied together for the test case.
+            """
             return (10.0, 0.0, None, np.zeros((1, 100)), False, None, None)
 
         with patch.object(tide_io, "readbidstsv", side_effect=_nocolumns):
@@ -1170,7 +1309,16 @@ class TestFastResamplerFromFileErrors:
                 tide_resample.FastResamplerFromFile(actual_file)
 
     def test_single_column_file_debug(self, tmp_path, capsys):
-        """A single column file loads, and the debug path reports what it read."""
+        """
+        A single column file loads, and the debug path reports what it read.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         filepath = str(tmp_path / "onecol")
         create_test_timecourse_file(filepath, length=100, samplerate=10.0)
         actual_file = filepath + ".tsv.gz"
@@ -1191,7 +1339,14 @@ class TestArbresampleEdgeCases:
             tide_resample.arbresample(data, 10.0, 5.0, method="notamethod")
 
     def test_downsample_reports_stages(self, capsys):
-        """Downsampling reports each stage when run verbosely."""
+        """
+        Downsampling reports each stage when run verbosely.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         # long enough that the antialiasing filter's padding fits inside the data
         data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
         result = tide_resample.arbresample(data, 20.0, 5.0, debug=True)
@@ -1200,7 +1355,14 @@ class TestArbresampleEdgeCases:
         assert len(result) > 0
 
     def test_upsample_reports_stages(self, capsys):
-        """Upsampling reports its point counts when run verbosely."""
+        """
+        Upsampling reports its point counts when run verbosely.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
         result = tide_resample.arbresample(data, 5.0, 20.0, debug=True)
         assert "arbresample" in capsys.readouterr().out
@@ -1213,21 +1375,42 @@ class TestArbresampleEdgeCases:
         assert len(result) < len(data)
 
     def test_decimate_upsample_only(self, capsys):
-        """With decimate set and a higher target frequency, only upsampling happens."""
+        """
+        With decimate set and a higher target frequency, only upsampling happens.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
         result = tide_resample.arbresample(data, 5.0, 20.0, decimate=True, debug=True)
         assert len(result) > len(data)
         assert "arbresample - upsampled points:" in capsys.readouterr().out
 
     def test_decimate_same_frequency_passes_through(self, capsys):
-        """Resampling to the same frequency returns the input untouched."""
+        """
+        Resampling to the same frequency returns the input untouched.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
         result = tide_resample.arbresample(data, 10.0, 10.0, decimate=True, debug=True)
         assert result is data
         assert "arbresample - final points:" in capsys.readouterr().out
 
     def test_decimate_downsample_with_antialias(self, capsys):
-        """The antialiased decimation path reports its intermediate frequency."""
+        """
+        The antialiased decimation path reports its intermediate frequency.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
         result = tide_resample.arbresample(
             data, 20.0, 6.0, decimate=True, antialias=True, debug=True
@@ -1260,7 +1443,14 @@ class TestUpsampleErrors:
             tide_resample.upsample(data, 10.0, 10.0)
 
     def test_debug_reports_timing(self, capsys):
-        """The verbose path reports how long the resampling took."""
+        """
+        The verbose path reports how long the resampling took.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         data = np.sin(np.linspace(0.0, 40 * np.pi, 2000))
         tide_resample.upsample(data, 10.0, 20.0, debug=True)
         assert "upsampling took" in capsys.readouterr().out
@@ -1277,7 +1467,14 @@ class TestDotwostepresampleErrors:
             tide_resample.dotwostepresample(orig_x, orig_y, 5.0, 10.0)
 
     def test_debug_reports_timing(self, capsys):
-        """The verbose path reports the antialiasing and downsampling times."""
+        """
+        The verbose path reports the antialiasing and downsampling times.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         orig_x = np.linspace(0.0, 100.0, 2000)
         orig_y = np.sin(2 * np.pi * 0.05 * orig_x)
         tide_resample.dotwostepresample(orig_x, orig_y, 50.0, 20.0, debug=True)
@@ -1347,7 +1544,14 @@ class TestResampleReportingPaths:
     """Verbose reporting paths in the remaining resample routines."""
 
     def test_doresample_debug(self, capsys):
-        """doresample reports its padding when run verbosely."""
+        """
+        Doresample reports its padding when run verbosely.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         orig_x = np.linspace(0.0, 10.0, 100)
         orig_y = np.sin(orig_x)
         new_x = np.linspace(1.0, 9.0, 50)
@@ -1356,7 +1560,14 @@ class TestResampleReportingPaths:
         assert "padlen=" in capsys.readouterr().out
 
     def test_timeshift_debug(self, capsys):
-        """timeshift reports its padded length when run verbosely."""
+        """
+        Timeshift reports its padded length when run verbosely.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         data = np.sin(np.linspace(0.0, 6.0, 64))
         shifted, weights, paddedshifted, paddedweights = tide_resample.timeshift(
             data, 3.0, 10, debug=True
@@ -1412,7 +1623,14 @@ class TestResampleReportingPaths:
         plt.close("all")
 
     def test_timewarp_debug(self, capsys):
-        """timewarp reports the mean delay it removed and the peak deviation."""
+        """
+        Timewarp reports the mean delay it removed and the peak deviation.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         orig_x = np.linspace(0.0, 10.0, 100)
         orig_y = np.sin(orig_x)
         timeoffset = np.linspace(0.2, 0.4, 100)

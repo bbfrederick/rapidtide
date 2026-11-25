@@ -30,7 +30,25 @@ from rapidtide.workflows.polyfitim import _get_parser, main, polyfitim
 
 
 def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
-    """Create a mock NIfTI header that supports __getitem__ and __setitem__."""
+    """
+    Create a mock NIfTI header that supports __getitem__ and __setitem__.
+
+    Parameters
+    ----------
+    xsize : int
+        Number of voxels along the x axis.
+    ysize : int
+        Number of voxels along the y axis.
+    numslices : int
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+
+    Returns
+    -------
+    MagicMock
+        Mock object configured for the test case.
+    """
     store = {
         "dim": [4, xsize, ysize, numslices, timepoints, 1, 1, 1],
         "pixdim": [1.0, 2.0, 2.0, 2.0, 1.5, 1.0, 1.0, 1.0],
@@ -40,6 +58,14 @@ def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
     hdr.__setitem__ = MagicMock(side_effect=lambda key, val: store.__setitem__(key, val))
 
     def copy_fn():
+        """
+        Copy fn.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         new_store = {
             "dim": list(store["dim"]),
             "pixdim": list(store["pixdim"]),
@@ -54,11 +80,30 @@ def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
 
 
 def _make_test_data(xsize=4, ysize=4, numslices=2, timepoints=5, order=1):
-    """Create synthetic data with a known polynomial relationship to a template.
+    """
+    Create synthetic data with a known polynomial relationship to a template.
 
     Returns data, template, masks, and expected relationship parameters.
     data[voxel, t] = intercept + slope * template[voxel] + noise
     For higher orders, adds template^2, template^3, etc.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+    order : int, optional
+        Value supplied as ``order`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     rng = np.random.RandomState(42)
     numvoxels = xsize * ysize * numslices
@@ -88,10 +133,37 @@ def _make_test_data(xsize=4, ysize=4, numslices=2, timepoints=5, order=1):
 
 
 def _make_dims(xsize, ysize, numslices, timepoints):
+    """
+    Create dims.
+
+    Parameters
+    ----------
+    xsize : int
+        Number of voxels along the x axis.
+    ysize : int
+        Number of voxels along the y axis.
+    numslices : int
+        Number of slices in the test image.
+    timepoints : int
+        Number of time samples.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array supplied to the test or its caller.
+    """
     return np.array([4, xsize, ysize, numslices, timepoints, 1, 1, 1])
 
 
 def _make_sizes():
+    """
+    Create sizes.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array supplied to the test or its caller.
+    """
     return np.array([1.0, 2.0, 2.0, 2.0, 1.5, 1.0, 1.0, 1.0])
 
 
@@ -99,7 +171,14 @@ def _make_sizes():
 
 
 def parser_basic(debug=False):
-    """Test that parser creates successfully."""
+    """
+    Test that parser creates successfully.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -108,7 +187,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
-    """Test parser has required arguments."""
+    """
+    Test parser has required arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -121,7 +207,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
-    """Test default values for optional arguments."""
+    """
+    Test default values for optional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     parser = _get_parser()
@@ -137,7 +230,14 @@ def parser_defaults(debug=False):
 
 
 def parser_order(debug=False):
-    """Test --order option."""
+    """
+    Test --order option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_order")
     parser = _get_parser()
@@ -152,7 +252,14 @@ def parser_order(debug=False):
 
 
 def parser_regionatlas(debug=False):
-    """Test --regionatlas option."""
+    """
+    Test --regionatlas option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_regionatlas")
     parser = _get_parser()
@@ -183,7 +290,31 @@ def parser_regionatlas(debug=False):
 def _run_polyfitim(
     xsize=4, ysize=4, numslices=2, timepoints=5, order=1, regionatlas_data=None, datamask_4d=False
 ):
-    """Helper to run polyfitim with mocked IO. Returns saved files dict."""
+    """
+    Helper to run polyfitim with mocked IO. Returns saved files dict.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+    order : int, optional
+        Value supplied as ``order`` by the test case.
+    regionatlas_data : object or None, optional
+        Value supplied as ``regionatlas_data`` by the test case.
+    datamask_4d : bool, optional
+        Setting for ``datamask_4d`` in the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     data, template, datamask, templatemask = _make_test_data(
         xsize,
         ysize,
@@ -215,6 +346,21 @@ def _run_polyfitim(
     saved_text = {}
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         if "atlas" in fname:
             return (
                 MagicMock(),
@@ -245,9 +391,35 @@ def _run_polyfitim(
             return MagicMock(), data, data_hdr, data_dims, sizes
 
     def mock_savetonifti(arr, hdr, fname, **kwargs):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        arr : array-like
+            Array passed to the test helper.
+        hdr : object
+            Image header used by the helper.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         saved_nifti[fname] = arr.copy()
 
     def mock_writenpvecs(arr, fname, **kwargs):
+        """
+        Simulate ``writenpvecs`` for the test.
+
+        Parameters
+        ----------
+        arr : array-like
+            Array passed to the test helper.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         saved_text[fname] = np.array(arr).copy()
 
     with (
@@ -274,7 +446,14 @@ def _run_polyfitim(
 
 
 def polyfitim_linear_basic(debug=False):
-    """Test basic linear (order=1) polyfitim without region atlas."""
+    """
+    Test basic linear (order=1) polyfitim without region atlas.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("polyfitim_linear_basic")
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
@@ -303,7 +482,14 @@ def polyfitim_linear_basic(debug=False):
 
 
 def polyfitim_quadratic(debug=False):
-    """Test quadratic (order=2) polyfitim."""
+    """
+    Test quadratic (order=2) polyfitim.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("polyfitim_quadratic")
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
@@ -322,7 +508,14 @@ def polyfitim_quadratic(debug=False):
 
 
 def polyfitim_cubic(debug=False):
-    """Test cubic (order=3) polyfitim."""
+    """
+    Test cubic (order=3) polyfitim.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("polyfitim_cubic")
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
@@ -340,7 +533,14 @@ def polyfitim_cubic(debug=False):
 
 
 def polyfitim_r2_quality(debug=False):
-    """Test that R2 values are high for data with known polynomial relationship."""
+    """
+    Test that R2 values are high for data with known polynomial relationship.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("polyfitim_r2_quality")
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
@@ -360,7 +560,14 @@ def polyfitim_r2_quality(debug=False):
 
 
 def polyfitim_residuals_small(debug=False):
-    """Test that residuals are small for data matching the polynomial model."""
+    """
+    Test that residuals are small for data matching the polynomial model.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("polyfitim_residuals_small")
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
@@ -382,7 +589,14 @@ def polyfitim_residuals_small(debug=False):
 
 
 def polyfitim_with_regionatlas(debug=False):
-    """Test polyfitim with a region atlas for per-region fitting."""
+    """
+    Test polyfitim with a region atlas for per-region fitting.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("polyfitim_with_regionatlas")
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
@@ -411,7 +625,14 @@ def polyfitim_with_regionatlas(debug=False):
 
 
 def polyfitim_4d_datamask(debug=False):
-    """Test polyfitim with a 4D data mask."""
+    """
+    Test polyfitim with a 4D data mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("polyfitim_4d_datamask")
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
@@ -430,7 +651,14 @@ def polyfitim_4d_datamask(debug=False):
 
 
 def polyfitim_order_zero_exit(debug=False):
-    """Test that order < 1 causes exit."""
+    """
+    Test that order < 1 causes exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("polyfitim_order_zero_exit")
     with pytest.raises(SystemExit):
@@ -445,7 +673,14 @@ def polyfitim_order_zero_exit(debug=False):
 
 
 def polyfitim_space_mismatch(debug=False):
-    """Test that spatial dimension mismatch causes exit."""
+    """
+    Test that spatial dimension mismatch causes exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("polyfitim_space_mismatch")
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
@@ -463,9 +698,41 @@ def polyfitim_space_mismatch(debug=False):
     call_count = {"n": 0}
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (MagicMock(), data, data_hdr, data_dims, sizes)
 
     def mock_checkspacedimmatch(dims1, dims2, **kwargs):
+        """
+        Simulate ``checkspacedimmatch`` for the test.
+
+        Parameters
+        ----------
+        dims1 : object
+            Value supplied as ``dims1`` by the test case.
+        dims2 : object
+            Value supplied as ``dims2`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        bool
+            Boolean result supplied by the test substitute.
+        """
         call_count["n"] += 1
         if call_count["n"] == 1:
             return False  # First call: data vs datamask fails
@@ -493,7 +760,14 @@ def polyfitim_space_mismatch(debug=False):
 
 
 def polyfitim_fit_plus_residuals_equals_data(debug=False):
-    """Test that fit + residuals = original data."""
+    """
+    Test that fit + residuals = original data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("polyfitim_fit_plus_residuals_equals_data")
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
@@ -514,6 +788,21 @@ def polyfitim_fit_plus_residuals_equals_data(debug=False):
     saved_nifti = {}
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         if "templatemask" in fname:
             return (
                 MagicMock(),
@@ -542,6 +831,20 @@ def polyfitim_fit_plus_residuals_equals_data(debug=False):
             return MagicMock(), data, data_hdr, data_dims, sizes
 
     def mock_savetonifti(arr, hdr, fname, **kwargs):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        arr : array-like
+            Array passed to the test helper.
+        hdr : object
+            Image header used by the helper.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         saved_nifti[fname] = arr.copy()
 
     with (
@@ -576,7 +879,14 @@ def polyfitim_fit_plus_residuals_equals_data(debug=False):
 
 
 def main_function(debug=False):
-    """Test main function dispatches correctly."""
+    """
+    Test main function dispatches correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("main_function")
     xsize, ysize, numslices, timepoints = 4, 4, 2, 5
@@ -594,6 +904,21 @@ def main_function(debug=False):
     template_dims = _make_dims(xsize, ysize, numslices, 1)
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         if "templatemask" in fname:
             return (
                 MagicMock(),
@@ -649,6 +974,14 @@ def main_function(debug=False):
 
 def test_polyfitim(debug=False):
     # _get_parser tests
+    """
+    Verify polyfitim.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("Running parser tests")
     parser_basic(debug=debug)

@@ -990,6 +990,25 @@ def mutual_info_to_r(themi: float, d: int = 1) -> float:
 def delayedcorr(
     data1: NDArray, data2: NDArray, delayval: float, timestep: float
 ) -> Tuple[float, float]:
+    """
+    Compute the Pearson correlation after shifting the second time series.
+
+    Parameters
+    ----------
+    data1 : NDArray
+        Reference time series.
+    data2 : NDArray
+        Time series to shift before correlation.
+    delayval : float
+        Amount by which to shift the second time series, in seconds.
+    timestep : float
+        Interval between samples, in seconds.
+
+    Returns
+    -------
+    PearsonRResult
+        Correlation statistic and p-value.
+    """
     return sp.stats.pearsonr(data1, tide_resample.timeshift(data2, delayval / timestep, 30)[0])
 
 
@@ -997,41 +1016,23 @@ def cepstraldelay(
     data1: NDArray, data2: NDArray, timestep: float, displayplots: bool = True
 ) -> float:
     """
-    Calculate correlation between two datasets with a time delay applied to the second dataset.
-
-    This function computes the Pearson correlation coefficient between two datasets,
-    where the second dataset is time-shifted by a specified delay before correlation
-    is calculated. The time shift is applied using the tide_resample.timeshift function.
+    Estimate the delay from the peak of the residual cepstrum.
 
     Parameters
     ----------
     data1 : NDArray
-        First dataset for correlation calculation.
+        Reference time series.
     data2 : NDArray
-        Second dataset to be time-shifted and correlated with data1.
-    delayval : float
-        Time delay to apply to data2, specified in the same units as timestep.
+        Time series to shift before correlation.
     timestep : float
-        Time step of the datasets, used to convert delayval to sample units.
+        Interval between samples, in seconds.
+    displayplots : bool, optional
+        Display diagnostic plots.
 
     Returns
     -------
-    Tuple[float, float]
-        Pearson correlation coefficient and p-value from the correlation test.
-
-    Notes
-    -----
-    The delayval is converted to sample units by dividing by timestep before
-    applying the time shift. The tide_resample.timeshift function is used internally
-    with a window parameter of 30.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> data1 = np.array([1, 2, 3, 4, 5])
-    >>> data2 = np.array([2, 3, 4, 5, 6])
-    >>> corr, p_value = delayedcorr(data1, data2, delay=1.0, timestep=0.1)
-    >>> print(f"Correlation: {corr:.3f}")
+    float
+        Delay at the maximum of the real residual cepstrum, in seconds.
     """
     ceps1, _ = tide_math.complex_cepstrum(data1)
     ceps2, _ = tide_math.complex_cepstrum(data2)

@@ -27,6 +27,14 @@ from rapidtide.tests.utils import get_test_temp_path, mse
 
 
 def test_FastResampler(debug=False):
+    """
+    Verify FastResampler.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     tr = 1.0
     padtime = 50.0
     testlen = 1000

@@ -31,7 +31,19 @@ from rapidtide.workflows.diffrois import _get_parser, diffrois
 
 
 def _make_args(**overrides):
-    """Build a minimal args Namespace for diffrois with sensible defaults."""
+    """
+    Build a minimal args Namespace for diffrois with sensible defaults.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         datafile="input.csv",
         outputroot="/tmp/test_diffrois_out",
@@ -44,7 +56,8 @@ def _make_args(**overrides):
 
 
 def _make_csv_df(numregions=3, numlabels=5, nan_positions=None, seed=42):
-    """Create a synthetic DataFrame mimicking ROI CSV data.
+    """
+    Create a synthetic DataFrame mimicking ROI CSV data.
 
     Parameters
     ----------
@@ -60,6 +73,7 @@ def _make_csv_df(numregions=3, numlabels=5, nan_positions=None, seed=42):
     Returns
     -------
     pd.DataFrame with a "Region" column and numregions data columns.
+        Value supplied to the caller.
     """
     rng = np.random.RandomState(seed)
     region_names = [f"ROI_{i}" for i in range(numregions)]
@@ -76,17 +90,39 @@ def _make_csv_df(numregions=3, numlabels=5, nan_positions=None, seed=42):
 
 
 def _capture_savetonifti():
-    """Capture savetonifti calls, copying data at call time."""
+    """
+    Capture savetonifti calls, copying data at call time.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     captured = []
 
     def _side_effect(data, hdr, filename, **kwargs):
+        """
+        Record the call for assertions in the surrounding test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        hdr : object
+            Image header used by the helper.
+        filename : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured.append((np.array(data, copy=True), filename))
 
     return _side_effect, captured
 
 
 def _run_diffrois(args, df, keyfile_content=None):
-    """Run diffrois with full mocking of external dependencies.
+    """
+    Run diffrois with full mocking of external dependencies.
 
     Parameters
     ----------
@@ -100,6 +136,7 @@ def _run_diffrois(args, df, keyfile_content=None):
     Returns
     -------
     dict with keys: 'savetonifti'
+        Value supplied to the caller.
     """
     stn_effect, stn_captured = _capture_savetonifti()
 
@@ -137,7 +174,14 @@ def _run_diffrois(args, df, keyfile_content=None):
 
 
 def test_parser_required_args(debug=False):
-    """Parser should accept the two required positional args."""
+    """
+    Parser should accept the two required positional args.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".csv") as f:
         parser = _get_parser()
         args = parser.parse_args([f.name, "outroot"])
@@ -148,7 +192,14 @@ def test_parser_required_args(debug=False):
 
 
 def test_parser_defaults(debug=False):
-    """Parser defaults should match expected values."""
+    """
+    Parser defaults should match expected values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".csv") as f:
         parser = _get_parser()
         args = parser.parse_args([f.name, "outroot"])
@@ -160,7 +211,14 @@ def test_parser_defaults(debug=False):
 
 
 def test_parser_keyfile(debug=False):
-    """Parser should accept --keyfile with a valid file."""
+    """
+    Parser should accept --keyfile with a valid file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with (
         tempfile.NamedTemporaryFile(suffix=".csv") as data_f,
         tempfile.NamedTemporaryFile(suffix=".txt") as key_f,
@@ -173,7 +231,14 @@ def test_parser_keyfile(debug=False):
 
 
 def test_parser_maxlines(debug=False):
-    """Parser should accept --maxlines with an integer."""
+    """
+    Parser should accept --maxlines with an integer.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".csv") as f:
         parser = _get_parser()
         args = parser.parse_args([f.name, "outroot", "--maxlines", "10"])
@@ -183,7 +248,14 @@ def test_parser_maxlines(debug=False):
 
 
 def test_parser_debug_flag(debug=False):
-    """Parser should accept --debug flag."""
+    """
+    Parser should accept --debug flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".csv") as f:
         parser = _get_parser()
         args = parser.parse_args([f.name, "outroot", "--debug"])
@@ -193,7 +265,14 @@ def test_parser_debug_flag(debug=False):
 
 
 def test_parser_missing_required(debug=False):
-    """Parser should fail when required arguments are missing."""
+    """
+    Parser should fail when required arguments are missing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args([])
@@ -205,7 +284,14 @@ def test_parser_missing_required(debug=False):
 
 
 def test_diffrois_basic_run(debug=False):
-    """diffrois should run without errors with basic inputs."""
+    """
+    Diffrois should run without errors with basic inputs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     df, _ = _make_csv_df(numregions=3, numlabels=5)
     args = _make_args()
     result = _run_diffrois(args, df)
@@ -215,7 +301,14 @@ def test_diffrois_basic_run(debug=False):
 
 
 def test_diffrois_output_files(debug=False):
-    """diffrois should write all 5 expected output files."""
+    """
+    Diffrois should write all 5 expected output files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     df, _ = _make_csv_df(numregions=3, numlabels=5)
     args = _make_args(outputroot="/tmp/dr")
     result = _run_diffrois(args, df)
@@ -229,7 +322,14 @@ def test_diffrois_output_files(debug=False):
 
 
 def test_diffrois_diffs_shape(debug=False):
-    """Diffs output should have shape (numregions, numregions, 1, numlabels)."""
+    """
+    Diffs output should have shape (numregions, numregions, 1, numlabels).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 3
     numlabels = 5
     df, _ = _make_csv_df(numregions=numregions, numlabels=numlabels)
@@ -252,7 +352,14 @@ def test_diffrois_diffs_shape(debug=False):
 
 
 def test_diffrois_mask_shape(debug=False):
-    """Mask output should have shape (numregions, numregions, 1, numlabels)."""
+    """
+    Mask output should have shape (numregions, numregions, 1, numlabels).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 4
     numlabels = 6
     df, _ = _make_csv_df(numregions=numregions, numlabels=numlabels)
@@ -270,7 +377,14 @@ def test_diffrois_mask_shape(debug=False):
 
 
 def test_diffrois_meandiffs_shape(debug=False):
-    """Mean diffs output should have shape (numregions, numregions, 1, 1)."""
+    """
+    Mean diffs output should have shape (numregions, numregions, 1, 1).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 3
     numlabels = 5
     df, _ = _make_csv_df(numregions=numregions, numlabels=numlabels)
@@ -288,7 +402,14 @@ def test_diffrois_meandiffs_shape(debug=False):
 
 
 def test_diffrois_stddiffs_shape(debug=False):
-    """Std diffs output should have shape (numregions, numregions, 1, 1)."""
+    """
+    Std diffs output should have shape (numregions, numregions, 1, 1).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 3
     numlabels = 5
     df, _ = _make_csv_df(numregions=numregions, numlabels=numlabels)
@@ -306,7 +427,14 @@ def test_diffrois_stddiffs_shape(debug=False):
 
 
 def test_diffrois_demeaneddiffs_shape(debug=False):
-    """Demeaned diffs output should have shape (numregions, numregions, 1, numlabels)."""
+    """
+    Demeaned diffs output should have shape (numregions, numregions, 1, numlabels).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 3
     numlabels = 5
     df, _ = _make_csv_df(numregions=numregions, numlabels=numlabels)
@@ -327,7 +455,14 @@ def test_diffrois_demeaneddiffs_shape(debug=False):
 
 
 def test_diffrois_diagonal_zero(debug=False):
-    """Diagonal elements (self-differences) should be zero."""
+    """
+    Diagonal elements (self-differences) should be zero.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 3
     numlabels = 4
     df, _ = _make_csv_df(numregions=numregions, numlabels=numlabels)
@@ -349,7 +484,14 @@ def test_diffrois_diagonal_zero(debug=False):
 
 
 def test_diffrois_symmetric_values(debug=False):
-    """Matrix [i,j] and [j,i] should have the same value (symmetric, not antisymmetric)."""
+    """
+    Matrix [i,j] and [j,i] should have the same value (symmetric, not antisymmetric).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 3
     numlabels = 4
     df, _ = _make_csv_df(numregions=numregions, numlabels=numlabels)
@@ -372,7 +514,14 @@ def test_diffrois_symmetric_values(debug=False):
 
 
 def test_diffrois_difference_values(debug=False):
-    """Verify computed differences match manual calculation."""
+    """
+    Verify computed differences match manual calculation.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 2
     numlabels = 3
     # Create deterministic data
@@ -406,7 +555,14 @@ def test_diffrois_difference_values(debug=False):
 
 
 def test_diffrois_mean_values(debug=False):
-    """Verify mean differences are computed correctly."""
+    """
+    Verify mean differences are computed correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 2
     numlabels = 4
     # Create data where ROI_0 - ROI_1 = [2, 4, 6, 8] -> mean = 5.0
@@ -431,7 +587,14 @@ def test_diffrois_mean_values(debug=False):
 
 
 def test_diffrois_std_values(debug=False):
-    """Verify std differences are computed correctly."""
+    """
+    Verify std differences are computed correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 2
     numlabels = 4
     # ROI_0 - ROI_1 = [2, 4, 6, 8] -> std = np.std([2,4,6,8])
@@ -454,7 +617,14 @@ def test_diffrois_std_values(debug=False):
 
 
 def test_diffrois_demeaned_values(debug=False):
-    """Verify demeaned differences are computed correctly."""
+    """
+    Verify demeaned differences are computed correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 2
     numlabels = 4
     # ROI_0 - ROI_1 = [2, 4, 6, 8], mean = 5.0
@@ -481,7 +651,14 @@ def test_diffrois_demeaned_values(debug=False):
 
 
 def test_diffrois_nan_masking(debug=False):
-    """NaN values should be masked out (mask=0 for affected pairs)."""
+    """
+    NaN values should be masked out (mask=0 for affected pairs).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 2
     numlabels = 3
     # Put NaN in ROI_0 at row 1
@@ -502,7 +679,14 @@ def test_diffrois_nan_masking(debug=False):
 
 
 def test_diffrois_nan_diffs_zero(debug=False):
-    """Diffs at NaN positions should remain zero (default array value)."""
+    """
+    Diffs at NaN positions should remain zero (default array value).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 2
     numlabels = 3
     df, _ = _make_csv_df(numregions=numregions, numlabels=numlabels, nan_positions=[(1, 0)])
@@ -524,7 +708,14 @@ def test_diffrois_nan_diffs_zero(debug=False):
 
 
 def test_diffrois_nan_diagonal_mask(debug=False):
-    """Diagonal mask should be 0 when the diagonal region has a NaN."""
+    """
+    Diagonal mask should be 0 when the diagonal region has a NaN.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 2
     numlabels = 3
     # NaN at ROI_0, row 1 — diagonal [0,0] at z=1 should have mask=0
@@ -542,7 +733,14 @@ def test_diffrois_nan_diagonal_mask(debug=False):
 
 
 def test_diffrois_all_nan_column(debug=False):
-    """Column with all NaN should produce all-zero mask for affected pairs."""
+    """
+    Column with all NaN should produce all-zero mask for affected pairs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 2
     numlabels = 3
     # All rows of ROI_0 are NaN
@@ -564,7 +762,14 @@ def test_diffrois_all_nan_column(debug=False):
 
 
 def test_diffrois_demeaned_nan_zeroed(debug=False):
-    """Demeaned diffs at NaN positions should be zeroed out."""
+    """
+    Demeaned diffs at NaN positions should be zeroed out.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 2
     numlabels = 3
     df, _ = _make_csv_df(numregions=numregions, numlabels=numlabels, nan_positions=[(1, 0)])
@@ -584,7 +789,14 @@ def test_diffrois_demeaned_nan_zeroed(debug=False):
 
 
 def test_diffrois_maxlines(debug=False):
-    """--maxlines should limit processing to the first N rows."""
+    """
+    --maxlines should limit processing to the first N rows.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 2
     numlabels = 10
     maxlines = 4
@@ -607,7 +819,14 @@ def test_diffrois_maxlines(debug=False):
 
 
 def test_diffrois_maxlines_larger_than_data(debug=False):
-    """--maxlines larger than data should use all available rows."""
+    """
+    --maxlines larger than data should use all available rows.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 2
     numlabels = 5
     maxlines = 100
@@ -632,7 +851,14 @@ def test_diffrois_maxlines_larger_than_data(debug=False):
 
 
 def test_diffrois_keyfile_reorder(debug=False):
-    """Keyfile should reorder regions in the output."""
+    """
+    Keyfile should reorder regions in the output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 3
     numlabels = 4
     # Create data with known values
@@ -674,7 +900,14 @@ def test_diffrois_keyfile_reorder(debug=False):
 
 
 def test_diffrois_keyfile_subset(debug=False):
-    """Keyfile with subset of regions should only produce that subset."""
+    """
+    Keyfile with subset of regions should only produce that subset.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 3
     numlabels = 3
     data_vals = np.array(
@@ -711,7 +944,14 @@ def test_diffrois_keyfile_subset(debug=False):
 
 
 def test_diffrois_no_keyfile(debug=False):
-    """Without keyfile, regions should be in CSV column order."""
+    """
+    Without keyfile, regions should be in CSV column order.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 3
     numlabels = 3
     data_vals = np.array(
@@ -747,7 +987,14 @@ def test_diffrois_no_keyfile(debug=False):
 
 
 def test_diffrois_debug_mode(debug=False):
-    """diffrois should run successfully with debug=True."""
+    """
+    Diffrois should run successfully with debug=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     df, _ = _make_csv_df(numregions=2, numlabels=3)
     args = _make_args(debug=True)
     result = _run_diffrois(args, df)
@@ -760,7 +1007,14 @@ def test_diffrois_debug_mode(debug=False):
 
 
 def test_diffrois_single_region(debug=False):
-    """diffrois should handle a single region (1x1 output)."""
+    """
+    Diffrois should handle a single region (1x1 output).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data_vals = np.array([[5.0], [6.0], [7.0]])
     region_names = ["ROI_0"]
     labels = ["label_0", "label_1", "label_2"]
@@ -786,7 +1040,14 @@ def test_diffrois_single_region(debug=False):
 
 
 def test_diffrois_single_label(debug=False):
-    """diffrois should handle a single time point."""
+    """
+    Diffrois should handle a single time point.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data_vals = np.array([[1.0, 2.0, 3.0]])
     region_names = ["ROI_0", "ROI_1", "ROI_2"]
     labels = ["label_0"]
@@ -814,7 +1075,14 @@ def test_diffrois_single_label(debug=False):
 
 
 def test_diffrois_mask_all_ones_no_nan(debug=False):
-    """Mask should be all ones when there are no NaN values."""
+    """
+    Mask should be all ones when there are no NaN values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 3
     numlabels = 4
     df, _ = _make_csv_df(numregions=numregions, numlabels=numlabels)
@@ -830,7 +1098,14 @@ def test_diffrois_mask_all_ones_no_nan(debug=False):
 
 
 def test_diffrois_many_regions(debug=False):
-    """diffrois should handle larger numbers of regions."""
+    """
+    Diffrois should handle larger numbers of regions.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 10
     numlabels = 8
     df, _ = _make_csv_df(numregions=numregions, numlabels=numlabels)
@@ -854,7 +1129,14 @@ def test_diffrois_many_regions(debug=False):
 
 
 def test_diffrois_integration(debug=False):
-    """Full integration test verifying all outputs are consistent."""
+    """
+    Full integration test verifying all outputs are consistent.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numregions = 3
     numlabels = 6
     data_vals = np.array(
@@ -922,7 +1204,14 @@ def test_diffrois_integration(debug=False):
 
 
 def test_diffrois(debug=False):
-    """Run all diffrois tests."""
+    """
+    Run all diffrois tests.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # parser tests
     test_parser_required_args(debug=debug)
     test_parser_defaults(debug=debug)

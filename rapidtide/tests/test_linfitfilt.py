@@ -30,7 +30,25 @@ from rapidtide.workflows.linfitfilt import _get_parser, linfitfilt, main
 
 
 def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
-    """Create a mock NIfTI header that supports __getitem__ and __setitem__."""
+    """
+    Create a mock NIfTI header that supports __getitem__ and __setitem__.
+
+    Parameters
+    ----------
+    xsize : int
+        Number of voxels along the x axis.
+    ysize : int
+        Number of voxels along the y axis.
+    numslices : int
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+
+    Returns
+    -------
+    MagicMock
+        Mock object configured for the test case.
+    """
     store = {
         "dim": [4, xsize, ysize, numslices, timepoints, 1, 1, 1],
         "pixdim": [1.0, 2.0, 2.0, 2.0, 1.5, 1.0, 1.0, 1.0],
@@ -40,6 +58,14 @@ def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
     hdr.__setitem__ = MagicMock(side_effect=lambda key, val: store.__setitem__(key, val))
 
     def copy_fn():
+        """
+        Copy fn.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         new_store = {
             "dim": list(store["dim"]),
             "pixdim": list(store["pixdim"]),
@@ -54,7 +80,25 @@ def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
 
 
 def _make_4d_data(xsize=3, ysize=3, numslices=2, numtimepoints=20):
-    """Create 4D data with signal + noise suitable for regression."""
+    """
+    Create 4D data with signal + noise suitable for regression.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    numtimepoints : int, optional
+        Number of time samples.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     rng = np.random.RandomState(42)
     t = np.linspace(0, 4 * np.pi, numtimepoints)
     # Create data = baseline + signal * regressor + noise
@@ -77,7 +121,14 @@ def _make_4d_data(xsize=3, ysize=3, numslices=2, numtimepoints=20):
 
 
 def parser_basic(debug=False):
-    """Test that parser creates successfully."""
+    """
+    Test that parser creates successfully.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -86,7 +137,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
-    """Test parser has required arguments."""
+    """
+    Test parser has required arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -96,7 +154,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
-    """Test default values for optional arguments."""
+    """
+    Test default values for optional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     parser = _get_parser()
@@ -109,7 +174,14 @@ def parser_defaults(debug=False):
 
 
 def parser_numskip(debug=False):
-    """Test --numskip option."""
+    """
+    Test --numskip option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_numskip")
     parser = _get_parser()
@@ -119,7 +191,14 @@ def parser_numskip(debug=False):
 
 
 def parser_limitoutput(debug=False):
-    """Test --limitoutput flag sets saveall to False."""
+    """
+    Test --limitoutput flag sets saveall to False.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_limitoutput")
     parser = _get_parser()
@@ -129,7 +208,14 @@ def parser_limitoutput(debug=False):
 
 
 def parser_evfile(debug=False):
-    """Test --evfile option with multiple files."""
+    """
+    Test --evfile option with multiple files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_evfile")
     parser = _get_parser()
@@ -143,7 +229,14 @@ def parser_evfile(debug=False):
 
 
 def parser_dmask(debug=False):
-    """Test --dmask option."""
+    """
+    Test --dmask option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_dmask")
     parser = _get_parser()
@@ -161,9 +254,34 @@ def parser_dmask(debug=False):
 def _setup_mocks_for_linfitfilt(
     xsize, ysize, numslices, numtimepoints, numskip=0, ev_type="text", num_evs=1, with_mask=False
 ):
-    """Build mock functions and data for linfitfilt tests.
+    """
+    Build mock functions and data for linfitfilt tests.
 
     Returns a dict with all the mock objects and data needed.
+
+    Parameters
+    ----------
+    xsize : int
+        Number of voxels along the x axis.
+    ysize : int
+        Number of voxels along the y axis.
+    numslices : int
+        Number of slices in the test image.
+    numtimepoints : int
+        Number of time samples.
+    numskip : int, optional
+        Value supplied as ``numskip`` by the test case.
+    ev_type : str, optional
+        Value supplied as ``ev_type`` by the test case.
+    num_evs : int, optional
+        Value supplied as ``num_evs`` by the test case.
+    with_mask : bool, optional
+        Setting for ``with_mask`` in the test case.
+
+    Returns
+    -------
+    dict
+        Values supplied together for the test case.
     """
     data, hdr, dims, sizes, regressor = _make_4d_data(xsize, ysize, numslices, numtimepoints)
     effective_tp = numtimepoints - numskip
@@ -182,6 +300,21 @@ def _setup_mocks_for_linfitfilt(
     saved_nifti = {}
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         if "mask" in fname:
             return MagicMock(), mask_data, mask_hdr, mask_dims, sizes
         elif "ev_nifti" in fname:
@@ -198,19 +331,89 @@ def _setup_mocks_for_linfitfilt(
             return MagicMock(), data, hdr, dims, sizes
 
     def mock_savetonifti(data_arr, header, fname, **kwargs):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        data_arr : object
+            Value supplied as ``data_arr`` by the test case.
+        header : object
+            Value supplied as ``header`` by the test case.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         saved_nifti[fname] = data_arr.copy()
 
     def mock_checkifnifti(fname):
+        """
+        Simulate ``checkifnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        bool
+            Boolean result supplied by the test substitute.
+        """
         return "ev_nifti" in fname
 
     def mock_checkifparfile(fname):
+        """
+        Simulate ``checkifparfile`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return fname.endswith(".par")
 
     def mock_readvec(fname, **kwargs):
+        """
+        Simulate ``readvec`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return ev_regressors[0]
 
     def mock_readvecs(fname, **kwargs):
         # Return 6 rows for par file
+        """
+        Simulate ``readvecs`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.array([ev_regressors[0]] * 6)
 
     return {
@@ -231,7 +434,14 @@ def _setup_mocks_for_linfitfilt(
 
 
 def linfitfilt_text_regressor(debug=False):
-    """Test linfitfilt with a single text regressor, saveall=True."""
+    """
+    Test linfitfilt with a single text regressor, saveall=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfilt_text_regressor")
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
@@ -290,7 +500,14 @@ def linfitfilt_text_regressor(debug=False):
 
 
 def linfitfilt_limitoutput(debug=False):
-    """Test linfitfilt with saveall=False (limitoutput)."""
+    """
+    Test linfitfilt with saveall=False (limitoutput).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfilt_limitoutput")
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
@@ -345,7 +562,14 @@ def linfitfilt_limitoutput(debug=False):
 
 
 def linfitfilt_with_numskip(debug=False):
-    """Test linfitfilt with numskip > 0 using a text regressor."""
+    """
+    Test linfitfilt with numskip > 0 using a text regressor.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfilt_with_numskip")
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
@@ -408,7 +632,14 @@ def linfitfilt_with_numskip(debug=False):
 
 
 def linfitfilt_with_mask(debug=False):
-    """Test linfitfilt with a data mask."""
+    """
+    Test linfitfilt with a data mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfilt_with_mask")
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
@@ -462,7 +693,14 @@ def linfitfilt_with_mask(debug=False):
 
 
 def linfitfilt_nifti_regressor(debug=False):
-    """Test linfitfilt with a NIfTI (voxel-specific) regressor."""
+    """
+    Test linfitfilt with a NIfTI (voxel-specific) regressor.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfilt_nifti_regressor")
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
@@ -504,7 +742,14 @@ def linfitfilt_nifti_regressor(debug=False):
 
 
 def linfitfilt_parfile_regressor(debug=False):
-    """Test linfitfilt with an FSL par file (6 regressors)."""
+    """
+    Test linfitfilt with an FSL par file (6 regressors).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfilt_parfile_regressor")
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
@@ -549,7 +794,14 @@ def linfitfilt_parfile_regressor(debug=False):
 
 
 def linfitfilt_multiple_text_regressors(debug=False):
-    """Test linfitfilt with multiple text regressors."""
+    """
+    Test linfitfilt with multiple text regressors.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfilt_multiple_text_regressors")
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
@@ -558,6 +810,21 @@ def linfitfilt_multiple_text_regressors(debug=False):
     ev_idx = {"i": 0}
 
     def mock_readvec(fname, **kwargs):
+        """
+        Simulate ``readvec`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         idx = ev_idx["i"]
         ev_idx["i"] += 1
         return m["ev_regressors"][idx]
@@ -601,7 +868,14 @@ def linfitfilt_multiple_text_regressors(debug=False):
 
 
 def linfitfilt_mask_mismatch(debug=False):
-    """Test that mask space mismatch causes exit."""
+    """
+    Test that mask space mismatch causes exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfilt_mask_mismatch")
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
@@ -635,7 +909,14 @@ def linfitfilt_mask_mismatch(debug=False):
 
 
 def linfitfilt_r2_values(debug=False):
-    """Test that R2 values are reasonable for a known signal."""
+    """
+    Test that R2 values are reasonable for a known signal.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfilt_r2_values")
     xsize, ysize, numslices, numtimepoints = 2, 2, 1, 50
@@ -656,9 +937,38 @@ def linfitfilt_r2_values(debug=False):
     saved_nifti = {}
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return MagicMock(), data, hdr, dims, sizes
 
     def mock_savetonifti(data_arr, header, fname, **kwargs):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        data_arr : object
+            Value supplied as ``data_arr`` by the test case.
+        header : object
+            Value supplied as ``header`` by the test case.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         saved_nifti[fname] = data_arr.copy()
 
     with (
@@ -696,7 +1006,14 @@ def linfitfilt_r2_values(debug=False):
 
 
 def linfitfilt_flat_voxel(debug=False):
-    """Test that flat (zero-variance) voxels get zero fit values."""
+    """
+    Test that flat (zero-variance) voxels get zero fit values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfilt_flat_voxel")
     xsize, ysize, numslices, numtimepoints = 2, 2, 1, 20
@@ -716,9 +1033,38 @@ def linfitfilt_flat_voxel(debug=False):
     saved_nifti = {}
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return MagicMock(), data, hdr, dims, sizes
 
     def mock_savetonifti(data_arr, header, fname, **kwargs):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        data_arr : object
+            Value supplied as ``data_arr`` by the test case.
+        header : object
+            Value supplied as ``header`` by the test case.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         saved_nifti[fname] = data_arr.copy()
 
     with (
@@ -761,7 +1107,14 @@ def linfitfilt_flat_voxel(debug=False):
 
 
 def main_function(debug=False):
-    """Test main function dispatches correctly."""
+    """
+    Test main function dispatches correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("main_function")
     xsize, ysize, numslices, numtimepoints = 3, 3, 2, 20
@@ -811,6 +1164,14 @@ def main_function(debug=False):
 
 def test_linfitfilt(debug=False):
     # _get_parser tests
+    """
+    Verify linfitfilt.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("Running parser tests")
     parser_basic(debug=debug)

@@ -42,6 +42,23 @@ def _procOneVoxelTimeShift(
     voxelargs: tuple,
     **kwargs: Any,
 ) -> tuple[int, NDArray, NDArray, NDArray, NDArray]:
+    """
+    Calculate the time-shifted series for a voxel.
+
+    Parameters
+    ----------
+    vox : int
+        Index of the voxel being processed.
+    voxelargs : tuple
+        Input values for the voxel time-shifting operation.
+    **kwargs : object
+        Additional keyword options for the operation.
+
+    Returns
+    -------
+    tuple
+        Voxel index, shifted signal and weights, and their padded forms.
+    """
     options = {
         "detrendorder": 1,
         "offsettime": 0.0,

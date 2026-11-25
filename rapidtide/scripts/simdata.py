@@ -21,6 +21,7 @@ import rapidtide.workflows.simdata as theworkflow
 
 
 def entrypoint():
+    """Run the `simdata` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.simdata)
 
 

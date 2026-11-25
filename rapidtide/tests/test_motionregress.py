@@ -27,6 +27,21 @@ from rapidtide.tests.utils import mse
 
 
 def genmotions(tsize=200, numcycles=11):
+    """
+    Set up ``genmotions`` for the test.
+
+    Parameters
+    ----------
+    tsize : int, optional
+        Value supplied as ``tsize`` by the test case.
+    numcycles : int, optional
+        Value supplied as ``numcycles`` by the test case.
+
+    Returns
+    -------
+    dict
+        The ``motiondict`` value supplied to the caller.
+    """
     timeaxis = 2.0 * np.pi * np.linspace(0, 1.0, num=tsize, endpoint=False)
 
     motiondict = {}
@@ -68,6 +83,16 @@ def genmotions(tsize=200, numcycles=11):
 
 
 def showthetcs(motionregressors, motionregressorlabels):
+    """
+    Set up ``showthetcs`` for the test.
+
+    Parameters
+    ----------
+    motionregressors : object
+        Value supplied as ``motionregressors`` by the test case.
+    motionregressorlabels : object
+        Value supplied as ``motionregressorlabels`` by the test case.
+    """
     plt.figure()
     for whichregressor in range(motionregressors.shape[0]):
         plt.plot(motionregressors[whichregressor, :] + whichregressor)
@@ -76,6 +101,19 @@ def showthetcs(motionregressors, motionregressorlabels):
 
 
 def makedataarray(motionregressors):
+    """
+    Set up ``makedataarray`` for the test.
+
+    Parameters
+    ----------
+    motionregressors : object
+        Value supplied as ``motionregressors`` by the test case.
+
+    Returns
+    -------
+    numpy.ndarray
+        The ``dataarray`` value supplied to the caller.
+    """
     offsets = [0, 1, 2, 5, 10, 20]
     numoffsets = len(offsets)
     dataarray = np.zeros(
@@ -89,6 +127,16 @@ def makedataarray(motionregressors):
 
 
 def test_motionregress(debug=False, displayplots=False):
+    """
+    Verify motionregress.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     np.random.seed(12345)
     tsize = 200
     startcycles = 11

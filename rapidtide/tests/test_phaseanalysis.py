@@ -27,6 +27,25 @@ from rapidtide.tests.utils import mse
 
 def eval_phaseanalysis(phasestep=0.01, amplitude=1.0, numpoints=100, displayplots=False):
     # read in some data
+    """
+    Evaluate phaseanalysis.
+
+    Parameters
+    ----------
+    phasestep : float, optional
+        Value supplied as ``phasestep`` by the test case.
+    amplitude : float, optional
+        Value supplied as ``amplitude`` by the test case.
+    numpoints : int, optional
+        Value supplied as ``numpoints`` by the test case.
+    displayplots : bool, optional
+        Display plots from the test.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     phases = np.linspace(0.0, numpoints * phasestep, num=numpoints, endpoint=False)
     testwaveform = amplitude * np.cos(phases)
     if displayplots:
@@ -53,6 +72,16 @@ def eval_phaseanalysis(phasestep=0.01, amplitude=1.0, numpoints=100, displayplot
 
 
 def test_phaseanalysis(debug=False, displayplots=False):
+    """
+    Verify phaseanalysis.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     msethresh = 1e-3
     instantaneous_mse, filtered_mse = eval_phaseanalysis(
         phasestep=0.1, amplitude=3.0, numpoints=1000, displayplots=displayplots

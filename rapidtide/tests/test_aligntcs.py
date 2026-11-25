@@ -26,6 +26,16 @@ from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
 def test_aligntcs(displayplots=False, localrun=False):
+    """
+    Verify aligntcs.
+
+    Parameters
+    ----------
+    displayplots : bool, optional
+        Display plots from the test.
+    localrun : bool, optional
+        Setting for ``localrun`` in the test case.
+    """
     args = SimpleNamespace()
     if localrun:
         inputdatapath = "../data/examples/src"

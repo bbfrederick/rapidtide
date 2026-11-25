@@ -646,21 +646,23 @@ def saveregionaltimeseries(
         Base name for the output file (without extension)
     filter : Optional[Any], default=None
         Filter to apply to the time series data
-    initfile : bool, default=False
+    initfile : bool, default=False, optional
         If True, initializes a new file; if False, appends to existing file
     excludemask : Optional[NDArray], default=None
         Binary mask defining regions to exclude from the analysis
-    filedesc : str, default="regional"
+    filedesc : str, default="regional", optional
         Description string for the output file name
-    suffix : str, default=""
+    extrainfo : str, optional
+        Additional metadata to write with the output.
+    suffix : str, default="", optional
         Suffix to append to the column name in the output file
-    signalgenmethod : str, default="sum"
+    signalgenmethod : str, default="sum", optional
         Method for generating the signal ('sum', 'mean', 'pca', etc.)
-    pcacomponents : Union[float, str], default=0.8
+    pcacomponents : Union[float, str], default=0.8, optional
         Number of PCA components to use (or fraction of variance explained)
-    rt_floattype : np.dtype, default=np.float64
+    rt_floattype : np.dtype, default=np.float64, optional
         Data type for floating point operations
-    debug : bool, default=False
+    debug : bool, default=False, optional
         If True, enables debug mode for additional logging
 
     Returns

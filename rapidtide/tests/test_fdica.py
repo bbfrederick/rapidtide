@@ -29,27 +29,55 @@ from rapidtide.workflows.fdica import P2R, R2P, _get_parser, fdica, main
 
 
 def P2R_zero_angle(debug=False):
-    """Test P2R with zero angle returns real number."""
+    """
+    Test P2R with zero angle returns real number.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     result = P2R(1.0, 0.0)
     assert np.isclose(result, 1.0 + 0.0j)
 
 
 def P2R_right_angle(debug=False):
-    """Test P2R with pi/2 angle returns imaginary number."""
+    """
+    Test P2R with pi/2 angle returns imaginary number.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     result = P2R(2.0, np.pi / 2)
     assert np.isclose(result.imag, 2.0, atol=1e-10)
     assert np.isclose(result.real, 0.0, atol=1e-10)
 
 
 def P2R_pi_angle(debug=False):
-    """Test P2R with pi angle returns negative real number."""
+    """
+    Test P2R with pi angle returns negative real number.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     result = P2R(3.0, np.pi)
     assert np.isclose(result.real, -3.0, atol=1e-10)
     assert np.isclose(result.imag, 0.0, atol=1e-10)
 
 
 def P2R_array_input(debug=False):
-    """Test P2R with numpy array inputs."""
+    """
+    Test P2R with numpy array inputs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     radii = np.array([1.0, 2.0, 3.0])
     angles = np.array([0.0, np.pi / 2, np.pi])
     result = P2R(radii, angles)
@@ -60,13 +88,27 @@ def P2R_array_input(debug=False):
 
 
 def P2R_zero_radius(debug=False):
-    """Test P2R with zero radius returns zero regardless of angle."""
+    """
+    Test P2R with zero radius returns zero regardless of angle.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     result = P2R(0.0, 1.23)
     assert np.isclose(result, 0.0 + 0.0j)
 
 
 def P2R_2d_array(debug=False):
-    """Test P2R with 2D array inputs."""
+    """
+    Test P2R with 2D array inputs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     radii = np.ones((3, 4))
     angles = np.zeros((3, 4))
     result = P2R(radii, angles)
@@ -79,35 +121,70 @@ def P2R_2d_array(debug=False):
 
 
 def R2P_real_positive(debug=False):
-    """Test R2P with positive real numbers."""
+    """
+    Test R2P with positive real numbers.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mag, angle = R2P(np.array([3.0 + 0.0j]))
     assert np.isclose(mag[0], 3.0)
     assert np.isclose(angle[0], 0.0)
 
 
 def R2P_real_negative(debug=False):
-    """Test R2P with negative real numbers."""
+    """
+    Test R2P with negative real numbers.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mag, angle = R2P(np.array([-2.0 + 0.0j]))
     assert np.isclose(mag[0], 2.0)
     assert np.isclose(np.abs(angle[0]), np.pi)
 
 
 def R2P_pure_imaginary(debug=False):
-    """Test R2P with pure imaginary numbers."""
+    """
+    Test R2P with pure imaginary numbers.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mag, angle = R2P(np.array([0.0 + 5.0j]))
     assert np.isclose(mag[0], 5.0)
     assert np.isclose(angle[0], np.pi / 2)
 
 
 def R2P_complex(debug=False):
-    """Test R2P with general complex number (3+4j has magnitude 5)."""
+    """
+    Test R2P with general complex number (3+4j has magnitude 5).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mag, angle = R2P(np.array([3.0 + 4.0j]))
     assert np.isclose(mag[0], 5.0)
     assert np.isclose(angle[0], np.arctan2(4.0, 3.0))
 
 
 def R2P_array(debug=False):
-    """Test R2P with array of complex numbers."""
+    """
+    Test R2P with array of complex numbers.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x = np.array([1.0 + 0.0j, 0.0 + 1.0j, -1.0 + 0.0j])
     mag, angle = R2P(x)
     np.testing.assert_allclose(mag, [1.0, 1.0, 1.0])
@@ -115,7 +192,14 @@ def R2P_array(debug=False):
 
 
 def R2P_zero(debug=False):
-    """Test R2P with zero."""
+    """
+    Test R2P with zero.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mag, angle = R2P(np.array([0.0 + 0.0j]))
     assert np.isclose(mag[0], 0.0)
     assert np.isclose(angle[0], 0.0)
@@ -125,7 +209,14 @@ def R2P_zero(debug=False):
 
 
 def P2R_R2P_roundtrip(debug=False):
-    """Test that P2R and R2P are inverse operations."""
+    """
+    Test that P2R and R2P are inverse operations.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     radii = np.array([1.0, 2.5, 0.5, 3.0])
     angles = np.array([0.3, -1.2, np.pi / 4, -np.pi / 3])
     complex_vals = P2R(radii, angles)
@@ -135,7 +226,14 @@ def P2R_R2P_roundtrip(debug=False):
 
 
 def R2P_P2R_roundtrip(debug=False):
-    """Test that R2P then P2R recovers the original complex values."""
+    """
+    Test that R2P then P2R recovers the original complex values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     original = np.array([1.0 + 2.0j, -3.0 + 4.0j, 0.5 - 0.5j])
     mag, angle = R2P(original)
     recovered = P2R(mag, angle)
@@ -147,19 +245,40 @@ def R2P_P2R_roundtrip(debug=False):
 
 
 def get_parser_returns_parser(debug=False):
-    """Test that _get_parser returns an ArgumentParser."""
+    """
+    Test that _get_parser returns an ArgumentParser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
 
 
 def get_parser_prog_name(debug=False):
-    """Test that the parser prog name is correct."""
+    """
+    Test that the parser prog name is correct.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert parser.prog == "fdica"
 
 
 def get_parser_defaults(debug=False):
-    """Test that default values are correct."""
+    """
+    Test that default values are correct.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     defaults = {action.dest: action.default for action in parser._actions}
     assert defaults["gausssigma"] == 0.0
@@ -169,7 +288,16 @@ def get_parser_defaults(debug=False):
 
 
 def get_parser_with_options(testtemproot, debug=False):
-    """Test parser with all optional arguments."""
+    """
+    Test parser with all optional arguments.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # Create dummy input files
     datafile = os.path.join(testtemproot, "fdica_data.nii.gz")
     maskfile = os.path.join(testtemproot, "fdica_mask.nii.gz")
@@ -200,7 +328,16 @@ def get_parser_with_options(testtemproot, debug=False):
 
 
 def get_parser_required_args(testtemproot, debug=False):
-    """Test parser with only required arguments."""
+    """
+    Test parser with only required arguments.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     datafile = os.path.join(testtemproot, "fdica_data2.nii.gz")
     maskfile = os.path.join(testtemproot, "fdica_mask2.nii.gz")
     with open(datafile, "w") as f:
@@ -220,7 +357,25 @@ def get_parser_required_args(testtemproot, debug=False):
 
 
 def _make_mock_nifti_data(xsize=4, ysize=4, numslices=2, timepoints=64):
-    """Helper to create mock NIFTI data and headers for fdica tests."""
+    """
+    Helper to create mock NIFTI data and headers for fdica tests.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     data = np.random.randn(xsize, ysize, numslices, timepoints).astype(np.float64)
     mask = np.ones((xsize, ysize, numslices), dtype=np.float64)
 
@@ -245,7 +400,25 @@ def _make_mock_nifti_data(xsize=4, ysize=4, numslices=2, timepoints=64):
 
 
 def _make_simple_header(xsize, ysize, numslices, timepoints):
-    """Create a simple dict-like mock header for deepcopy results."""
+    """
+    Create a simple dict-like mock header for deepcopy results.
+
+    Parameters
+    ----------
+    xsize : int
+        Number of voxels along the x axis.
+    ysize : int
+        Number of voxels along the y axis.
+    numslices : int
+        Number of slices in the test image.
+    timepoints : int
+        Number of time samples.
+
+    Returns
+    -------
+    dict
+        Image header constructed for the test.
+    """
     hdr = {}
     hdr["dim"] = [4, xsize, ysize, numslices, timepoints, 1, 1, 1]
     hdr["pixdim"] = [1.0, 2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0]
@@ -253,7 +426,16 @@ def _make_simple_header(xsize, ysize, numslices, timepoints):
 
 
 def fdica_basic(testtemproot, debug=False):
-    """Test fdica with basic parameters and mocked IO."""
+    """
+    Test fdica with basic parameters and mocked IO.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 4, 4, 2, 64
     data, mask, hdr, dims, sizes = _make_mock_nifti_data(xsize, ysize, numslices, timepoints)
     mask_dims = np.array([3, xsize, ysize, numslices, 1, 1, 1, 1])
@@ -292,7 +474,16 @@ def fdica_basic(testtemproot, debug=False):
 
 
 def fdica_with_spatial_filter(testtemproot, debug=False):
-    """Test fdica with Gaussian spatial filtering enabled."""
+    """
+    Test fdica with Gaussian spatial filtering enabled.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 4, 4, 2, 64
     data, mask, hdr, dims, sizes = _make_mock_nifti_data(xsize, ysize, numslices, timepoints)
     mask_dims = np.array([3, xsize, ysize, numslices, 1, 1, 1, 1])
@@ -333,7 +524,16 @@ def fdica_with_spatial_filter(testtemproot, debug=False):
 
 
 def fdica_auto_gausssigma(testtemproot, debug=False):
-    """Test fdica with negative gausssigma triggers automatic calculation."""
+    """
+    Test fdica with negative gausssigma triggers automatic calculation.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 4, 4, 2, 64
     data, mask, hdr, dims, sizes = _make_mock_nifti_data(xsize, ysize, numslices, timepoints)
     mask_dims = np.array([3, xsize, ysize, numslices, 1, 1, 1, 1])
@@ -374,7 +574,16 @@ def fdica_auto_gausssigma(testtemproot, debug=False):
 
 
 def fdica_with_ica_components(testtemproot, debug=False):
-    """Test fdica with explicit ICA component count."""
+    """
+    Test fdica with explicit ICA component count.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 4, 4, 2, 64
     data, mask, hdr, dims, sizes = _make_mock_nifti_data(xsize, ysize, numslices, timepoints)
     mask_dims = np.array([3, xsize, ysize, numslices, 1, 1, 1, 1])
@@ -412,12 +621,20 @@ def fdica_with_ica_components(testtemproot, debug=False):
 
 
 def fdica_with_pca_integer(testtemproot, debug=False):
-    """Test fdica with integer PCA components (>=1.0 branch).
+    """
+    Test fdica with integer PCA components (>=1.0 branch).
 
     Note: pcacomponents must be passed as int (not float) when >= 1,
     because sklearn PCA requires int for explicit component counts.
     The CLI parser defines this as type=float, which would cause a
     failure when the user passes an integer value like 3 (it becomes 3.0).
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     xsize, ysize, numslices, timepoints = 4, 4, 2, 64
     data, mask, hdr, dims, sizes = _make_mock_nifti_data(xsize, ysize, numslices, timepoints)
@@ -453,7 +670,16 @@ def fdica_with_pca_integer(testtemproot, debug=False):
 
 
 def fdica_dim_mismatch_exits(testtemproot, debug=False):
-    """Test fdica exits when spatial dimensions don't match."""
+    """
+    Test fdica exits when spatial dimensions don't match.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 4, 4, 2, 64
     data, mask, hdr, dims, sizes = _make_mock_nifti_data(xsize, ysize, numslices, timepoints)
     mask_dims = np.array([3, xsize, ysize, numslices, 1, 1, 1, 1])
@@ -486,7 +712,16 @@ def fdica_dim_mismatch_exits(testtemproot, debug=False):
 
 
 def fdica_4d_mask_exits(testtemproot, debug=False):
-    """Test fdica exits when mask is 4D instead of 3D."""
+    """
+    Test fdica exits when mask is 4D instead of 3D.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 4, 4, 2, 64
     data, mask, hdr, dims, sizes = _make_mock_nifti_data(xsize, ysize, numslices, timepoints)
     # mask with 4th dimension > 1
@@ -520,7 +755,16 @@ def fdica_4d_mask_exits(testtemproot, debug=False):
 
 
 def fdica_msec_tr(testtemproot, debug=False):
-    """Test fdica handles TR in milliseconds correctly."""
+    """
+    Test fdica handles TR in milliseconds correctly.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 4, 4, 2, 64
     data, mask, hdr, dims, sizes = _make_mock_nifti_data(xsize, ysize, numslices, timepoints)
     mask_dims = np.array([3, xsize, ysize, numslices, 1, 1, 1, 1])
@@ -559,7 +803,16 @@ def fdica_msec_tr(testtemproot, debug=False):
 
 
 def fdica_negative_freq_bounds(testtemproot, debug=False):
-    """Test fdica with negative frequency bounds (use all bins)."""
+    """
+    Test fdica with negative frequency bounds (use all bins).
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 4, 4, 2, 64
     data, mask, hdr, dims, sizes = _make_mock_nifti_data(xsize, ysize, numslices, timepoints)
     mask_dims = np.array([3, xsize, ysize, numslices, 1, 1, 1, 1])
@@ -596,7 +849,16 @@ def fdica_negative_freq_bounds(testtemproot, debug=False):
 
 
 def fdica_output_files(testtemproot, debug=False):
-    """Test that fdica saves the expected output files."""
+    """
+    Test that fdica saves the expected output files.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 4, 4, 2, 64
     data, mask, hdr, dims, sizes = _make_mock_nifti_data(xsize, ysize, numslices, timepoints)
     mask_dims = np.array([3, xsize, ysize, numslices, 1, 1, 1, 1])
@@ -658,7 +920,16 @@ def fdica_output_files(testtemproot, debug=False):
 
 
 def fdica_partial_mask(testtemproot, debug=False):
-    """Test fdica with a partial mask (not all voxels selected)."""
+    """
+    Test fdica with a partial mask (not all voxels selected).
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 4, 4, 2, 64
     data = np.random.randn(xsize, ysize, numslices, timepoints).astype(np.float64)
     # Only select half the voxels
@@ -717,7 +988,14 @@ def fdica_partial_mask(testtemproot, debug=False):
 
 
 def main_calls_fdica(debug=False):
-    """Test that main parses args and calls fdica."""
+    """
+    Test that main parses args and calls fdica.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with (
         patch("rapidtide.workflows.fdica._get_parser") as mock_parser,
         patch("rapidtide.workflows.fdica.fdica") as mock_fdica,
@@ -748,7 +1026,14 @@ def main_calls_fdica(debug=False):
 
 
 def main_parse_error(debug=False):
-    """Test that main prints help on parse error."""
+    """
+    Test that main prints help on parse error.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with patch("rapidtide.workflows.fdica._get_parser") as mock_parser:
         mock_parser.return_value.parse_args.side_effect = SystemExit(2)
 
@@ -764,6 +1049,16 @@ def main_parse_error(debug=False):
 
 def test_fdica(debug=False, local=False):
     # set up temp directory
+    """
+    Verify fdica.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     testtemproot = get_test_temp_path(local)
     create_dir(testtemproot)
 

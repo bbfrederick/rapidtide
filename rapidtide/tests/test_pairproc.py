@@ -29,7 +29,19 @@ from rapidtide.workflows.pairproc import _get_parser, pairproc
 
 
 def _make_args(**overrides):
-    """Build a minimal args Namespace for pairproc with sensible defaults."""
+    """
+    Build a minimal args Namespace for pairproc with sensible defaults.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         inputfile="input.nii.gz",
         outputroot="/tmp/test_pairproc_out",
@@ -43,13 +55,28 @@ def _make_args(**overrides):
 
 
 def _make_mock_hdr():
-    """Create a mock NIfTI header that supports copy() and item access."""
+    """
+    Create a mock NIfTI header that supports copy() and item access.
+
+    Returns
+    -------
+    object
+        Value returned to the caller in this test case.
+    """
     hdr = {
         "pixdim": np.zeros(8),
     }
 
     class MockHdr(dict):
         def copy(self):
+            """
+            Set up ``copy`` for the test.
+
+            Returns
+            -------
+            object
+                The ``new`` value supplied to the caller.
+            """
             new = MockHdr(self)
             new["pixdim"] = np.array(self["pixdim"])
             return new
@@ -58,11 +85,26 @@ def _make_mock_hdr():
 
 
 def _make_input_data(xsize=2, ysize=2, numslices=1, timepoints=6, seed=42):
-    """Create synthetic 4D input data for pairproc tests.
+    """
+    Create synthetic 4D input data for pairproc tests.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+    seed : int, optional
+        Random seed for reproducible test data.
 
     Returns
     -------
     dict with keys: 'data', 'hdr', 'dims', 'sizes', and component values.
+        Value supplied to the caller.
     """
     rng = np.random.RandomState(seed)
     data = rng.randn(xsize, ysize, numslices, timepoints).astype(np.double)
@@ -86,7 +128,25 @@ def _make_input_data(xsize=2, ysize=2, numslices=1, timepoints=6, seed=42):
 
 
 def _make_mask_data(xsize=2, ysize=2, numslices=1, mask_value=1.0):
-    """Create a 3D mask for pairproc tests."""
+    """
+    Create a 3D mask for pairproc tests.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    mask_value : float, optional
+        Value supplied as ``mask_value`` by the test case.
+
+    Returns
+    -------
+    dict
+        Values supplied together for the test case.
+    """
     data = np.full((xsize, ysize, numslices), mask_value, dtype=np.double)
     hdr = _make_mock_hdr()
     dims = np.array([3, xsize, ysize, numslices, 1])
@@ -100,27 +160,68 @@ def _make_mask_data(xsize=2, ysize=2, numslices=1, mask_value=1.0):
 
 
 def _capture_savetonifti():
-    """Capture savetonifti calls, copying data at call time."""
+    """
+    Capture savetonifti calls, copying data at call time.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     captured = []
 
     def _side_effect(data, hdr, filename, **kwargs):
+        """
+        Record the call for assertions in the surrounding test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        hdr : object
+            Image header used by the helper.
+        filename : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured.append((np.array(data, copy=True), filename))
 
     return _side_effect, captured
 
 
 def _capture_writenpvecs():
-    """Capture writenpvecs calls, copying data at call time."""
+    """
+    Capture writenpvecs calls, copying data at call time.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     captured = []
 
     def _side_effect(data, filename, **kwargs):
+        """
+        Record the call for assertions in the surrounding test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        filename : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured.append((np.array(data, copy=True), filename))
 
     return _side_effect, captured
 
 
 def _run_pairproc(args, input_info, mask_info=None):
-    """Run pairproc with full mocking of external dependencies.
+    """
+    Run pairproc with full mocking of external dependencies.
 
     Parameters
     ----------
@@ -134,6 +235,7 @@ def _run_pairproc(args, input_info, mask_info=None):
     Returns
     -------
     dict with keys: 'savetonifti', 'writenpvecs'
+        Value supplied to the caller.
     """
     stn_effect, stn_captured = _capture_savetonifti()
     wnp_effect, wnp_captured = _capture_writenpvecs()
@@ -197,7 +299,14 @@ def _run_pairproc(args, input_info, mask_info=None):
 
 
 def test_parser_required_args(debug=False):
-    """Parser should accept the two required positional args."""
+    """
+    Parser should accept the two required positional args.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["input.nii.gz", "outroot"])
     assert args.inputfile == "input.nii.gz"
@@ -207,7 +316,14 @@ def test_parser_required_args(debug=False):
 
 
 def test_parser_defaults(debug=False):
-    """Parser defaults should match expected values."""
+    """
+    Parser defaults should match expected values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["input.nii.gz", "outroot"])
     assert args.datamaskname is None
@@ -219,7 +335,14 @@ def test_parser_defaults(debug=False):
 
 
 def test_parser_dmask(debug=False):
-    """Parser should accept --dmask with a valid file."""
+    """
+    Parser should accept --dmask with a valid file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
         parser = _get_parser()
         args = parser.parse_args(["input.nii.gz", "outroot", "--dmask", f.name])
@@ -229,7 +352,14 @@ def test_parser_dmask(debug=False):
 
 
 def test_parser_getdist(debug=False):
-    """Parser should accept --getdist flag."""
+    """
+    Parser should accept --getdist flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["input.nii.gz", "outroot", "--getdist"])
     assert args.getdist is True
@@ -238,7 +368,14 @@ def test_parser_getdist(debug=False):
 
 
 def test_parser_demean(debug=False):
-    """Parser should accept --demean flag."""
+    """
+    Parser should accept --demean flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["input.nii.gz", "outroot", "--demean"])
     assert args.demean is True
@@ -247,7 +384,14 @@ def test_parser_demean(debug=False):
 
 
 def test_parser_debug_flag(debug=False):
-    """Parser should accept --debug flag."""
+    """
+    Parser should accept --debug flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["input.nii.gz", "outroot", "--debug"])
     assert args.debug is True
@@ -256,7 +400,14 @@ def test_parser_debug_flag(debug=False):
 
 
 def test_parser_missing_required(debug=False):
-    """Parser should fail when required arguments are missing."""
+    """
+    Parser should fail when required arguments are missing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args([])
@@ -265,7 +416,14 @@ def test_parser_missing_required(debug=False):
 
 
 def test_parser_all_options(debug=False):
-    """Parser should accept all optional flags together."""
+    """
+    Parser should accept all optional flags together.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
         parser = _get_parser()
         args = parser.parse_args(
@@ -291,7 +449,14 @@ def test_parser_all_options(debug=False):
 
 
 def test_pairproc_basic_run(debug=False):
-    """pairproc should run without errors with basic inputs."""
+    """
+    Pairproc should run without errors with basic inputs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(timepoints=6)
     args = _make_args()
     result = _run_pairproc(args, input_info)
@@ -302,7 +467,14 @@ def test_pairproc_basic_run(debug=False):
 
 
 def test_pairproc_output_files_real(debug=False):
-    """pairproc should write temporal and spatial output files for 'real' run."""
+    """
+    Pairproc should write temporal and spatial output files for 'real' run.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(timepoints=6)
     args = _make_args(outputroot="/tmp/pp")
     result = _run_pairproc(args, input_info)
@@ -323,7 +495,14 @@ def test_pairproc_output_files_real(debug=False):
 
 
 def test_pairproc_output_counts_no_getdist(debug=False):
-    """Without getdist, should produce 2 NIfTI and 2 text files."""
+    """
+    Without getdist, should produce 2 NIfTI and 2 text files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(timepoints=6)
     args = _make_args(getdist=False)
     result = _run_pairproc(args, input_info)
@@ -335,7 +514,14 @@ def test_pairproc_output_counts_no_getdist(debug=False):
 
 
 def test_pairproc_temporal_output_shape(debug=False):
-    """Temporal output maps should have 3D shape (xsize, ysize, numslices)."""
+    """
+    Temporal output maps should have 3D shape (xsize, ysize, numslices).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices = 3, 2, 1
     input_info = _make_input_data(xsize=xsize, ysize=ysize, numslices=numslices, timepoints=8)
     args = _make_args()
@@ -348,7 +534,14 @@ def test_pairproc_temporal_output_shape(debug=False):
 
 
 def test_pairproc_spatial_output_length(debug=False):
-    """Spatial output vectors should have length numsubjects = timepoints // 2."""
+    """
+    Spatial output vectors should have length numsubjects = timepoints // 2.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     timepoints = 10
     input_info = _make_input_data(timepoints=timepoints)
     args = _make_args()
@@ -365,7 +558,14 @@ def test_pairproc_spatial_output_length(debug=False):
 
 
 def test_pairproc_odd_timepoints_raises(debug=False):
-    """pairproc should raise ValueError for odd number of timepoints."""
+    """
+    Pairproc should raise ValueError for odd number of timepoints.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(timepoints=7)
     args = _make_args()
 
@@ -398,7 +598,14 @@ def test_pairproc_odd_timepoints_raises(debug=False):
 
 
 def test_pairproc_even_odd_split(debug=False):
-    """Verify that even and odd volumes are correctly separated."""
+    """
+    Verify that even and odd volumes are correctly separated.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 1, 1, 1, 4
     # Create data: [10, 20, 30, 40] → even=[10, 30], odd=[20, 40]
     data = np.array([[[[10.0, 20.0, 30.0, 40.0]]]])
@@ -422,6 +629,21 @@ def test_pairproc_even_odd_split(debug=False):
     original_pearsonr_result.pvalue = 0.01
 
     def mock_pearsonr(a, b):
+        """
+        Simulate ``pearsonr`` for the test.
+
+        Parameters
+        ----------
+        a : object
+            Value supplied as ``a`` by the test case.
+        b : object
+            Value supplied as ``b`` by the test case.
+
+        Returns
+        -------
+        object
+            The ``original_pearsonr_result`` value supplied to the caller.
+        """
         pearsonr_calls.append((np.array(a, copy=True), np.array(b, copy=True)))
         return original_pearsonr_result
 
@@ -461,7 +683,14 @@ def test_pairproc_even_odd_split(debug=False):
 
 
 def test_pairproc_demean(debug=False):
-    """pairproc with demean should subtract mean from each image."""
+    """
+    Pairproc with demean should subtract mean from each image.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 1, 2, 1, 4
     # 2 voxels, 4 timepoints: even=[0,2], odd=[1,3]
     data = np.zeros((xsize, ysize, numslices, timepoints))
@@ -488,6 +717,21 @@ def test_pairproc_demean(debug=False):
     mock_result.pvalue = 0.1
 
     def mock_pearsonr(a, b):
+        """
+        Simulate ``pearsonr`` for the test.
+
+        Parameters
+        ----------
+        a : object
+            Value supplied as ``a`` by the test case.
+        b : object
+            Value supplied as ``b`` by the test case.
+
+        Returns
+        -------
+        object
+            The ``mock_result`` value supplied to the caller.
+        """
         pearsonr_inputs.append((np.array(a, copy=True), np.array(b, copy=True)))
         return mock_result
 
@@ -522,7 +766,14 @@ def test_pairproc_demean(debug=False):
 
 
 def test_pairproc_no_demean(debug=False):
-    """pairproc without demean should use raw values."""
+    """
+    Pairproc without demean should use raw values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(timepoints=6)
     args = _make_args(demean=False)
     result = _run_pairproc(args, input_info)
@@ -535,7 +786,14 @@ def test_pairproc_no_demean(debug=False):
 
 
 def test_pairproc_getdist(debug=False):
-    """With getdist, should produce outputs for both 'real' and 'shifted' runs."""
+    """
+    With getdist, should produce outputs for both 'real' and 'shifted' runs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(timepoints=6)
     args = _make_args(getdist=True)
     result = _run_pairproc(args, input_info)
@@ -562,7 +820,14 @@ def test_pairproc_getdist(debug=False):
 
 
 def test_pairproc_shifted_uses_roll(debug=False):
-    """In shifted run, oddims should be rolled by 1 along subject axis."""
+    """
+    In shifted run, oddims should be rolled by 1 along subject axis.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, timepoints = 1, 1, 1, 6
     # Single voxel, 6 timepoints → 3 subjects
     data = np.array([[[[1.0, 2.0, 3.0, 4.0, 5.0, 6.0]]]])
@@ -586,6 +851,21 @@ def test_pairproc_shifted_uses_roll(debug=False):
     mock_result.pvalue = 0.1
 
     def mock_pearsonr(a, b):
+        """
+        Simulate ``pearsonr`` for the test.
+
+        Parameters
+        ----------
+        a : object
+            Value supplied as ``a`` by the test case.
+        b : object
+            Value supplied as ``b`` by the test case.
+
+        Returns
+        -------
+        object
+            The ``mock_result`` value supplied to the caller.
+        """
         pearsonr_calls.append((np.array(a, copy=True), np.array(b, copy=True)))
         return mock_result
 
@@ -623,7 +903,14 @@ def test_pairproc_shifted_uses_roll(debug=False):
 
 
 def test_pairproc_with_mask(debug=False):
-    """pairproc should use provided mask to select voxels."""
+    """
+    Pairproc should use provided mask to select voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices = 2, 2, 1
     timepoints = 4
     input_info = _make_input_data(
@@ -654,7 +941,14 @@ def test_pairproc_with_mask(debug=False):
 
 
 def test_pairproc_auto_mask(debug=False):
-    """Without mask, voxels with zero range should be excluded."""
+    """
+    Without mask, voxels with zero range should be excluded.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices = 3, 1, 1
     timepoints = 4
     data = np.zeros((xsize, ysize, numslices, timepoints))
@@ -689,7 +983,14 @@ def test_pairproc_auto_mask(debug=False):
 
 
 def test_pairproc_mask_dim_mismatch_exits(debug=False):
-    """pairproc should exit when mask spatial dimensions don't match."""
+    """
+    Pairproc should exit when mask spatial dimensions don't match.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(xsize=2, ysize=2, numslices=1, timepoints=4)
     mask_info = _make_mask_data(xsize=3, ysize=3, numslices=1)  # wrong dims
     args = _make_args(datamaskname="mask.nii.gz")
@@ -738,7 +1039,14 @@ def test_pairproc_mask_dim_mismatch_exits(debug=False):
 
 
 def test_pairproc_mask_time_not_one_exits(debug=False):
-    """pairproc should exit when mask time dimension is not 1."""
+    """
+    Pairproc should exit when mask time dimension is not 1.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(xsize=2, ysize=2, numslices=1, timepoints=4)
     mask_info = _make_mask_data(xsize=2, ysize=2, numslices=1)
     mask_info["dims"][4] = 4  # wrong time dim
@@ -792,7 +1100,14 @@ def test_pairproc_mask_time_not_one_exits(debug=False):
 
 
 def test_pairproc_debug_mode(debug=False):
-    """pairproc should run successfully with debug=True."""
+    """
+    Pairproc should run successfully with debug=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(timepoints=6)
     args = _make_args(debug=True)
     result = _run_pairproc(args, input_info)
@@ -805,7 +1120,14 @@ def test_pairproc_debug_mode(debug=False):
 
 
 def test_pairproc_temporal_correlations_range(debug=False):
-    """Temporal correlations should be in [-1, 1] for valid voxels."""
+    """
+    Temporal correlations should be in [-1, 1] for valid voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(xsize=3, ysize=3, numslices=1, timepoints=10)
     args = _make_args()
     result = _run_pairproc(args, input_info)
@@ -821,7 +1143,14 @@ def test_pairproc_temporal_correlations_range(debug=False):
 
 
 def test_pairproc_temporal_pvalues_range(debug=False):
-    """Temporal p-values should be in [0, 1] for valid voxels."""
+    """
+    Temporal p-values should be in [0, 1] for valid voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(xsize=3, ysize=3, numslices=1, timepoints=10)
     args = _make_args()
     result = _run_pairproc(args, input_info)
@@ -837,7 +1166,14 @@ def test_pairproc_temporal_pvalues_range(debug=False):
 
 
 def test_pairproc_spatial_correlations_range(debug=False):
-    """Spatial correlations should be in [-1, 1]."""
+    """
+    Spatial correlations should be in [-1, 1].
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(xsize=3, ysize=3, numslices=1, timepoints=10)
     args = _make_args()
     result = _run_pairproc(args, input_info)
@@ -852,7 +1188,14 @@ def test_pairproc_spatial_correlations_range(debug=False):
 
 
 def test_pairproc_spatial_pvalues_range(debug=False):
-    """Spatial p-values should be in [0, 1]."""
+    """
+    Spatial p-values should be in [0, 1].
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(xsize=3, ysize=3, numslices=1, timepoints=10)
     args = _make_args()
     result = _run_pairproc(args, input_info)
@@ -870,7 +1213,14 @@ def test_pairproc_spatial_pvalues_range(debug=False):
 
 
 def test_pairproc_four_timepoints(debug=False):
-    """pairproc should work with 4 timepoints (minimum practical: 2 subjects)."""
+    """
+    Pairproc should work with 4 timepoints (minimum practical: 2 subjects).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(xsize=2, ysize=1, numslices=1, timepoints=4)
     args = _make_args()
     result = _run_pairproc(args, input_info)
@@ -884,7 +1234,14 @@ def test_pairproc_four_timepoints(debug=False):
 
 
 def test_pairproc_large_timepoints(debug=False):
-    """pairproc should handle larger time series."""
+    """
+    Pairproc should handle larger time series.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(xsize=2, ysize=2, numslices=1, timepoints=20)
     args = _make_args()
     result = _run_pairproc(args, input_info)
@@ -897,7 +1254,14 @@ def test_pairproc_large_timepoints(debug=False):
 
 
 def test_pairproc_multi_slice(debug=False):
-    """pairproc should work with multiple slices."""
+    """
+    Pairproc should work with multiple slices.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices = 2, 2, 3
     input_info = _make_input_data(xsize=xsize, ysize=ysize, numslices=numslices, timepoints=6)
     args = _make_args()
@@ -913,7 +1277,14 @@ def test_pairproc_multi_slice(debug=False):
 
 
 def test_pairproc_demean_and_getdist(debug=False):
-    """pairproc should work with both demean and getdist enabled."""
+    """
+    Pairproc should work with both demean and getdist enabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(timepoints=8)
     args = _make_args(demean=True, getdist=True)
     result = _run_pairproc(args, input_info)
@@ -926,7 +1297,14 @@ def test_pairproc_demean_and_getdist(debug=False):
 
 
 def test_pairproc_mask_and_demean(debug=False):
-    """pairproc should work with both mask and demean."""
+    """
+    Pairproc should work with both mask and demean.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input_info = _make_input_data(xsize=2, ysize=2, numslices=1, timepoints=6)
     mask_info = _make_mask_data(xsize=2, ysize=2, numslices=1)
     args = _make_args(datamaskname="mask.nii.gz", demean=True)
@@ -941,7 +1319,14 @@ def test_pairproc_mask_and_demean(debug=False):
 
 
 def test_pairproc_integration(debug=False):
-    """Full integration test verifying all outputs are consistent."""
+    """
+    Full integration test verifying all outputs are consistent.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices = 3, 2, 1
     timepoints = 8
     input_info = _make_input_data(
@@ -995,7 +1380,14 @@ def test_pairproc_integration(debug=False):
 
 
 def test_pairproc(debug=False):
-    """Run all pairproc tests."""
+    """
+    Run all pairproc tests.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # parser tests
     test_parser_required_args(debug=debug)
     test_parser_defaults(debug=debug)

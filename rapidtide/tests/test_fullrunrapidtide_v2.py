@@ -28,6 +28,18 @@ pytestmark = pytest.mark.slow
 
 def test_fullrunrapidtide_v2(debug=False, local=False, displayplots=False):
     # set input and output directories
+    """
+    Verify fullrunrapidtide v2.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     exampleroot, testtemproot = get_example_and_temp_roots(local)
 
     # run rapidtide

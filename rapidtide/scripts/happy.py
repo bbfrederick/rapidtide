@@ -23,6 +23,7 @@ import rapidtide.workflows.happy_parser as happy_parser
 
 
 def entrypoint():
+    """Run the `happy` command."""
     happy_workflow.happy_main(happy_parser.process_args(inputargs=None))
 
 

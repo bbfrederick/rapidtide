@@ -32,6 +32,18 @@ from rapidtide.tests.utils import create_dir, get_examples_path, get_test_temp_p
 
 def test_io(debug=True, local=False, displayplots=False):
     # set input and output directories
+    """
+    Verify io.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     exampleroot = get_examples_path(local)
     testtemproot = get_test_temp_path(local)
 
@@ -503,7 +515,23 @@ EPSILON = 1e-5
 
 
 def _make_4d_nifti(tmpdir, shape=(4, 5, 3, 10), name="test4d"):
-    """Create a 4D NIfTI file with random data and return path, data, header."""
+    """
+    Create a 4D NIfTI file with random data and return path, data, header.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    shape : tuple of int, optional
+        Dimensions of the test array.
+    name : str, optional
+        Value supplied as ``name`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     data = np.random.RandomState(42).randn(*shape).astype(np.float64)
     img = nib.Nifti1Image(data, affine=np.eye(4))
     filepath = os.path.join(tmpdir, name + ".nii.gz")
@@ -512,7 +540,23 @@ def _make_4d_nifti(tmpdir, shape=(4, 5, 3, 10), name="test4d"):
 
 
 def _make_3d_nifti(tmpdir, shape=(4, 5, 3), name="test3d"):
-    """Create a 3D NIfTI file with random data and return path, data, header."""
+    """
+    Create a 3D NIfTI file with random data and return path, data, header.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    shape : tuple of int, optional
+        Dimensions of the test array.
+    name : str, optional
+        Value supplied as ``name`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     data = np.random.RandomState(42).randn(*shape).astype(np.float64)
     img = nib.Nifti1Image(data, affine=np.eye(4))
     filepath = os.path.join(tmpdir, name + ".nii.gz")
@@ -521,14 +565,46 @@ def _make_3d_nifti(tmpdir, shape=(4, 5, 3), name="test3d"):
 
 
 def _make_text_vec(tmpdir, data, name="testvec.txt"):
-    """Write a 1D array to a text file, one value per line."""
+    """
+    Write a 1D array to a text file, one value per line.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    data : array-like
+        Data passed to the test helper.
+    name : str, optional
+        Value supplied as ``name`` by the test case.
+
+    Returns
+    -------
+    str
+        The ``filepath`` value supplied to the caller.
+    """
     filepath = os.path.join(tmpdir, name)
     np.savetxt(filepath, data)
     return filepath
 
 
 def _make_par_file(tmpdir, npoints=20, name="motion.par"):
-    """Create a .par file with 6 columns of motion data."""
+    """
+    Create a .par file with 6 columns of motion data.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    npoints : int, optional
+        Value supplied as ``npoints`` by the test case.
+    name : str, optional
+        Value supplied as ``name`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     rng = np.random.RandomState(42)
     data = rng.randn(npoints, 6)
     filepath = os.path.join(tmpdir, name)
@@ -537,7 +613,21 @@ def _make_par_file(tmpdir, npoints=20, name="motion.par"):
 
 
 def _make_2d_array(nrows=6, ncols=100):
-    """Create a 2D test array."""
+    """
+    Create a 2D test array.
+
+    Parameters
+    ----------
+    nrows : int, optional
+        Value supplied as ``nrows`` by the test case.
+    ncols : int, optional
+        Value supplied as ``ncols`` by the test case.
+
+    Returns
+    -------
+    numpy.ndarray
+        Output values supplied to the caller.
+    """
     arr = np.zeros((nrows, ncols), dtype=float)
     t = np.linspace(0, 1.0, ncols, endpoint=False)
     arr[0, :] = t
@@ -553,7 +643,14 @@ def _make_2d_array(nrows=6, ncols=100):
 
 
 def parseniftidims_basic(debug=False):
-    """Test parseniftidims extracts correct dimensions."""
+    """
+    Test parseniftidims extracts correct dimensions.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parseniftidims_basic")
     dims = np.array([4, 64, 80, 32, 100, 1, 1, 1])
@@ -565,7 +662,14 @@ def parseniftidims_basic(debug=False):
 
 
 def parseniftidims_3d(debug=False):
-    """Test parseniftidims with 3D data (nt=1)."""
+    """
+    Test parseniftidims with 3D data (nt=1).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parseniftidims_3d")
     dims = np.array([3, 10, 20, 30, 1, 1, 1, 1])
@@ -580,7 +684,14 @@ def parseniftidims_3d(debug=False):
 
 
 def parseniftisizes_basic(debug=False):
-    """Test parseniftisizes extracts correct sizes."""
+    """
+    Test parseniftisizes extracts correct sizes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parseniftisizes_basic")
     sizes = np.array([-1.0, 2.0, 2.0, 3.0, 1.5, 0.0, 0.0, 0.0])
@@ -595,7 +706,14 @@ def parseniftisizes_basic(debug=False):
 
 
 def niftifromarray_basic(debug=False):
-    """Test niftifromarray creates valid NIfTI image."""
+    """
+    Test niftifromarray creates valid NIfTI image.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftifromarray_basic")
     data = np.random.randn(10, 10, 10)
@@ -606,7 +724,14 @@ def niftifromarray_basic(debug=False):
 
 
 def niftifromarray_4d(debug=False):
-    """Test niftifromarray with 4D data."""
+    """
+    Test niftifromarray with 4D data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftifromarray_4d")
     data = np.zeros((3, 4, 5, 6))
@@ -618,7 +743,14 @@ def niftifromarray_4d(debug=False):
 
 
 def niftihdrfromarray_basic(debug=False):
-    """Test niftihdrfromarray creates valid NIfTI header."""
+    """
+    Test niftihdrfromarray creates valid NIfTI header.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftihdrfromarray_basic")
     data = np.random.randn(5, 5, 5)
@@ -634,7 +766,14 @@ def niftihdrfromarray_basic(debug=False):
 
 
 def niftisplitext_niigz(debug=False):
-    """Test niftisplitext with .nii.gz extension."""
+    """
+    Test niftisplitext with .nii.gz extension.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftisplitext_niigz")
     name, ext = tide_io.niftisplitext("myimage.nii.gz")
@@ -643,7 +782,14 @@ def niftisplitext_niigz(debug=False):
 
 
 def niftisplitext_nii(debug=False):
-    """Test niftisplitext with .nii extension."""
+    """
+    Test niftisplitext with .nii extension.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftisplitext_nii")
     name, ext = tide_io.niftisplitext("myimage.nii")
@@ -652,7 +798,14 @@ def niftisplitext_nii(debug=False):
 
 
 def niftisplitext_path(debug=False):
-    """Test niftisplitext with full path."""
+    """
+    Test niftisplitext with full path.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftisplitext_path")
     name, ext = tide_io.niftisplitext("/data/sub-01/func/bold.nii.gz")
@@ -664,7 +817,14 @@ def niftisplitext_path(debug=False):
 
 
 def checkifcifti_nifti(debug=False):
-    """Test checkifcifti returns False for standard NIfTI file."""
+    """
+    Test checkifcifti returns False for standard NIfTI file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkifcifti_nifti")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -676,7 +836,14 @@ def checkifcifti_nifti(debug=False):
 
 
 def checkspaceresmatch_same(debug=False):
-    """Test checkspaceresmatch with identical resolutions."""
+    """
+    Test checkspaceresmatch with identical resolutions.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkspaceresmatch_same")
     sizes = np.array([-1.0, 2.0, 2.0, 2.0, 1.0])
@@ -684,7 +851,14 @@ def checkspaceresmatch_same(debug=False):
 
 
 def checkspaceresmatch_different(debug=False):
-    """Test checkspaceresmatch with different resolutions."""
+    """
+    Test checkspaceresmatch with different resolutions.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkspaceresmatch_different")
     sizes1 = np.array([-1.0, 2.0, 2.0, 2.0, 1.0])
@@ -693,7 +867,14 @@ def checkspaceresmatch_different(debug=False):
 
 
 def checkspaceresmatch_within_tolerance(debug=False):
-    """Test checkspaceresmatch with sizes within tolerance."""
+    """
+    Test checkspaceresmatch with sizes within tolerance.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkspaceresmatch_within_tolerance")
     sizes1 = np.array([-1.0, 2.0, 2.0, 2.0, 1.0])
@@ -705,7 +886,14 @@ def checkspaceresmatch_within_tolerance(debug=False):
 
 
 def checkspacedimmatch_same(debug=False):
-    """Test checkspacedimmatch with identical dimensions."""
+    """
+    Test checkspacedimmatch with identical dimensions.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkspacedimmatch_same")
     dims = np.array([4, 64, 64, 32, 100, 1, 1, 1])
@@ -713,7 +901,14 @@ def checkspacedimmatch_same(debug=False):
 
 
 def checkspacedimmatch_different(debug=False):
-    """Test checkspacedimmatch with different dimensions."""
+    """
+    Test checkspacedimmatch with different dimensions.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkspacedimmatch_different")
     dims1 = np.array([4, 64, 64, 32, 100, 1, 1, 1])
@@ -725,7 +920,14 @@ def checkspacedimmatch_different(debug=False):
 
 
 def checktimematch_with_skip(debug=False):
-    """Test checktimematch with skip parameters."""
+    """
+    Test checktimematch with skip parameters.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checktimematch_with_skip")
     dims1 = np.array([4, 64, 64, 32, 100, 1, 1, 1])
@@ -738,7 +940,14 @@ def checktimematch_with_skip(debug=False):
 
 
 def checkdatamatch_identical(debug=False):
-    """Test checkdatamatch with identical data."""
+    """
+    Test checkdatamatch with identical data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkdatamatch_identical")
     data = np.array([1.0, 2.0, 3.0, 4.0])
@@ -748,7 +957,14 @@ def checkdatamatch_identical(debug=False):
 
 
 def checkdatamatch_different(debug=False):
-    """Test checkdatamatch with very different data."""
+    """
+    Test checkdatamatch with very different data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkdatamatch_different")
     data1 = np.array([1.0, 2.0, 3.0])
@@ -759,7 +975,14 @@ def checkdatamatch_different(debug=False):
 
 
 def checkdatamatch_close(debug=False):
-    """Test checkdatamatch with close but not identical data."""
+    """
+    Test checkdatamatch with close but not identical data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkdatamatch_close")
     data1 = np.array([1.0, 2.0, 3.0])
@@ -773,7 +996,14 @@ def checkdatamatch_close(debug=False):
 
 
 def checkniftifilematch_same(debug=False):
-    """Test checkniftifilematch with identical files."""
+    """
+    Test checkniftifilematch with identical files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkniftifilematch_same")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -782,7 +1012,14 @@ def checkniftifilematch_same(debug=False):
 
 
 def checkniftifilematch_different(debug=False):
-    """Test checkniftifilematch with different files."""
+    """
+    Test checkniftifilematch with different files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkniftifilematch_different")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -795,7 +1032,14 @@ def checkniftifilematch_different(debug=False):
 
 
 def makedestarray_nifti_3d(debug=False):
-    """Test makedestarray for 3D NIFTI output."""
+    """
+    Test makedestarray for 3D NIFTI output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makedestarray_nifti_3d")
     arr, iss = tide_io.makedestarray((4, 5, 3), filetype="nifti")
@@ -804,7 +1048,14 @@ def makedestarray_nifti_3d(debug=False):
 
 
 def makedestarray_nifti_4d(debug=False):
-    """Test makedestarray for 4D NIFTI output."""
+    """
+    Test makedestarray for 4D NIFTI output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makedestarray_nifti_4d")
     arr, iss = tide_io.makedestarray((4, 5, 3, 10), filetype="nifti")
@@ -813,7 +1064,14 @@ def makedestarray_nifti_4d(debug=False):
 
 
 def makedestarray_text_1d(debug=False):
-    """Test makedestarray for 1D text output."""
+    """
+    Test makedestarray for 1D text output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makedestarray_text_1d")
     arr, iss = tide_io.makedestarray(100, filetype="text")
@@ -822,7 +1080,14 @@ def makedestarray_text_1d(debug=False):
 
 
 def makedestarray_text_2d(debug=False):
-    """Test makedestarray for 2D text output."""
+    """
+    Test makedestarray for 2D text output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makedestarray_text_2d")
     arr, iss = tide_io.makedestarray((100, 5), filetype="text")
@@ -831,7 +1096,14 @@ def makedestarray_text_2d(debug=False):
 
 
 def makedestarray_cifti(debug=False):
-    """Test makedestarray for CIFTI output."""
+    """
+    Test makedestarray for CIFTI output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makedestarray_cifti")
     arr, iss = tide_io.makedestarray((10, 50), filetype="cifti")
@@ -843,7 +1115,14 @@ def makedestarray_cifti(debug=False):
 
 
 def populatemap_1d_validvoxels(debug=False):
-    """Test populatemap with 1D array and valid voxels."""
+    """
+    Test populatemap with 1D array and valid voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("populatemap_1d_validvoxels")
     themap = np.array([10.0, 20.0, 30.0])
@@ -858,7 +1137,14 @@ def populatemap_1d_validvoxels(debug=False):
 
 
 def populatemap_1d_no_validvoxels(debug=False):
-    """Test populatemap with 1D array and no mask."""
+    """
+    Test populatemap with 1D array and no mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("populatemap_1d_no_validvoxels")
     themap = np.array([1.0, 2.0, 3.0, 4.0])
@@ -868,7 +1154,14 @@ def populatemap_1d_no_validvoxels(debug=False):
 
 
 def populatemap_2d_validvoxels(debug=False):
-    """Test populatemap with 2D array and valid voxels."""
+    """
+    Test populatemap with 2D array and valid voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("populatemap_2d_validvoxels")
     themap = np.array([[1.0, 2.0], [3.0, 4.0]])
@@ -884,7 +1177,14 @@ def populatemap_2d_validvoxels(debug=False):
 
 
 def makeMNI_res2(debug=False):
-    """Test makeMNI at 2mm resolution."""
+    """
+    Test makeMNI at 2mm resolution.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makeMNI_res2")
     data, hdr, affine = tide_io.makeMNI(2)
@@ -893,7 +1193,14 @@ def makeMNI_res2(debug=False):
 
 
 def makeMNI_res1(debug=False):
-    """Test makeMNI at 1mm resolution."""
+    """
+    Test makeMNI at 1mm resolution.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makeMNI_res1")
     data, hdr, affine = tide_io.makeMNI(1)
@@ -901,7 +1208,14 @@ def makeMNI_res1(debug=False):
 
 
 def makeMNI_timepoints(debug=False):
-    """Test makeMNI with multiple timepoints."""
+    """
+    Test makeMNI with multiple timepoints.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makeMNI_timepoints")
     data, hdr, affine = tide_io.makeMNI(2, timepoints=5)
@@ -909,7 +1223,14 @@ def makeMNI_timepoints(debug=False):
 
 
 def makeMNI_invalid_res(debug=False):
-    """Test makeMNI raises ValueError for invalid resolution."""
+    """
+    Test makeMNI raises ValueError for invalid resolution.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makeMNI_invalid_res")
     try:
@@ -923,7 +1244,14 @@ def makeMNI_invalid_res(debug=False):
 
 
 def savemaplist_nifti(debug=False):
-    """Test savemaplist writes NIFTI files with JSON sidecars."""
+    """
+    Test savemaplist writes NIFTI files with JSON sidecars.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savemaplist_nifti")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -954,7 +1282,14 @@ def savemaplist_nifti(debug=False):
 
 
 def savemaplist_text(debug=False):
-    """Test savemaplist writes text files."""
+    """
+    Test savemaplist writes text files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savemaplist_text")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -983,7 +1318,14 @@ def savemaplist_text(debug=False):
 
 
 def writedicttojson_basic(debug=False):
-    """Test writedicttojson writes valid JSON."""
+    """
+    Test writedicttojson writes valid JSON.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writedicttojson_basic")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -999,7 +1341,14 @@ def writedicttojson_basic(debug=False):
 
 
 def writedicttojson_numpy_types(debug=False):
-    """Test writedicttojson handles numpy types."""
+    """
+    Test writedicttojson handles numpy types.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writedicttojson_numpy_types")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1019,7 +1368,14 @@ def writedicttojson_numpy_types(debug=False):
 
 
 def readdictfromjson_basic(debug=False):
-    """Test readdictfromjson reads valid JSON."""
+    """
+    Test readdictfromjson reads valid JSON.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readdictfromjson_basic")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1033,7 +1389,14 @@ def readdictfromjson_basic(debug=False):
 
 
 def readdictfromjson_no_extension(debug=False):
-    """Test readdictfromjson with filename without .json extension."""
+    """
+    Test readdictfromjson with filename without .json extension.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readdictfromjson_no_extension")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1046,7 +1409,14 @@ def readdictfromjson_no_extension(debug=False):
 
 
 def readdictfromjson_missing(debug=False):
-    """Test readdictfromjson returns empty dict for missing file."""
+    """
+    Test readdictfromjson returns empty dict for missing file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readdictfromjson_missing")
     result = tide_io.readdictfromjson("/nonexistent/path/file.json")
@@ -1057,7 +1427,14 @@ def readdictfromjson_missing(debug=False):
 
 
 def readbidssidecar_basic(debug=False):
-    """Test readbidssidecar reads JSON sidecar."""
+    """
+    Test readbidssidecar reads JSON sidecar.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readbidssidecar_basic")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1073,7 +1450,14 @@ def readbidssidecar_basic(debug=False):
 
 
 def readbidssidecar_missing(debug=False):
-    """Test readbidssidecar returns empty dict when file missing."""
+    """
+    Test readbidssidecar returns empty dict when file missing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readbidssidecar_missing")
     result = tide_io.readbidssidecar("/nonexistent/test.nii.gz")
@@ -1084,7 +1468,14 @@ def readbidssidecar_missing(debug=False):
 
 
 def readlabelledtsv_basic(debug=False):
-    """Test readlabelledtsv reads labeled TSV file."""
+    """
+    Test readlabelledtsv reads labeled TSV file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readlabelledtsv_basic")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1107,7 +1498,14 @@ def readlabelledtsv_basic(debug=False):
 
 
 def readlabelledtsv_nan_handling(debug=False):
-    """Test readlabelledtsv replaces NaN with 0."""
+    """
+    Test readlabelledtsv replaces NaN with 0.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readlabelledtsv_nan_handling")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1124,7 +1522,14 @@ def readlabelledtsv_nan_handling(debug=False):
 
 
 def readcsv_with_header(debug=False):
-    """Test readcsv with header line."""
+    """
+    Test readcsv with header line.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readcsv_with_header")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1140,7 +1545,14 @@ def readcsv_with_header(debug=False):
 
 
 def readcsv_without_header(debug=False):
-    """Test readcsv without header line (numeric first row)."""
+    """
+    Test readcsv without header line (numeric first row).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readcsv_without_header")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1156,7 +1568,14 @@ def readcsv_without_header(debug=False):
 
 
 def readconfounds_basic(debug=False):
-    """Test readconfounds reads and returns dict of arrays."""
+    """
+    Test readconfounds reads and returns dict of arrays.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readconfounds_basic")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1174,7 +1593,14 @@ def readconfounds_basic(debug=False):
 
 
 def sliceinfo_sequential(debug=False):
-    """Test sliceinfo with sequential slice times."""
+    """
+    Test sliceinfo with sequential slice times.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("sliceinfo_sequential")
     slicetimes = np.array([0.0, 0.1, 0.2, 0.3, 0.4])
@@ -1185,7 +1611,14 @@ def sliceinfo_sequential(debug=False):
 
 
 def sliceinfo_interleaved(debug=False):
-    """Test sliceinfo with interleaved slice times."""
+    """
+    Test sliceinfo with interleaved slice times.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("sliceinfo_interleaved")
     slicetimes = np.array([0.0, 0.2, 0.4, 0.1, 0.3])
@@ -1198,7 +1631,14 @@ def sliceinfo_interleaved(debug=False):
 
 
 def getslicetimesfromfile_json(debug=False):
-    """Test getslicetimesfromfile with JSON file."""
+    """
+    Test getslicetimesfromfile with JSON file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getslicetimesfromfile_json")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1215,7 +1655,14 @@ def getslicetimesfromfile_json(debug=False):
 
 
 def getslicetimesfromfile_text(debug=False):
-    """Test getslicetimesfromfile with text file."""
+    """
+    Test getslicetimesfromfile with text file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getslicetimesfromfile_text")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1231,7 +1678,14 @@ def getslicetimesfromfile_text(debug=False):
 
 
 def writedict_readdict_roundtrip(debug=False):
-    """Test writedict and readdict roundtrip."""
+    """
+    Test writedict and readdict roundtrip.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writedict_readdict_roundtrip")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1245,7 +1699,14 @@ def writedict_readdict_roundtrip(debug=False):
 
 
 def writedict_machinereadable(debug=False):
-    """Test writedict with machinereadable format."""
+    """
+    Test writedict with machinereadable format.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writedict_machinereadable")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1260,7 +1721,14 @@ def writedict_machinereadable(debug=False):
 
 
 def readdict_missing(debug=False):
-    """Test readdict returns empty dict for missing file."""
+    """
+    Test readdict returns empty dict for missing file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readdict_missing")
     result = tide_io.readdict("/nonexistent/file.txt")
@@ -1271,7 +1739,14 @@ def readdict_missing(debug=False):
 
 
 def writevec_readvec_roundtrip(debug=False):
-    """Test writevec and readvec roundtrip."""
+    """
+    Test writevec and readvec roundtrip.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writevec_readvec_roundtrip")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1283,7 +1758,14 @@ def writevec_readvec_roundtrip(debug=False):
 
 
 def writevec_lineendings(debug=False):
-    """Test writevec with different line endings."""
+    """
+    Test writevec with different line endings.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writevec_lineendings")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1298,7 +1780,14 @@ def writevec_lineendings(debug=False):
 
 
 def writenpvecs_2d(debug=False):
-    """Test writenpvecs with 2D array."""
+    """
+    Test writenpvecs with 2D array.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writenpvecs_2d")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1310,7 +1799,14 @@ def writenpvecs_2d(debug=False):
 
 
 def writenpvecs_1d(debug=False):
-    """Test writenpvecs with 1D array."""
+    """
+    Test writenpvecs with 1D array.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writenpvecs_1d")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1321,7 +1817,14 @@ def writenpvecs_1d(debug=False):
 
 
 def writenpvecs_csv_headers(debug=False):
-    """Test writenpvecs with CSV format and headers."""
+    """
+    Test writenpvecs with CSV format and headers.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writenpvecs_csv_headers")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1335,7 +1838,14 @@ def writenpvecs_csv_headers(debug=False):
 
 
 def writenpvecs_altmethod_false(debug=False):
-    """Test writenpvecs with altmethod=False."""
+    """
+    Test writenpvecs with altmethod=False.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writenpvecs_altmethod_false")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1349,7 +1859,14 @@ def writenpvecs_altmethod_false(debug=False):
 
 
 def readvecs_basic(debug=False):
-    """Test readvecs reads multi-column text file."""
+    """
+    Test readvecs reads multi-column text file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readvecs_basic")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1363,7 +1880,14 @@ def readvecs_basic(debug=False):
 
 
 def readvecs_colspec(debug=False):
-    """Test readvecs with column specification."""
+    """
+    Test readvecs with column specification.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readvecs_colspec")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1376,7 +1900,14 @@ def readvecs_colspec(debug=False):
 
 
 def readvecs_with_header(debug=False):
-    """Test readvecs auto-detects header line."""
+    """
+    Test readvecs auto-detects header line.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readvecs_with_header")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1394,7 +1925,14 @@ def readvecs_with_header(debug=False):
 
 
 def readtc_text_singlecol(debug=False):
-    """Test readtc reads single-column text file."""
+    """
+    Test readtc reads single-column text file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readtc_text_singlecol")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1410,7 +1948,14 @@ def readtc_text_singlecol(debug=False):
 
 
 def readtc_text_multicol(debug=False):
-    """Test readtc reads specific column from multi-column file."""
+    """
+    Test readtc reads specific column from multi-column file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readtc_text_multicol")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1425,7 +1970,14 @@ def readtc_text_multicol(debug=False):
 
 
 def readlabels_basic(debug=False):
-    """Test readlabels reads lines from file."""
+    """
+    Test readlabels reads lines from file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readlabels_basic")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1442,7 +1994,14 @@ def readlabels_basic(debug=False):
 
 
 def readcolfromtextfile_basic(debug=False):
-    """Test readcolfromtextfile reads a single column."""
+    """
+    Test readcolfromtextfile reads a single column.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readcolfromtextfile_basic")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1457,7 +2016,14 @@ def readcolfromtextfile_basic(debug=False):
 
 
 def unique_basic(debug=False):
-    """Test unique removes duplicates preserving order."""
+    """
+    Test unique removes duplicates preserving order.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("unique_basic")
     result = tide_io.unique([3, 1, 2, 1, 3, 4])
@@ -1465,7 +2031,14 @@ def unique_basic(debug=False):
 
 
 def unique_no_duplicates(debug=False):
-    """Test unique with no duplicates."""
+    """
+    Test unique with no duplicates.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("unique_no_duplicates")
     result = tide_io.unique([1, 2, 3])
@@ -1473,7 +2046,14 @@ def unique_no_duplicates(debug=False):
 
 
 def unique_empty(debug=False):
-    """Test unique with empty list."""
+    """
+    Test unique with empty list.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("unique_empty")
     result = tide_io.unique([])
@@ -1484,7 +2064,14 @@ def unique_empty(debug=False):
 
 
 def makecolname_basic(debug=False):
-    """Test makecolname generates correct names."""
+    """
+    Test makecolname generates correct names.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makecolname_basic")
     assert tide_io.makecolname(0, 0) == "col_00"
@@ -1497,7 +2084,14 @@ def makecolname_basic(debug=False):
 
 
 def processnamespec_with_colspec(debug=False):
-    """Test processnamespec with column specification."""
+    """
+    Test processnamespec with column specification.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("processnamespec_with_colspec")
     name, vals = tide_io.processnamespec("data.txt:1,3,5", "mask", "regions")
@@ -1506,7 +2100,14 @@ def processnamespec_with_colspec(debug=False):
 
 
 def processnamespec_without_colspec(debug=False):
-    """Test processnamespec without column specification."""
+    """
+    Test processnamespec without column specification.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("processnamespec_without_colspec")
     name, vals = tide_io.processnamespec("data.txt", "mask", "regions")
@@ -1518,7 +2119,14 @@ def processnamespec_without_colspec(debug=False):
 
 
 def readoptionsfile_json(debug=False):
-    """Test readoptionsfile reads JSON options file."""
+    """
+    Test readoptionsfile reads JSON options file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readoptionsfile_json")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1532,7 +2140,14 @@ def readoptionsfile_json(debug=False):
 
 
 def readoptionsfile_txt(debug=False):
-    """Test readoptionsfile reads TXT options file."""
+    """
+    Test readoptionsfile reads TXT options file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readoptionsfile_txt")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1544,7 +2159,14 @@ def readoptionsfile_txt(debug=False):
 
 
 def readoptionsfile_backwards_compat(debug=False):
-    """Test readoptionsfile fills default filter limits for old files."""
+    """
+    Test readoptionsfile fills default filter limits for old files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readoptionsfile_backwards_compat")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1560,7 +2182,14 @@ def readoptionsfile_backwards_compat(debug=False):
 
 
 def readoptionsfile_missing(debug=False):
-    """Test readoptionsfile raises FileNotFoundError."""
+    """
+    Test readoptionsfile raises FileNotFoundError.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readoptionsfile_missing")
     try:
@@ -1574,7 +2203,14 @@ def readoptionsfile_missing(debug=False):
 
 
 def readbidstsv_basic(debug=False):
-    """Test readbidstsv reads BIDS TSV with JSON sidecar."""
+    """
+    Test readbidstsv reads BIDS TSV with JSON sidecar.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readbidstsv_basic")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1593,7 +2229,14 @@ def readbidstsv_basic(debug=False):
 
 
 def readbidstsv_neednotexist(debug=False):
-    """Test readbidstsv with neednotexist=True for missing file."""
+    """
+    Test readbidstsv with neednotexist=True for missing file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readbidstsv_neednotexist")
     result = tide_io.readbidstsv("/nonexistent/file.json", neednotexist=True)
@@ -1602,7 +2245,14 @@ def readbidstsv_neednotexist(debug=False):
 
 
 def readbidstsv_colspec(debug=False):
-    """Test readbidstsv with column specification."""
+    """
+    Test readbidstsv with column specification.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readbidstsv_colspec")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1623,7 +2273,14 @@ def readbidstsv_colspec(debug=False):
 
 
 def readcolfrombidstsv_by_name(debug=False):
-    """Test readcolfrombidstsv by column name."""
+    """
+    Test readcolfrombidstsv by column name.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readcolfrombidstsv_by_name")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1638,7 +2295,14 @@ def readcolfrombidstsv_by_name(debug=False):
 
 
 def readcolfrombidstsv_by_number(debug=False):
-    """Test readcolfrombidstsv by column number."""
+    """
+    Test readcolfrombidstsv by column number.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readcolfrombidstsv_by_number")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1655,7 +2319,14 @@ def readcolfrombidstsv_by_number(debug=False):
 
 
 def writebidstsv_1d_data(debug=False):
-    """Test writebidstsv reshapes 1D data to 2D."""
+    """
+    Test writebidstsv reshapes 1D data to 2D.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writebidstsv_1d_data")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1668,7 +2339,14 @@ def writebidstsv_1d_data(debug=False):
 
 
 def writebidstsv_uncompressed(debug=False):
-    """Test writebidstsv with uncompressed output."""
+    """
+    Test writebidstsv with uncompressed output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writebidstsv_uncompressed")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1680,7 +2358,14 @@ def writebidstsv_uncompressed(debug=False):
 
 
 def writebidstsv_extraheaderinfo(debug=False):
-    """Test writebidstsv with extra header info."""
+    """
+    Test writebidstsv with extra header info.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writebidstsv_extraheaderinfo")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1695,7 +2380,14 @@ def writebidstsv_extraheaderinfo(debug=False):
 
 
 def writebidstsv_omitjson(debug=False):
-    """Test writebidstsv with omitjson=True."""
+    """
+    Test writebidstsv with omitjson=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writebidstsv_omitjson")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1710,7 +2402,14 @@ def writebidstsv_omitjson(debug=False):
 
 
 def savetonifti_various_dtypes(debug=False):
-    """Test savetonifti with various numpy dtypes."""
+    """
+    Test savetonifti with various numpy dtypes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savetonifti_various_dtypes")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1740,7 +2439,14 @@ def savetonifti_various_dtypes(debug=False):
 
 
 def readfromnifti_headeronly(debug=False):
-    """Test readfromnifti with headeronly=True."""
+    """
+    Test readfromnifti with headeronly=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readfromnifti_headeronly")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1751,7 +2457,14 @@ def readfromnifti_headeronly(debug=False):
 
 
 def readfromnifti_no_extension(debug=False):
-    """Test readfromnifti finds file without extension."""
+    """
+    Test readfromnifti finds file without extension.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readfromnifti_no_extension")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1763,7 +2476,14 @@ def readfromnifti_no_extension(debug=False):
 
 
 def readfromnifti_missing(debug=False):
-    """Test readfromnifti raises FileNotFoundError for missing file."""
+    """
+    Test readfromnifti raises FileNotFoundError for missing file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readfromnifti_missing")
     try:
@@ -1777,7 +2497,14 @@ def readfromnifti_missing(debug=False):
 
 
 def colspectolist_simple_range(debug=False):
-    """Test colspectolist with simple range."""
+    """
+    Test colspectolist with simple range.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("colspectolist_simple_range")
     result = tide_io.colspectolist("1-5")
@@ -1785,7 +2512,14 @@ def colspectolist_simple_range(debug=False):
 
 
 def colspectolist_single(debug=False):
-    """Test colspectolist with single value."""
+    """
+    Test colspectolist with single value.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("colspectolist_single")
     result = tide_io.colspectolist("7")
@@ -1793,7 +2527,14 @@ def colspectolist_single(debug=False):
 
 
 def colspectolist_macro(debug=False):
-    """Test colspectolist with SSEG_CSF macro."""
+    """
+    Test colspectolist with SSEG_CSF macro.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("colspectolist_macro")
     result = tide_io.colspectolist("SSEG_CSF")
@@ -1807,7 +2548,14 @@ def colspectolist_macro(debug=False):
 
 
 def colspectolist_none(debug=False):
-    """Test colspectolist returns None for None input."""
+    """
+    Test colspectolist returns None for None input.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("colspectolist_none")
     result = tide_io.colspectolist(None)
@@ -1818,7 +2566,14 @@ def colspectolist_none(debug=False):
 
 
 def parsefilespec_no_colspec(debug=False):
-    """Test parsefilespec without column spec."""
+    """
+    Test parsefilespec without column spec.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parsefilespec_no_colspec")
     name, spec = tide_io.parsefilespec("myfile.txt")
@@ -1827,7 +2582,14 @@ def parsefilespec_no_colspec(debug=False):
 
 
 def parsefilespec_with_colspec(debug=False):
-    """Test parsefilespec with column spec."""
+    """
+    Test parsefilespec with column spec.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parsefilespec_with_colspec")
     name, spec = tide_io.parsefilespec("data.nii.gz:1,3,5-8")
@@ -1840,6 +2602,14 @@ def parsefilespec_with_colspec(debug=False):
 
 def test_io2(debug=False):
     # parseniftidims
+    """
+    Verify io2.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("Running parseniftidims tests")
     parseniftidims_basic(debug=debug)
@@ -2100,7 +2870,14 @@ def test_io2(debug=False):
 
 
 def readmotion_tsv(debug=False):
-    """Test readmotion with TSV file (fmriprep-style confounds)."""
+    """
+    Test readmotion with TSV file (fmriprep-style confounds).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readmotion_tsv")
     import pandas as pd
@@ -2127,7 +2904,14 @@ def readmotion_tsv(debug=False):
 
 
 def readmotion_generic(debug=False):
-    """Test readmotion with generic 6-column text file."""
+    """
+    Test readmotion with generic 6-column text file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readmotion_generic")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2144,7 +2928,14 @@ def readmotion_generic(debug=False):
 
 
 def readoptionsfile_compat_none(debug=False):
-    """Test readoptionsfile backward compat for filtertype None."""
+    """
+    Test readoptionsfile backward compat for filtertype None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readoptionsfile_compat_none")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2157,7 +2948,14 @@ def readoptionsfile_compat_none(debug=False):
 
 
 def readoptionsfile_compat_vlf(debug=False):
-    """Test readoptionsfile backward compat for filtertype vlf."""
+    """
+    Test readoptionsfile backward compat for filtertype vlf.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readoptionsfile_compat_vlf")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2170,7 +2968,14 @@ def readoptionsfile_compat_vlf(debug=False):
 
 
 def readoptionsfile_compat_resp(debug=False):
-    """Test readoptionsfile backward compat for filtertype resp."""
+    """
+    Test readoptionsfile backward compat for filtertype resp.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readoptionsfile_compat_resp")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2183,7 +2988,14 @@ def readoptionsfile_compat_resp(debug=False):
 
 
 def readoptionsfile_compat_card(debug=False):
-    """Test readoptionsfile backward compat for filtertype card."""
+    """
+    Test readoptionsfile backward compat for filtertype card.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readoptionsfile_compat_card")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2196,7 +3008,14 @@ def readoptionsfile_compat_card(debug=False):
 
 
 def readoptionsfile_compat_arb(debug=False):
-    """Test readoptionsfile backward compat for filtertype arb."""
+    """
+    Test readoptionsfile backward compat for filtertype arb.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readoptionsfile_compat_arb")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2216,7 +3035,14 @@ def readoptionsfile_compat_arb(debug=False):
 
 
 def readoptionsfile_compat_unknown(debug=False):
-    """Test readoptionsfile backward compat for unknown filtertype."""
+    """
+    Test readoptionsfile backward compat for unknown filtertype.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readoptionsfile_compat_unknown")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2232,7 +3058,14 @@ def readoptionsfile_compat_unknown(debug=False):
 
 
 def readbidstsv_no_samplerate(debug=False):
-    """Test readbidstsv with JSON missing SamplingFrequency."""
+    """
+    Test readbidstsv with JSON missing SamplingFrequency.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readbidstsv_no_samplerate")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2251,7 +3084,14 @@ def readbidstsv_no_samplerate(debug=False):
 
 
 def readbidstsv_no_starttime(debug=False):
-    """Test readbidstsv with JSON missing StartTime."""
+    """
+    Test readbidstsv with JSON missing StartTime.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readbidstsv_no_starttime")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2268,7 +3108,14 @@ def readbidstsv_no_starttime(debug=False):
 
 
 def readbidstsv_no_columns(debug=False):
-    """Test readbidstsv with JSON missing Columns key."""
+    """
+    Test readbidstsv with JSON missing Columns key.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readbidstsv_no_columns")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2286,7 +3133,14 @@ def readbidstsv_no_columns(debug=False):
 
 
 def readbidstsv_bad_colspec(debug=False):
-    """Test readbidstsv with bad column specification returns None."""
+    """
+    Test readbidstsv with bad column specification returns None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readbidstsv_bad_colspec")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2298,7 +3152,14 @@ def readbidstsv_bad_colspec(debug=False):
 
 
 def readbidstsv_missing_raises(debug=False):
-    """Test readbidstsv raises FileNotFoundError when file missing."""
+    """
+    Test readbidstsv raises FileNotFoundError when file missing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readbidstsv_missing_raises")
     try:
@@ -2312,7 +3173,14 @@ def readbidstsv_missing_raises(debug=False):
 
 
 def readcolfrombidstsv_missing_file(debug=False):
-    """Test readcolfrombidstsv with neednotexist=True for missing file."""
+    """
+    Test readcolfrombidstsv with neednotexist=True for missing file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readcolfrombidstsv_missing_file")
     sr, st, data = tide_io.readcolfrombidstsv("/nonexistent/file.json", neednotexist=True)
@@ -2321,7 +3189,14 @@ def readcolfrombidstsv_missing_file(debug=False):
 
 
 def readcolfrombidstsv_bad_colname(debug=False):
-    """Test readcolfrombidstsv with nonexistent column name."""
+    """
+    Test readcolfrombidstsv with nonexistent column name.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readcolfrombidstsv_bad_colname")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2337,7 +3212,14 @@ def readcolfrombidstsv_bad_colname(debug=False):
 
 
 def writebidstsv_append(debug=False):
-    """Test writebidstsv append mode."""
+    """
+    Test writebidstsv append mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writebidstsv_append")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2356,7 +3238,14 @@ def writebidstsv_append(debug=False):
 
 
 def colspectolist_bad_range_order(debug=False):
-    """Test colspectolist with end < start."""
+    """
+    Test colspectolist with end < start.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("colspectolist_bad_range_order")
     result = tide_io.colspectolist("5-3")
@@ -2364,7 +3253,14 @@ def colspectolist_bad_range_order(debug=False):
 
 
 def colspectolist_bad_format(debug=False):
-    """Test colspectolist with too many hyphens."""
+    """
+    Test colspectolist with too many hyphens.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("colspectolist_bad_format")
     result = tide_io.colspectolist("1-3-5")
@@ -2375,7 +3271,14 @@ def colspectolist_bad_format(debug=False):
 
 
 def parsefilespec_too_many_colons(debug=False):
-    """Test parsefilespec with too many colons raises ValueError."""
+    """
+    Test parsefilespec with too many colons raises ValueError.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parsefilespec_too_many_colons")
     try:
@@ -2389,7 +3292,14 @@ def parsefilespec_too_many_colons(debug=False):
 
 
 def readtc_json(debug=False):
-    """Test readtc with JSON (BIDS) input file."""
+    """
+    Test readtc with JSON (BIDS) input file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readtc_json")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2402,7 +3312,14 @@ def readtc_json(debug=False):
 
 
 def readtc_json_no_col(debug=False):
-    """Test readtc JSON raises when no column specified."""
+    """
+    Test readtc JSON raises when no column specified.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readtc_json_no_col")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2417,7 +3334,14 @@ def readtc_json_no_col(debug=False):
 
 
 def readtc_json_both_cols(debug=False):
-    """Test readtc JSON raises when both colnum and colname specified."""
+    """
+    Test readtc JSON raises when both colnum and colname specified.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readtc_json_both_cols")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2432,7 +3356,14 @@ def readtc_json_both_cols(debug=False):
 
 
 def readtc_multicol_no_colnum(debug=False):
-    """Test readtc with multi-column text file but no colnum raises TypeError."""
+    """
+    Test readtc with multi-column text file but no colnum raises TypeError.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readtc_multicol_no_colnum")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2450,7 +3381,14 @@ def readtc_multicol_no_colnum(debug=False):
 
 
 def writedict_line_endings(debug=False):
-    """Test writedict with explicit line endings."""
+    """
+    Test writedict with explicit line endings.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writedict_line_endings")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2465,7 +3403,14 @@ def writedict_line_endings(debug=False):
 
 
 def writenpvecs_line_endings(debug=False):
-    """Test writenpvecs with explicit line endings."""
+    """
+    Test writenpvecs with explicit line endings.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writenpvecs_line_endings")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2477,7 +3422,14 @@ def writenpvecs_line_endings(debug=False):
 
 
 def writenpvecs_bad_header_count(debug=False):
-    """Test writenpvecs raises ValueError when header count doesn't match."""
+    """
+    Test writenpvecs raises ValueError when header count doesn't match.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writenpvecs_bad_header_count")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2491,7 +3443,14 @@ def writenpvecs_bad_header_count(debug=False):
 
 
 def writenpvecs_bad_header_count_1d(debug=False):
-    """Test writenpvecs raises ValueError when 1D data gets wrong header count."""
+    """
+    Test writenpvecs raises ValueError when 1D data gets wrong header count.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writenpvecs_bad_header_count_1d")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2508,7 +3467,14 @@ def writenpvecs_bad_header_count_1d(debug=False):
 
 
 def dumparraytonifti_basic(debug=False):
-    """Test dumparraytonifti creates a valid NIfTI file."""
+    """
+    Test dumparraytonifti creates a valid NIfTI file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dumparraytonifti_basic")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2523,7 +3489,14 @@ def dumparraytonifti_basic(debug=False):
 
 
 def niftisplit_along_axis4(debug=False):
-    """Test niftisplit with 4D data along axis 3."""
+    """
+    Test niftisplit with 4D data along axis 3.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftisplit_along_axis4")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2541,7 +3514,14 @@ def niftisplit_along_axis4(debug=False):
 
 
 def readbidstsv_with_header_line(debug=False):
-    """Test readbidstsv handles TSV file with header line."""
+    """
+    Test readbidstsv handles TSV file with header line.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readbidstsv_with_header_line")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2562,7 +3542,14 @@ def readbidstsv_with_header_line(debug=False):
 
 
 def readbidstsv_columns_from_tsv(debug=False):
-    """Test readbidstsv gets column names from TSV when JSON has none."""
+    """
+    Test readbidstsv gets column names from TSV when JSON has none.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readbidstsv_columns_from_tsv")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2586,6 +3573,14 @@ def readbidstsv_columns_from_tsv(debug=False):
 
 def test_io3(debug=False):
     # readmotion
+    """
+    Verify io3.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("Running readmotion tests")
     readmotion_tsv(debug=debug)

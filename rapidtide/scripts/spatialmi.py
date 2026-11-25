@@ -21,6 +21,7 @@ import rapidtide.workflows.spatialmi as theworkflow
 
 
 def entrypoint():
+    """Run the `spatialmi` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.spatialmi)
 
 

@@ -173,6 +173,16 @@ def wienerpass(
     if optiondict["nprocs"] > 1:
         # define the consumer function here so it inherits most of the arguments
         def Wiener_consumer(inQ, outQ):
+            """
+            Apply Wiener filtering to queued time series.
+
+            Parameters
+            ----------
+            inQ : queue-like
+                Queue supplying work items.
+            outQ : queue-like
+                Queue receiving processed results.
+            """
             while True:
                 try:
                     # get a new message

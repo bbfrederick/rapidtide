@@ -32,14 +32,56 @@ from tensorflow.keras.models import Model
 # Positional Encoding to add temporal information to the sequence
 class PositionalEncoding(tf.keras.layers.Layer):
     def __init__(self, sequence_len, d_model):
+        """
+        Initialize `PositionalEncoding`.
+
+        Parameters
+        ----------
+        sequence_len : int
+            Number of time steps to encode.
+        d_model : int
+            Width of the model embeddings.
+        """
         super(PositionalEncoding, self).__init__()
         self.pos_encoding = self.positional_encoding(sequence_len, d_model)
 
     def get_angles(self, pos, i, d_model):
+        """
+        Compute the angles used to construct sinusoidal positional encodings.
+
+        Parameters
+        ----------
+        pos : array-like
+            Sequence position indices.
+        i : array-like
+            Embedding dimension indices.
+        d_model : int
+            Width of the model embeddings.
+
+        Returns
+        -------
+        numpy.ndarray
+            Angle for each position and embedding dimension.
+        """
         angle_rates = 1 / tf.pow(10000, (2 * (i // 2)) / tf.cast(d_model, tf.float32))
         return pos * angle_rates
 
     def positional_encoding(self, sequence_len, d_model):
+        """
+        Construct sinusoidal positional encodings for a sequence.
+
+        Parameters
+        ----------
+        sequence_len : int
+            Number of time steps to encode.
+        d_model : int
+            Width of the model embeddings.
+
+        Returns
+        -------
+        tensorflow.Tensor
+            Sinusoidal encoding with a leading batch dimension.
+        """
         angle_rads = self.get_angles(
             tf.range(sequence_len)[:, tf.newaxis], tf.range(d_model)[tf.newaxis, :], d_model
         )
@@ -53,12 +95,39 @@ class PositionalEncoding(tf.keras.layers.Layer):
         return tf.cast(pos_encoding, tf.float32)
 
     def call(self, x):
+        """
+        Compute the layer output for the input tensor.
+
+        Parameters
+        ----------
+        x : tensorflow.Tensor
+            Input tensor passed to the model.
+
+        Returns
+        -------
+        tensorflow.Tensor
+            Layer output for the input sequence.
+        """
         return x + self.pos_encoding[:, : tf.shape(x)[1], :]
 
 
 # Transformer block implementation
 class TransformerBlock(tf.keras.layers.Layer):
     def __init__(self, d_model, num_heads, ff_dim, rate=0.1):
+        """
+        Initialize `TransformerBlock`.
+
+        Parameters
+        ----------
+        d_model : int
+            Width of the model embeddings.
+        num_heads : int
+            Number of attention heads.
+        ff_dim : int
+            Width of the feed-forward layer.
+        rate : float, optional
+            Dropout probability.
+        """
         super(TransformerBlock, self).__init__()
         self.att = MultiHeadAttention(num_heads=num_heads, key_dim=d_model)
         self.ffn = tf.keras.Sequential(
@@ -73,6 +142,21 @@ class TransformerBlock(tf.keras.layers.Layer):
         self.dropout2 = Dropout(rate)
 
     def call(self, x, training):
+        """
+        Compute the layer output for the input tensor.
+
+        Parameters
+        ----------
+        x : tensorflow.Tensor
+            Input tensor passed to the model.
+        training : bool
+            Enable training-time layer behavior.
+
+        Returns
+        -------
+        tensorflow.Tensor
+            Layer output for the input sequence.
+        """
         attn_output = self.att(x, x)  # Self-attention
         attn_output = self.dropout1(attn_output, training=training)
         out1 = self.layernorm1(x + attn_output)  # Add & Norm
@@ -86,6 +170,29 @@ class TransformerBlock(tf.keras.layers.Layer):
 def build_transformer_model(
     input_shape, d_model=128, num_heads=4, ff_dim=512, num_layers=3, dropout_rate=0.1
 ):
+    """
+    Build a transformer model for time-series filtering.
+
+    Parameters
+    ----------
+    input_shape : tuple of int
+        Dimensions of one input sequence, excluding the batch axis.
+    d_model : int, optional
+        Width of the model embeddings.
+    num_heads : int, optional
+        Number of attention heads.
+    ff_dim : int, optional
+        Width of the feed-forward layer.
+    num_layers : int, optional
+        Number of layers in the model.
+    dropout_rate : float, optional
+        Dropout probability.
+
+    Returns
+    -------
+    object
+        The model.
+    """
     inputs = Input(shape=input_shape)
 
     # Positional Encoding
@@ -106,6 +213,31 @@ def build_transformer_model(
 def compile_and_train_model(
     model, train_data, train_labels, val_data, val_labels, epochs=50, batch_size=32
 ):
+    """
+    Compile the model and fit it using training and validation data.
+
+    Parameters
+    ----------
+    model : object
+        Model instance or model file used by this routine.
+    train_data : array-like
+        Training input sequences.
+    train_labels : array-like
+        Training targets corresponding to the input sequences.
+    val_data : array-like
+        Validation input sequences.
+    val_labels : array-like
+        Validation targets corresponding to the input sequences.
+    epochs : int, optional
+        Number of training epochs.
+    batch_size : int, optional
+        Number of training examples per batch.
+
+    Returns
+    -------
+    object
+        The history.
+    """
     model.compile(optimizer="adam", loss="mse", metrics=["mae"])
     history = model.fit(
         train_data,

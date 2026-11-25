@@ -33,28 +33,98 @@ import rapidtide.maskutil as tide_maskutil
 
 class DummyFilter:
     def apply(self, Fs, data):
+        """
+        Set up ``apply`` for the test.
+
+        Parameters
+        ----------
+        Fs : object
+            Value supplied as ``Fs`` by the test case.
+        data : array-like
+            Data passed to the test helper.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return np.asarray(data) + 1.0
 
 
 class DummyPCAFit:
     def __init__(self, n_components=1):
+        """
+        Initialize the test double for ``DummyPCAFit``.
+
+        Parameters
+        ----------
+        n_components : int, optional
+            Value supplied as ``n_components`` by the test case.
+        """
         self.components_ = np.ones((n_components, 4))
         self.explained_variance_ratio_ = np.ones(n_components) / float(n_components)
         self.n_samples_ = 4
         self.n_features_in_ = 4
 
     def transform(self, x):
+        """
+        Set up ``transform`` for the test.
+
+        Parameters
+        ----------
+        x : object
+            Value supplied as ``x`` by the test case.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return np.asarray(x)[:, : len(self.components_)]
 
     def inverse_transform(self, t):
+        """
+        Set up ``inverse_transform`` for the test.
+
+        Parameters
+        ----------
+        t : object
+            Value supplied as ``t`` by the test case.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return np.tile(np.mean(np.asarray(t), axis=1, keepdims=True), (1, 4))
 
 
 class DummyPCA:
     def __init__(self, n_components=0.8):
+        """
+        Initialize the test double for ``DummyPCA``.
+
+        Parameters
+        ----------
+        n_components : float, optional
+            Value supplied as ``n_components`` by the test case.
+        """
         self.n_components = n_components
 
     def fit(self, x):
+        """
+        Set up ``fit`` for the test.
+
+        Parameters
+        ----------
+        x : object
+            Value supplied as ``x`` by the test case.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if self.n_components == "mle":
             raise ValueError("forced mle failure")
         ncomp = 1 if isinstance(self.n_components, float) else int(self.n_components)
@@ -62,6 +132,14 @@ class DummyPCA:
 
 
 def resampmask_and_makeepimask_tests(debug=False):
+    """
+    Check resampmask and makeepimask tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resampmask_and_makeepimask_tests")
 
@@ -76,6 +154,14 @@ def resampmask_and_makeepimask_tests(debug=False):
 
 
 def maketmask_tests(debug=False):
+    """
+    Check maketmask tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("maketmask_tests")
 
@@ -101,6 +187,14 @@ def maketmask_tests(debug=False):
 
 
 def readamask_tests(debug=False):
+    """
+    Check readamask tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readamask_tests")
 
@@ -147,6 +241,14 @@ def readamask_tests(debug=False):
 
 
 def getmaskset_tests(debug=False):
+    """
+    Check getmaskset tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getmaskset_tests")
 
@@ -213,6 +315,14 @@ def getmaskset_tests(debug=False):
 
 
 def getregionsignal_tests(debug=False):
+    """
+    Check getregionsignal tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getregionsignal_tests")
 
@@ -261,6 +371,14 @@ def getregionsignal_tests(debug=False):
 
 
 def saveregionaltimeseries_tests(debug=False):
+    """
+    Check saveregionaltimeseries tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("saveregionaltimeseries_tests")
 
@@ -293,7 +411,8 @@ def saveregionaltimeseries_tests(debug=False):
 
 
 def getregionsignal_masked_pca_tests(debug=False):
-    """The pca method has to honor its masks the same way the other methods do.
+    """
+    The pca method has to honor its masks the same way the other methods do.
 
     Everything the pca branch indexes - the loop counter, and the per voxel variance it
     broadcasts the reconstruction against - is a position in the selected subset, but the
@@ -303,6 +422,11 @@ def getregionsignal_masked_pca_tests(debug=False):
     position in the full array, and the broadcast at the end raised.  Passing the selected
     voxels in directly is the reference: masking inside the call has to give the same
     answer as filtering the rows beforehand.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("getregionsignal_masked_pca_tests")
@@ -340,6 +464,16 @@ def getregionsignal_masked_pca_tests(debug=False):
 
 
 def test_maskutil(debug=False, displayplots=False):
+    """
+    Verify maskutil.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     np.random.seed(12345)
     resampmask_and_makeepimask_tests(debug=debug)
     maketmask_tests(debug=debug)

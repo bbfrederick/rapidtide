@@ -31,7 +31,21 @@ from rapidtide.workflows.rapidtide2std import _get_parser, rapidtide2std
 
 
 def _make_default_args(tmpdir, **overrides):
-    """Create default args Namespace for rapidtide2std."""
+    """
+    Create default args Namespace for rapidtide2std.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         inputfileroot=os.path.join(tmpdir, "sub-01_task-rest"),
         outputdir=os.path.join(tmpdir, "output"),
@@ -51,7 +65,25 @@ def _make_default_args(tmpdir, **overrides):
 
 
 def _setup_feat_dir(tmpdir, with_warp=False, with_hires=True, with_standard=True):
-    """Create a minimal feat directory structure with registration files."""
+    """
+    Create a minimal feat directory structure with registration files.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    with_warp : bool, optional
+        Setting for ``with_warp`` in the test case.
+    with_hires : bool, optional
+        Setting for ``with_hires`` in the test case.
+    with_standard : bool, optional
+        Setting for ``with_standard`` in the test case.
+
+    Returns
+    -------
+    str
+        The ``regdir`` value supplied to the caller.
+    """
     regdir = os.path.join(tmpdir, "sub-01.feat", "reg")
     os.makedirs(regdir, exist_ok=True)
 
@@ -87,7 +119,21 @@ def _setup_feat_dir(tmpdir, with_warp=False, with_hires=True, with_standard=True
 
 
 def _setup_input_files(tmpdir, subjroot="sub-01_task-rest"):
-    """Create minimal input files that rapidtide2std expects to find."""
+    """
+    Create minimal input files that rapidtide2std expects to find.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    subjroot : str, optional
+        Value supplied as ``subjroot`` by the test case.
+
+    Returns
+    -------
+    object
+        The ``subjroot`` value supplied to the caller.
+    """
     # corrout_info file (used by glob to find fileroot)
     corrout = os.path.join(tmpdir, subjroot + "_desc-corrout_info.nii.gz")
     with open(corrout, "w") as f:
@@ -145,7 +191,14 @@ def _setup_input_files(tmpdir, subjroot="sub-01_task-rest"):
 
 
 def parser_basic(debug=False):
-    """Test that _get_parser returns a valid parser."""
+    """
+    Test that _get_parser returns a valid parser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
     assert parser.prog == "rapidtide2std"
@@ -155,7 +208,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
-    """Test that parser requires all three positional arguments."""
+    """
+    Test that parser requires all three positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args([])
@@ -171,7 +231,14 @@ def parser_required_args(debug=False):
 
 
 def parser_all_positional(debug=False):
-    """Test parser with all three positional arguments."""
+    """
+    Test parser with all three positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["myinput", "myoutput", "myfeat.feat"])
     assert args.inputfileroot == "myinput"
@@ -183,7 +250,14 @@ def parser_all_positional(debug=False):
 
 
 def parser_defaults(debug=False):
-    """Test default values for optional arguments."""
+    """
+    Test default values for optional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat"])
 
@@ -202,7 +276,14 @@ def parser_defaults(debug=False):
 
 
 def parser_corrout(debug=False):
-    """Test --corrout flag."""
+    """
+    Test --corrout flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--corrout"])
     assert args.corrout is True
@@ -212,7 +293,14 @@ def parser_corrout(debug=False):
 
 
 def parser_clean(debug=False):
-    """Test --clean flag."""
+    """
+    Test --clean flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--clean"])
     assert args.clean is True
@@ -222,7 +310,14 @@ def parser_clean(debug=False):
 
 
 def parser_confound(debug=False):
-    """Test --confound flag."""
+    """
+    Test --confound flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--confound"])
     assert args.confound is True
@@ -232,7 +327,14 @@ def parser_confound(debug=False):
 
 
 def parser_hires(debug=False):
-    """Test --hires flag."""
+    """
+    Test --hires flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--hires"])
     assert args.aligntohires is True
@@ -242,7 +344,14 @@ def parser_hires(debug=False):
 
 
 def parser_linear(debug=False):
-    """Test --linear flag."""
+    """
+    Test --linear flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--linear"])
     assert args.forcelinear is True
@@ -252,7 +361,14 @@ def parser_linear(debug=False):
 
 
 def parser_onefile(debug=False):
-    """Test --onefile option."""
+    """
+    Test --onefile option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--onefile", "myfile"])
     assert args.onefilename == "myfile"
@@ -262,7 +378,14 @@ def parser_onefile(debug=False):
 
 
 def parser_sequential(debug=False):
-    """Test --sequential flag."""
+    """
+    Test --sequential flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--sequential"])
     assert args.sequential is True
@@ -272,7 +395,14 @@ def parser_sequential(debug=False):
 
 
 def parser_fake(debug=False):
-    """Test --fake flag."""
+    """
+    Test --fake flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--fake"])
     assert args.preponly is True
@@ -282,7 +412,14 @@ def parser_fake(debug=False):
 
 
 def parser_debug(debug=False):
-    """Test --debug flag."""
+    """
+    Test --debug flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in", "out", "feat", "--debug"])
     assert args.debug is True
@@ -295,7 +432,14 @@ def parser_debug(debug=False):
 
 
 def workflow_no_fsldir(debug=False):
-    """Test that rapidtide2std exits when FSLDIR is not set."""
+    """
+    Test that rapidtide2std exits when FSLDIR is not set.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_no_fsldir")
 
@@ -307,7 +451,14 @@ def workflow_no_fsldir(debug=False):
 
 
 def workflow_missing_xform(debug=False):
-    """Test that rapidtide2std exits when transform matrix is missing."""
+    """
+    Test that rapidtide2std exits when transform matrix is missing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_missing_xform")
 
@@ -323,7 +474,14 @@ def workflow_missing_xform(debug=False):
 
 
 def workflow_missing_reftarget(debug=False):
-    """Test that rapidtide2std exits when reference target is missing."""
+    """
+    Test that rapidtide2std exits when reference target is missing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_missing_reftarget")
 
@@ -343,7 +501,14 @@ def workflow_missing_reftarget(debug=False):
 
 
 def workflow_onefile_missing(debug=False):
-    """Test rapidtide2std with --onefile pointing to a nonexistent file."""
+    """
+    Test rapidtide2std with --onefile pointing to a nonexistent file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_onefile_missing")
 
@@ -379,7 +544,14 @@ def workflow_onefile_missing(debug=False):
 
 
 def workflow_onefile_exists(debug=False):
-    """Test rapidtide2std with --onefile pointing to an existing file."""
+    """
+    Test rapidtide2std with --onefile pointing to an existing file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_onefile_exists")
 
@@ -403,6 +575,16 @@ def workflow_onefile_exists(debug=False):
         runcmd_calls = []
 
         def mock_runcmd(cmd, fake=False):
+            """
+            Simulate ``runcmd`` for the test.
+
+            Parameters
+            ----------
+            cmd : object
+                Command supplied to the subprocess stub.
+            fake : bool, optional
+                Setting for ``fake`` in the test case.
+            """
             runcmd_calls.append(cmd)
 
         with (
@@ -428,7 +610,14 @@ def workflow_onefile_exists(debug=False):
 
 
 def workflow_linear_standard(debug=False):
-    """Test full workflow with linear transformation to standard space."""
+    """
+    Test full workflow with linear transformation to standard space.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_linear_standard")
 
@@ -453,9 +642,40 @@ def workflow_linear_standard(debug=False):
         written_json = {}
 
         def mock_runcmd(cmd, fake=False):
+            """
+            Simulate ``runcmd`` for the test.
+
+            Parameters
+            ----------
+            cmd : object
+                Command supplied to the subprocess stub.
+            fake : bool, optional
+                Setting for ``fake`` in the test case.
+            """
             runcmd_calls.append(cmd)
 
         def mock_makeflirtcmd(inputfile, targetname, xform, outputname, **kwargs):
+            """
+            Simulate ``makeflirtcmd`` for the test.
+
+            Parameters
+            ----------
+            inputfile : path-like
+                Path of the input file.
+            targetname : path-like
+                Path of the registration reference image.
+            xform : path-like
+                Transformation supplied to the registration stub.
+            outputname : path-like
+                Name of the output file.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            list
+                Values supplied together for the test case.
+            """
             flirt_calls.append(
                 {
                     "input": inputfile,
@@ -468,9 +688,32 @@ def workflow_linear_standard(debug=False):
             return ["flirt", "-in", inputfile, "-out", outputname]
 
         def mock_readoptionsfile(fname):
+            """
+            Simulate ``readoptionsfile`` for the test.
+
+            Parameters
+            ----------
+            fname : path-like
+                Filename supplied to the test helper.
+
+            Returns
+            -------
+            dict
+                Values supplied together for the test case.
+            """
             return {"filtertype": "lfo", "key1": "val1"}
 
         def mock_writedicttojson(thedict, fname):
+            """
+            Simulate ``writedicttojson`` for the test.
+
+            Parameters
+            ----------
+            thedict : object
+                Value supplied as ``thedict`` by the test case.
+            fname : path-like
+                Filename supplied to the test helper.
+            """
             written_json[fname] = thedict
 
         with (
@@ -517,7 +760,14 @@ def workflow_linear_standard(debug=False):
 
 
 def workflow_nonlinear_standard(debug=False):
-    """Test full workflow with nonlinear transformation (warp file present)."""
+    """
+    Test full workflow with nonlinear transformation (warp file present).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_nonlinear_standard")
 
@@ -540,9 +790,40 @@ def workflow_nonlinear_standard(debug=False):
         flirt_calls = []
 
         def mock_runcmd(cmd, fake=False):
+            """
+            Simulate ``runcmd`` for the test.
+
+            Parameters
+            ----------
+            cmd : object
+                Command supplied to the subprocess stub.
+            fake : bool, optional
+                Setting for ``fake`` in the test case.
+            """
             pass
 
         def mock_makeflirtcmd(inputfile, targetname, xform, outputname, **kwargs):
+            """
+            Simulate ``makeflirtcmd`` for the test.
+
+            Parameters
+            ----------
+            inputfile : path-like
+                Path of the input file.
+            targetname : path-like
+                Path of the registration reference image.
+            xform : path-like
+                Transformation supplied to the registration stub.
+            outputname : path-like
+                Name of the output file.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            list
+                Values supplied together for the test case.
+            """
             flirt_calls.append({"kwargs": kwargs})
             return ["applywarp", "-in", inputfile]
 
@@ -573,7 +854,14 @@ def workflow_nonlinear_standard(debug=False):
 
 
 def workflow_forcelinear(debug=False):
-    """Test that --linear forces linear transformation even when warp file exists."""
+    """
+    Test that --linear forces linear transformation even when warp file exists.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_forcelinear")
 
@@ -596,9 +884,40 @@ def workflow_forcelinear(debug=False):
         flirt_calls = []
 
         def mock_runcmd(cmd, fake=False):
+            """
+            Simulate ``runcmd`` for the test.
+
+            Parameters
+            ----------
+            cmd : object
+                Command supplied to the subprocess stub.
+            fake : bool, optional
+                Setting for ``fake`` in the test case.
+            """
             pass
 
         def mock_makeflirtcmd(inputfile, targetname, xform, outputname, **kwargs):
+            """
+            Simulate ``makeflirtcmd`` for the test.
+
+            Parameters
+            ----------
+            inputfile : path-like
+                Path of the input file.
+            targetname : path-like
+                Path of the registration reference image.
+            xform : path-like
+                Transformation supplied to the registration stub.
+            outputname : path-like
+                Name of the output file.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            list
+                Values supplied together for the test case.
+            """
             flirt_calls.append({"kwargs": kwargs})
             return ["flirt", "-in", inputfile]
 
@@ -629,7 +948,14 @@ def workflow_forcelinear(debug=False):
 
 
 def workflow_hires(debug=False):
-    """Test workflow with --hires (align to highres anatomical)."""
+    """
+    Test workflow with --hires (align to highres anatomical).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_hires")
 
@@ -647,9 +973,40 @@ def workflow_hires(debug=False):
         written_json = {}
 
         def mock_runcmd(cmd, fake=False):
+            """
+            Simulate ``runcmd`` for the test.
+
+            Parameters
+            ----------
+            cmd : object
+                Command supplied to the subprocess stub.
+            fake : bool, optional
+                Setting for ``fake`` in the test case.
+            """
             runcmd_calls.append(cmd)
 
         def mock_makeflirtcmd(inputfile, targetname, xform, outputname, **kwargs):
+            """
+            Simulate ``makeflirtcmd`` for the test.
+
+            Parameters
+            ----------
+            inputfile : path-like
+                Path of the input file.
+            targetname : path-like
+                Path of the registration reference image.
+            xform : path-like
+                Transformation supplied to the registration stub.
+            outputname : path-like
+                Name of the output file.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            list
+                Values supplied together for the test case.
+            """
             flirt_calls.append(
                 {
                     "target": targetname,
@@ -660,6 +1017,16 @@ def workflow_hires(debug=False):
             return ["flirt", "-in", inputfile]
 
         def mock_writedicttojson(thedict, fname):
+            """
+            Simulate ``writedicttojson`` for the test.
+
+            Parameters
+            ----------
+            thedict : object
+                Value supplied as ``thedict`` by the test case.
+            fname : path-like
+                Filename supplied to the test helper.
+            """
             written_json[fname] = thedict
 
         with (
@@ -704,7 +1071,14 @@ def workflow_hires(debug=False):
 
 
 def workflow_corrout_clean_confound(debug=False):
-    """Test that --corrout, --clean, --confound add extra maps."""
+    """
+    Test that --corrout, --clean, --confound add extra maps.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_corrout_clean_confound")
 
@@ -727,9 +1101,40 @@ def workflow_corrout_clean_confound(debug=False):
         flirt_calls_no_extras = []
 
         def mock_runcmd(cmd, fake=False):
+            """
+            Simulate ``runcmd`` for the test.
+
+            Parameters
+            ----------
+            cmd : object
+                Command supplied to the subprocess stub.
+            fake : bool, optional
+                Setting for ``fake`` in the test case.
+            """
             pass
 
         def capture_flirt_no_extras(inputfile, targetname, xform, outputname, **kwargs):
+            """
+            Capture flirt no extras.
+
+            Parameters
+            ----------
+            inputfile : path-like
+                Path of the input file.
+            targetname : path-like
+                Path of the registration reference image.
+            xform : path-like
+                Transformation supplied to the registration stub.
+            outputname : path-like
+                Name of the output file.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            list
+                Values supplied together for the test case.
+            """
             flirt_calls_no_extras.append(inputfile)
             return ["flirt"]
 
@@ -758,6 +1163,27 @@ def workflow_corrout_clean_confound(debug=False):
         flirt_calls_extras = []
 
         def capture_flirt_extras(inputfile, targetname, xform, outputname, **kwargs):
+            """
+            Capture flirt extras.
+
+            Parameters
+            ----------
+            inputfile : path-like
+                Path of the input file.
+            targetname : path-like
+                Path of the registration reference image.
+            xform : path-like
+                Transformation supplied to the registration stub.
+            outputname : path-like
+                Name of the output file.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            list
+                Values supplied together for the test case.
+            """
             flirt_calls_extras.append(inputfile)
             return ["flirt"]
 
@@ -796,7 +1222,14 @@ def workflow_corrout_clean_confound(debug=False):
 
 
 def workflow_debug_output(debug=False):
-    """Test that --debug prints args."""
+    """
+    Test that --debug prints args.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_debug_output")
 
@@ -845,7 +1278,14 @@ def workflow_debug_output(debug=False):
 
 
 def workflow_preponly(debug=False):
-    """Test that --fake (preponly) passes fake=True to runcmd."""
+    """
+    Test that --fake (preponly) passes fake=True to runcmd.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_preponly")
 
@@ -868,6 +1308,16 @@ def workflow_preponly(debug=False):
         runcmd_kwargs = []
 
         def mock_runcmd(cmd, fake=False):
+            """
+            Simulate ``runcmd`` for the test.
+
+            Parameters
+            ----------
+            cmd : object
+                Command supplied to the subprocess stub.
+            fake : bool, optional
+                Setting for ``fake`` in the test case.
+            """
             runcmd_kwargs.append({"fake": fake})
 
         with (
@@ -898,7 +1348,14 @@ def workflow_preponly(debug=False):
 
 
 def workflow_sequential_flag(debug=False):
-    """Test that --sequential passes cluster=False to makeflirtcmd."""
+    """
+    Test that --sequential passes cluster=False to makeflirtcmd.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_sequential_flag")
 
@@ -921,6 +1378,27 @@ def workflow_sequential_flag(debug=False):
         flirt_kwargs = []
 
         def mock_makeflirtcmd(inputfile, targetname, xform, outputname, **kwargs):
+            """
+            Simulate ``makeflirtcmd`` for the test.
+
+            Parameters
+            ----------
+            inputfile : path-like
+                Path of the input file.
+            targetname : path-like
+                Path of the registration reference image.
+            xform : path-like
+                Transformation supplied to the registration stub.
+            outputname : path-like
+                Name of the output file.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            list
+                Values supplied together for the test case.
+            """
             flirt_kwargs.append(kwargs)
             return ["flirt"]
 
@@ -948,7 +1426,14 @@ def workflow_sequential_flag(debug=False):
 
 
 def workflow_cluster_flag(debug=False):
-    """Test that without --sequential, cluster=True is passed to makeflirtcmd."""
+    """
+    Test that without --sequential, cluster=True is passed to makeflirtcmd.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_cluster_flag")
 
@@ -971,6 +1456,27 @@ def workflow_cluster_flag(debug=False):
         flirt_kwargs = []
 
         def mock_makeflirtcmd(inputfile, targetname, xform, outputname, **kwargs):
+            """
+            Simulate ``makeflirtcmd`` for the test.
+
+            Parameters
+            ----------
+            inputfile : path-like
+                Path of the input file.
+            targetname : path-like
+                Path of the registration reference image.
+            xform : path-like
+                Transformation supplied to the registration stub.
+            outputname : path-like
+                Name of the output file.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            list
+                Values supplied together for the test case.
+            """
             flirt_kwargs.append(kwargs)
             return ["flirt"]
 
@@ -998,7 +1504,14 @@ def workflow_cluster_flag(debug=False):
 
 
 def workflow_output_tags_standard(debug=False):
-    """Test that standard space outputs have _std_ tag."""
+    """
+    Test that standard space outputs have _std_ tag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_output_tags_standard")
 
@@ -1021,6 +1534,27 @@ def workflow_output_tags_standard(debug=False):
         flirt_outputs = []
 
         def mock_makeflirtcmd(inputfile, targetname, xform, outputname, **kwargs):
+            """
+            Simulate ``makeflirtcmd`` for the test.
+
+            Parameters
+            ----------
+            inputfile : path-like
+                Path of the input file.
+            targetname : path-like
+                Path of the registration reference image.
+            xform : path-like
+                Transformation supplied to the registration stub.
+            outputname : path-like
+                Name of the output file.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            list
+                Values supplied together for the test case.
+            """
             flirt_outputs.append(outputname)
             return ["flirt"]
 
@@ -1048,7 +1582,14 @@ def workflow_output_tags_standard(debug=False):
 
 
 def workflow_anat_maps_standard(debug=False):
-    """Test that anatomic maps are transformed in standard mode."""
+    """
+    Test that anatomic maps are transformed in standard mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_anat_maps_standard")
 
@@ -1072,9 +1613,40 @@ def workflow_anat_maps_standard(debug=False):
         runcmd_calls = []
 
         def mock_runcmd(cmd, fake=False):
+            """
+            Simulate ``runcmd`` for the test.
+
+            Parameters
+            ----------
+            cmd : object
+                Command supplied to the subprocess stub.
+            fake : bool, optional
+                Setting for ``fake`` in the test case.
+            """
             runcmd_calls.append(cmd)
 
         def mock_makeflirtcmd(inputfile, targetname, xform, outputname, **kwargs):
+            """
+            Simulate ``makeflirtcmd`` for the test.
+
+            Parameters
+            ----------
+            inputfile : path-like
+                Path of the input file.
+            targetname : path-like
+                Path of the registration reference image.
+            xform : path-like
+                Transformation supplied to the registration stub.
+            outputname : path-like
+                Name of the output file.
+            **kwargs : object
+                Additional keyword arguments accepted by the stub.
+
+            Returns
+            -------
+            list
+                Values supplied together for the test case.
+            """
             flirt_outputs.append(outputname)
             return ["flirt", "-in", inputfile]
 
@@ -1110,6 +1682,14 @@ def workflow_anat_maps_standard(debug=False):
 
 def test_rapidtide2std(debug=False):
     # parser tests
+    """
+    Verify rapidtide2std.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_all_positional(debug=debug)

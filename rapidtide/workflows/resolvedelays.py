@@ -532,6 +532,21 @@ def resolvedelaymap(
         # every caller passes a 4D per-voxel vector field - the candidate lags, the
         # candidate amplitudes, or grad(tau) - so only the spatial axes are padded and
         # the trailing axis is left alone.  The 3D mask is padded inline below instead.
+        """
+        Pad the input array using the supplied fill value.
+
+        Parameters
+        ----------
+        thearray : numpy.ndarray
+            Array to process.
+        fill : float, optional
+            Value assigned to padded elements.
+
+        Returns
+        -------
+        numpy.ndarray
+            Padded array reshaped as voxels by samples.
+        """
         return np.pad(
             thearray, ((1, 1), (1, 1), (1, 1), (0, 0)), mode="constant", constant_values=fill
         ).reshape(-1, thearray.shape[-1])
@@ -642,6 +657,19 @@ def resolvedelaymap(
     thechanged = assigned & np.isfinite(tau) & (np.abs(tau - paddedlags[:, 0]) > 1.0e-6)
 
     def unpad(thearray):
+        """
+        Remove the padding from the input array.
+
+        Parameters
+        ----------
+        thearray : numpy.ndarray
+            Array to process.
+
+        Returns
+        -------
+        numpy.ndarray
+            Image array with the spatial border removed.
+        """
         return thearray.reshape(paddedshape)[1:-1, 1:-1, 1:-1]
 
     return (
@@ -748,10 +776,6 @@ def resolvedelays(args: argparse.Namespace) -> None:
     ----------
     args : argparse.Namespace
         The parsed command line arguments.
-
-    Returns
-    -------
-    None
     """
     starttime = time.time()
     theroot = args.corrfile
@@ -885,6 +909,7 @@ def resolvedelays(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
+    """Run the `resolvedelays` command."""
     try:
         args = _get_parser().parse_args()
     except SystemExit:

@@ -87,7 +87,18 @@ def _rapidtidedataset(exampleroot, testtemproot):
 
 
 def test_fullrunretroregress(debug=False, local=False, displayplots=False):
-    """Drive retroregress across its option surface against one rapidtide dataset."""
+    """
+    Drive retroregress across its option surface against one rapidtide dataset.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     exampleroot, testtemproot = get_example_and_temp_roots(local)
     fmrifile, theroot = _rapidtidedataset(exampleroot, testtemproot)
 
@@ -158,11 +169,21 @@ def test_fullrunretroregress(debug=False, local=False, displayplots=False):
 
 
 def test_fullrunretroregress_rejects_mismatched_fmri(debug=False, local=False, displayplots=False):
-    """A dataset built from different geometry than the fmri file is rejected.
+    """
+    A dataset built from different geometry than the fmri file is rejected.
 
     Every mask and map retroregress reads has to agree with the fmri file it is handed;
     pairing a dataset with an fmri file of another shape must fail rather than silently
     reinterpret the voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    displayplots : bool, optional
+        Display plots from the test.
     """
     import nibabel as nib
     import numpy as np

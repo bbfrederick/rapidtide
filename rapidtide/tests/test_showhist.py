@@ -30,6 +30,19 @@ from rapidtide.workflows.showhist import _get_parser, showhist
 
 
 def _make_default_args(**overrides):
+    """
+    Create default args.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         infilename="input.txt",
         thexlabel=None,
@@ -50,6 +63,14 @@ def _make_default_args(**overrides):
 
 
 def parser_basic(debug=False):
+    """
+    Check that the command-line parser initializes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -58,6 +79,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
+    """
+    Check that the parser requires the mandatory arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -66,6 +95,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
+    """
+    Check the parser defaults.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     parser = _get_parser()
@@ -81,6 +118,14 @@ def parser_defaults(debug=False):
 
 
 def parser_xlabel(debug=False):
+    """
+    Check parser handling of xlabel.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_xlabel")
     parser = _get_parser()
@@ -89,6 +134,14 @@ def parser_xlabel(debug=False):
 
 
 def parser_ylabel(debug=False):
+    """
+    Check parser handling of ylabel.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_ylabel")
     parser = _get_parser()
@@ -97,6 +150,14 @@ def parser_ylabel(debug=False):
 
 
 def parser_title(debug=False):
+    """
+    Check parser handling of title.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_title")
     parser = _get_parser()
@@ -105,6 +166,14 @@ def parser_title(debug=False):
 
 
 def parser_outputfile(debug=False):
+    """
+    Check parser handling of outputfile.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_outputfile")
     parser = _get_parser()
@@ -113,6 +182,14 @@ def parser_outputfile(debug=False):
 
 
 def parser_dobars(debug=False):
+    """
+    Check parser handling of dobars.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_dobars")
     parser = _get_parser()
@@ -121,6 +198,14 @@ def parser_dobars(debug=False):
 
 
 def parser_calcdist(debug=False):
+    """
+    Check parser handling of calcdist.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_calcdist")
     parser = _get_parser()
@@ -129,6 +214,14 @@ def parser_calcdist(debug=False):
 
 
 def parser_debug(debug=False):
+    """
+    Check parser handling of debug.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_debug")
     parser = _get_parser()
@@ -137,6 +230,14 @@ def parser_debug(debug=False):
 
 
 def parser_all_flags(debug=False):
+    """
+    Parse a command line with all optional flags enabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_all_flags")
     parser = _get_parser()
@@ -171,7 +272,14 @@ def parser_all_flags(debug=False):
 
 
 def showhist_line_plot(debug=False):
-    """Test basic line plot mode (no calcdist, no bars)."""
+    """
+    Test basic line plot mode (no calcdist, no bars).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_line_plot")
 
@@ -199,7 +307,14 @@ def showhist_line_plot(debug=False):
 
 
 def showhist_bar_plot(debug=False):
-    """Test bar plot mode (dobars=True)."""
+    """
+    Test bar plot mode (dobars=True).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_bar_plot")
 
@@ -228,7 +343,14 @@ def showhist_bar_plot(debug=False):
 
 
 def showhist_calcdist(debug=False):
-    """Test calcdist mode: reads raw data, computes histogram, then plots."""
+    """
+    Test calcdist mode: reads raw data, computes histogram, then plots.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_calcdist")
 
@@ -242,6 +364,23 @@ def showhist_calcdist(debug=False):
     captured = {}
 
     def _mock_makehistogram(indata, hl, **kwargs):
+        """
+        Simulate ``makehistogram`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        hl : object
+            Value supplied as ``hl`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         captured["histlen"] = hl
         return (mock_hist_tuple, 1.0, 0.0, 1.0, 0.0, 50.0)
 
@@ -269,7 +408,14 @@ def showhist_calcdist(debug=False):
 
 
 def showhist_calcdist_with_bars(debug=False):
-    """Test calcdist combined with dobars."""
+    """
+    Test calcdist combined with dobars.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_calcdist_with_bars")
 
@@ -298,7 +444,14 @@ def showhist_calcdist_with_bars(debug=False):
 
 
 def showhist_with_title(debug=False):
-    """Test that title is set when provided."""
+    """
+    Test that title is set when provided.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_with_title")
 
@@ -317,7 +470,14 @@ def showhist_with_title(debug=False):
 
 
 def showhist_no_title(debug=False):
-    """Test that title() is not called when thetitle is None."""
+    """
+    Test that title() is not called when thetitle is None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_no_title")
 
@@ -336,7 +496,14 @@ def showhist_no_title(debug=False):
 
 
 def showhist_with_xlabel(debug=False):
-    """Test that xlabel is set when provided."""
+    """
+    Test that xlabel is set when provided.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_with_xlabel")
 
@@ -355,7 +522,14 @@ def showhist_with_xlabel(debug=False):
 
 
 def showhist_no_xlabel(debug=False):
-    """Test that xlabel() is not called when thexlabel is None."""
+    """
+    Test that xlabel() is not called when thexlabel is None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_no_xlabel")
 
@@ -374,7 +548,14 @@ def showhist_no_xlabel(debug=False):
 
 
 def showhist_with_ylabel(debug=False):
-    """Test that ylabel is set when provided."""
+    """
+    Test that ylabel is set when provided.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_with_ylabel")
 
@@ -393,7 +574,14 @@ def showhist_with_ylabel(debug=False):
 
 
 def showhist_no_ylabel(debug=False):
-    """Test that ylabel() is not called when theylabel is None."""
+    """
+    Test that ylabel() is not called when theylabel is None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_no_ylabel")
 
@@ -412,7 +600,14 @@ def showhist_no_ylabel(debug=False):
 
 
 def showhist_save_to_file(debug=False):
-    """Test that savefig is called instead of show when outputfile is set."""
+    """
+    Test that savefig is called instead of show when outputfile is set.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_save_to_file")
 
@@ -432,7 +627,14 @@ def showhist_save_to_file(debug=False):
 
 
 def showhist_display_on_screen(debug=False):
-    """Test that show() is called when outputfile is None."""
+    """
+    Test that show() is called when outputfile is None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_display_on_screen")
 
@@ -452,7 +654,14 @@ def showhist_display_on_screen(debug=False):
 
 
 def showhist_debug_mode(debug=False):
-    """Test that debug mode prints args."""
+    """
+    Test that debug mode prints args.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_debug_mode")
 
@@ -472,7 +681,14 @@ def showhist_debug_mode(debug=False):
 
 
 def showhist_no_debug(debug=False):
-    """Test that args are not printed when debug is False."""
+    """
+    Test that args are not printed when debug is False.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_no_debug")
 
@@ -491,7 +707,14 @@ def showhist_no_debug(debug=False):
 
 
 def showhist_all_labels_and_save(debug=False):
-    """Test with all labels set and saving to file."""
+    """
+    Test with all labels set and saving to file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_all_labels_and_save")
 
@@ -522,7 +745,14 @@ def showhist_all_labels_and_save(debug=False):
 
 
 def showhist_infilename_forwarded(debug=False):
-    """Verify the input filename is passed to readvecs."""
+    """
+    Verify the input filename is passed to readvecs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showhist_infilename_forwarded")
 
@@ -548,6 +778,14 @@ def showhist_infilename_forwarded(debug=False):
 
 def test_showhist(debug=False):
     # Parser tests
+    """
+    Verify showhist.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_defaults(debug=debug)

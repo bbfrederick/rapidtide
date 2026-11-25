@@ -211,6 +211,14 @@ def gmscalc_main() -> None:
     The function uses the `tide_io` module for reading and writing data, and
     `tide_filt` and `tide_math` for filtering and normalization.
 
+    See Also
+    --------
+    tide_io.readfromnifti : Reads NIfTI files.
+    tide_io.writevec : Writes vectors to text files.
+    tide_filt.ssmooth : Applies spatial smoothing.
+    tide_filt.NoncausalFilter : Applies non-causal filtering.
+    tide_math.normalize : Normalizes a signal.
+
     Notes
     -----
     The function expects a command-line interface to be set up with `_get_parser()`
@@ -225,14 +233,6 @@ def gmscalc_main() -> None:
 
     This will read the input data, perform processing, and write output files
     with names based on the `outputroot` argument.
-
-    See Also
-    --------
-    tide_io.readfromnifti : Reads NIfTI files.
-    tide_io.writevec : Writes vectors to text files.
-    tide_filt.ssmooth : Applies spatial smoothing.
-    tide_filt.NoncausalFilter : Applies non-causal filtering.
-    tide_math.normalize : Normalizes a signal.
     """
     try:
         args = _get_parser().parse_args()

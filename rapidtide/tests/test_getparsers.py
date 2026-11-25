@@ -83,6 +83,14 @@ from rapidtide.workflows.variabilityizer import _get_parser as variabilityizer_g
 
 
 def test_parsers(debug=False):
+    """
+    Verify parsers.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parserlist = [
         adjustoffset_getparser,
         aligntcs_getparser,

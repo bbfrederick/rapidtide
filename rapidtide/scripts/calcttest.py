@@ -20,6 +20,7 @@ import rapidtide.workflows.niftistats
 
 
 def entrypoint():
+    """Run the `calcttest` command."""
     rapidtide.workflows.niftistats.niftistats_main(calctype="ttest")
 
 

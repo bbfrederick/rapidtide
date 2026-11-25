@@ -27,24 +27,91 @@ import rapidtide.happy_supportfuncs as hs
 
 class DummyFilter:
     def __init__(self, scale=1.0):
+        """
+        Initialize the test double for ``DummyFilter``.
+
+        Parameters
+        ----------
+        scale : float, optional
+            Value supplied as ``scale`` by the test case.
+        """
         self.scale = scale
         self._freqs = (0.1, 0.2, 0.3, 0.4)
 
     def apply(self, Fs, x):
+        """
+        Set up ``apply`` for the test.
+
+        Parameters
+        ----------
+        Fs : object
+            Value supplied as ``Fs`` by the test case.
+        x : object
+            Value supplied as ``x`` by the test case.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return self.scale * np.asarray(x)
 
     def setfreqs(self, a, b, c, d):
+        """
+        Set up ``setfreqs`` for the test.
+
+        Parameters
+        ----------
+        a : object
+            Value supplied as ``a`` by the test case.
+        b : object
+            Value supplied as ``b`` by the test case.
+        c : object
+            Value supplied as ``c`` by the test case.
+        d : object
+            Value supplied as ``d`` by the test case.
+        """
         self._freqs = (a, b, c, d)
 
     def getfreqs(self):
+        """
+        Set up ``getfreqs`` for the test.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return self._freqs
 
     def settype(self, filtertype):
+        """
+        Set up ``settype`` for the test.
+
+        Parameters
+        ----------
+        filtertype : object
+            Value supplied as ``filtertype`` by the test case.
+        """
         return None
 
 
 class DummyInputData:
     def __init__(self, xsize=1, ysize=1, numslices=2, timepoints=4):
+        """
+        Initialize the test double for ``DummyInputData``.
+
+        Parameters
+        ----------
+        xsize : int, optional
+            Number of voxels along the x axis.
+        ysize : int, optional
+            Number of voxels along the y axis.
+        numslices : int, optional
+            Number of slices in the test image.
+        timepoints : int, optional
+            Number of time samples.
+        """
         self.xsize = xsize
         self.ysize = ysize
         self.numslices = numslices
@@ -58,19 +125,66 @@ class DummyInputData:
         self._byslice = self._byvol.reshape(xsize * ysize, numslices, timepoints)
 
     def byvol(self):
+        """
+        Set up ``byvol`` for the test.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return self._byvol.copy()
 
     def byslice(self):
+        """
+        Set up ``byslice`` for the test.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return self._byslice.copy()
 
     def getdims(self):
+        """
+        Set up ``getdims`` for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return self.xsize, self.ysize, self.numslices, self.timepoints
 
     def copyheader(self, numtimepoints=None, tr=None):
+        """
+        Set up ``copyheader`` for the test.
+
+        Parameters
+        ----------
+        numtimepoints : int, optional
+            Number of time samples.
+        tr : float, optional
+            Repetition time in seconds.
+
+        Returns
+        -------
+        dict
+            Values supplied together for the test case.
+        """
         return {"dim": [0, self.xsize, self.ysize, self.numslices, numtimepoints], "tr": tr}
 
 
 def basic_routines(debug=False):
+    """
+    Check basic routines in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("basic_routines")
 
@@ -115,6 +229,14 @@ def basic_routines(debug=False):
 
 
 def cardiac_pipeline_routines(debug=False):
+    """
+    Check cardiac pipeline routines in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("cardiac_pipeline_routines")
 
@@ -209,17 +331,62 @@ def cardiac_pipeline_routines(debug=False):
 
 
 def frequency_routines(debug=False):
+    """
+    Check frequency routines in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("frequency_routines")
 
     class DummyArbFilter:
         def __init__(self, filtertype="arb"):
+            """
+            Initialize the test double for ``DummyArbFilter``.
+
+            Parameters
+            ----------
+            filtertype : str, optional
+                Value supplied as ``filtertype`` by the test case.
+            """
             self.count = 0
 
         def setfreqs(self, a, b, c, d):
+            """
+            Set up ``setfreqs`` for the test.
+
+            Parameters
+            ----------
+            a : object
+                Value supplied as ``a`` by the test case.
+            b : object
+                Value supplied as ``b`` by the test case.
+            c : object
+                Value supplied as ``c`` by the test case.
+            d : object
+                Value supplied as ``d`` by the test case.
+            """
             return None
 
         def apply(self, Fs, x):
+            """
+            Set up ``apply`` for the test.
+
+            Parameters
+            ----------
+            Fs : object
+                Value supplied as ``Fs`` by the test case.
+            x : object
+                Value supplied as ``x`` by the test case.
+
+            Returns
+            -------
+            numpy.ndarray
+                Array supplied to the test or its caller.
+            """
             self.count += 1
             return np.asarray(x)
 
@@ -239,6 +406,14 @@ def frequency_routines(debug=False):
 
 
 def detrend_normalize_routines(debug=False):
+    """
+    Check detrend normalize routines in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("detrend_normalize_routines")
 
@@ -296,6 +471,14 @@ def detrend_normalize_routines(debug=False):
 
 
 def physio_quality_routines(debug=False):
+    """
+    Check physio quality routines in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("physio_quality_routines")
 
@@ -477,6 +660,14 @@ def physio_quality_routines(debug=False):
 
 
 def projection_helpers_routines(debug=False):
+    """
+    Check projection helpers routines in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("projection_helpers_routines")
 
@@ -486,6 +677,33 @@ def projection_helpers_routines(debug=False):
     procpoints = np.arange(len(srcphases), dtype=int)
 
     def fake_congrid(dest, src, val, bins, kernel=None, cache=True, cyclic=True, debug=False):
+        """
+        Simulate ``congrid`` for the test.
+
+        Parameters
+        ----------
+        dest : object
+            Value supplied as ``dest`` by the test case.
+        src : object
+            Value supplied as ``src`` by the test case.
+        val : object
+            Value supplied as ``val`` by the test case.
+        bins : object
+            Value supplied as ``bins`` by the test case.
+        kernel : object or None, optional
+            Value supplied as ``kernel`` by the test case.
+        cache : bool, optional
+            Setting for ``cache`` in the test case.
+        cyclic : bool, optional
+            Setting for ``cyclic`` in the test case.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         idx = int(np.argmin(np.abs(dest - src)))
         return np.array([1.0]), np.array([1.0]), np.array([idx], dtype=int)
 
@@ -643,6 +861,14 @@ def projection_helpers_routines(debug=False):
 
 
 def high_level_routines(debug=False):
+    """
+    Check high level routines in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("high_level_routines")
 
@@ -759,6 +985,40 @@ def high_level_routines(debug=False):
         destpoints,
         **kwargs,
     ):
+        """
+        Simulate ``phaseprojectpass`` for the test.
+
+        Parameters
+        ----------
+        numslices : int
+            Number of slices in the test image.
+        demeandata_byslice : object
+            Value supplied as ``demeandata_byslice`` by the test case.
+        fmri_data_byslice : object
+            Value supplied as ``fmri_data_byslice`` by the test case.
+        validlocslist : object
+            Value supplied as ``validlocslist`` by the test case.
+        proctrs : object
+            Value supplied as ``proctrs`` by the test case.
+        weights_byslice : object
+            Value supplied as ``weights_byslice`` by the test case.
+        cine_byslice : object
+            Value supplied as ``cine_byslice`` by the test case.
+        rawapp_byslice : object
+            Value supplied as ``rawapp_byslice`` by the test case.
+        outphases : object
+            Value supplied as ``outphases`` by the test case.
+        cardphasevals : object
+            Value supplied as ``cardphasevals`` by the test case.
+        congridbins : object
+            Value supplied as ``congridbins`` by the test case.
+        gridkernel : object
+            Value supplied as ``gridkernel`` by the test case.
+        destpoints : object
+            Value supplied as ``destpoints`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         base = 1.0 + float(np.sum(proctrs))
         for s in range(numslices):
             for v in validlocslist[s]:
@@ -800,6 +1060,16 @@ def high_level_routines(debug=False):
 
 
 def test_happysupportfuncs(debug=False, local=False):
+    """
+    Verify happysupportfuncs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     np.random.seed(12345)
     basic_routines(debug=debug)
     cardiac_pipeline_routines(debug=debug)

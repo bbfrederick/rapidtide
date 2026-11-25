@@ -44,6 +44,33 @@ def getNullDistributionData(
     searchend,
     numreps=1000,
 ):
+    """
+    Estimate the null distribution of peak correlations.
+
+    Parameters
+    ----------
+    indata : numpy.ndarray
+        Input signal used to estimate the null distribution.
+    xcorr_x : numpy.ndarray
+        Lag coordinates of the cross-correlation values.
+    thefilter : object
+        Filter applied before computing the null correlation.
+    windowfunc : str
+        Window applied to each signal before correlation.
+    detrendorder : int
+        Polynomial detrending order.
+    searchstart : int
+        Lower index of the peak search interval.
+    searchend : int
+        Exclusive upper index of the peak search interval.
+    numreps : int, optional
+        Number of null-distribution repetitions.
+
+    Returns
+    -------
+    tuple
+        Simulated lists of peak and Pearson correlations.
+    """
     print("estimating significance distribution using ", numreps, " repetitions")
     corrlist = zeros(numreps, dtype="float")
     corrlist_pear = zeros(numreps, dtype="float")
@@ -93,6 +120,14 @@ def getNullDistributionData(
 
 
 def usage():
+    """
+    Print command-line usage information.
+
+    Returns
+    -------
+    tuple
+        Empty tuple after displaying the usage message.
+    """
     print("showxcorr - calculate and display crosscorrelation between two timeseries")
     print("")
     print(
@@ -136,6 +171,7 @@ def usage():
 
 def main():
     # get the command line parameters
+    """Run the `showxcorr_legacy` command."""
     searchrange = 15.0
     uselabel = False
     displayplots = True

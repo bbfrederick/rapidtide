@@ -8,6 +8,19 @@ from rapidtide.maprender import render_rapidtide
 
 
 def _positive_float(value):
+    """
+    Parse a command-line value as a strictly positive number.
+
+    Parameters
+    ----------
+    value : str
+        Text supplied on the command line.
+
+    Returns
+    -------
+    float
+        Parsed positive value.
+    """
     number = float(value)
     if not math.isfinite(number) or number <= 0:
         raise argparse.ArgumentTypeError("must be finite and positive")
@@ -15,6 +28,14 @@ def _positive_float(value):
 
 
 def _get_parser():
+    """
+    Build the command-line argument parser.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Parser configured for this command.
+    """
     parser = argparse.ArgumentParser(
         prog="showrapidtide",
         description="Render delay/correlation maps and a corrout lag-sweep video from 2D TIFF/Zarr outputs.",
@@ -57,7 +78,14 @@ def _get_parser():
 
 
 def main(args):
-    """Render artifacts using the standard Rapidtide parser/workflow pattern."""
+    """
+    Render artifacts using the standard Rapidtide parser/workflow pattern.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed options for the command.
+    """
     #try:
     paths = render_rapidtide(
         args.outputroot,

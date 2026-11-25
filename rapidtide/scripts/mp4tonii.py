@@ -21,6 +21,7 @@ import rapidtide.workflows.mp4tonii as theworkflow
 
 
 def entrypoint():
+    """Run the `mp4tonii` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.main)
 
 

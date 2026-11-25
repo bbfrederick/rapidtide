@@ -46,6 +46,12 @@ def _get_parser() -> Any:
         Configured argument parser object with all required and optional
         arguments for spectrogram computation.
 
+    See Also
+    --------
+    is_valid_file : Validates input file existence and readability
+    is_float : Validates float conversion
+    is_int : Validates integer conversion
+
     Notes
     -----
     The parser expects a text file containing one data point per line and a
@@ -60,12 +66,6 @@ def _get_parser() -> Any:
     'input.txt'
     >>> print(args.samplerate)
     44100
-
-    See Also
-    --------
-    is_valid_file : Validates input file existence and readability
-    is_float : Validates float conversion
-    is_int : Validates integer conversion
     """
     parser = argparse.ArgumentParser(
         prog="spectrogram",

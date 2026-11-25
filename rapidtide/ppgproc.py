@@ -351,6 +351,7 @@ class AdaptivePPGKalmanFilter:
             self.Q_scale = max(0.0001, min(0.01, innovation_std * 0.05))
 
     def predict(self) -> None:
+        """Advance the Kalman filter state and covariance by one time step."""
         Q = (
             np.array([[self.dt**4 / 4, self.dt**3 / 2], [self.dt**3 / 2, self.dt**2]])
             * self.Q_scale
@@ -541,13 +542,6 @@ class ExtendedPPGKalmanFilter:
         This function converts the angular frequency stored in the state vector
         to beats per minute (BPM), which represents the heart rate.
 
-        Parameters
-        ----------
-        self : object
-            The object instance containing the state vector. The state vector
-            is expected to have at least 4 elements, with the third element
-            (index 3) containing the angular frequency in radians/second.
-
         Returns
         -------
         float
@@ -658,26 +652,11 @@ class ExtendedPPGKalmanFilter:
 
     def predict(self) -> None:
         """
-        EKF prediction step
+        EKF prediction step.
 
         Performs the prediction step of the Extended Kalman Filter (EKF) algorithm.
         This step propagates the state estimate and covariance matrix forward in time
         using the state transition model and process noise.
-
-        Parameters
-        ----------
-        self : object
-            The EKF instance containing the following attributes:
-            - x : array-like
-                Current state vector
-            - P : array-like
-                Current covariance matrix
-            - dt : float
-                Time step
-            - Q : array-like
-                Process noise covariance matrix
-            - state_transition : callable
-                Function that computes the state transition
 
         Returns
         -------
@@ -938,13 +917,6 @@ class HarmonicPPGKalmanFilter:
         This function converts the angular frequency stored in the state vector
         to beats per minute (BPM), which represents the current heart rate estimate.
 
-        Parameters
-        ----------
-        self : object
-            The instance containing the state vector with heart rate information.
-            The state vector is expected to have at least 6 elements, with the 6th
-            element (index 5) containing the angular frequency in radians/second.
-
         Returns
         -------
         float
@@ -1071,19 +1043,6 @@ class HarmonicPPGKalmanFilter:
 
         Performs the prediction step of the Extended Kalman Filter (EKF) algorithm,
         propagating the state estimate and error covariance forward in time.
-
-        Parameters
-        ----------
-        self : object
-            The EKF instance containing the following attributes:
-            - x : array-like
-                Current state vector
-            - P : array-like
-                Current error covariance matrix
-            - Q : array-like
-                Process noise covariance matrix
-            - dt : float
-                Time step
 
         Returns
         -------
@@ -1481,10 +1440,6 @@ class HeartRateExtractor:
         fs : float
             Sampling frequency in Hz. Default is 100.0 Hz.
 
-        Returns
-        -------
-        None
-
         Notes
         -----
         This constructor sets the sampling frequency attribute for the object.
@@ -1831,8 +1786,8 @@ class RobustPPGProcessor:
         """
         Complete processing pipeline.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         signal_data : array
             Raw PPG signal
         missing_indices : array, optional
@@ -1840,8 +1795,8 @@ class RobustPPGProcessor:
         quality_threshold : float
             Minimum quality score (0-1) for accepting segments
 
-        Returns:
-        --------
+        Returns
+        -------
         results : dict
             Dictionary containing all processing results
         """
@@ -1942,13 +1897,13 @@ class PPGFeatureExtractor:
         """
         Extract Heart Rate Variability (HRV) features.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         peak_indices : array
             Indices of detected peaks
 
-        Returns:
-        --------
+        Returns
+        -------
         hrv_features : dict
             Dictionary of HRV metrics
         """
@@ -2008,15 +1963,15 @@ class PPGFeatureExtractor:
         """
         Extract morphological features from a single PPG pulse.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         signal_segment : array
             PPG signal segment containing one pulse
         peak_idx : int
             Index of the systolic peak within the segment
 
-        Returns:
-        --------
+        Returns
+        -------
         features : dict
             Morphological features
         """
@@ -2059,13 +2014,13 @@ class PPGFeatureExtractor:
         Note: This is a simplified proxy and not a real SpO2 measurement.
         Real SpO2 requires red and infrared PPG signals.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         filtered_signal : array
             Filtered PPG signal
 
-        Returns:
-        --------
+        Returns
+        -------
         spo2_proxy : float
             Proxy value (not actual SpO2)
         """
@@ -2088,6 +2043,21 @@ class PPGFeatureExtractor:
 def read_happy_ppg(
     filenameroot: str, debug: bool = False
 ) -> tuple[NDArray, float, NDArray, NDArray, NDArray | None, list]:
+    """
+    Read cardiac waveforms and metadata from a HAPPY BIDS sidecar.
+
+    Parameters
+    ----------
+    filenameroot : str
+        Path prefix of the HAPPY physiological recordings.
+    debug : bool, optional
+        Enable diagnostic output.
+
+    Returns
+    -------
+    tuple
+        Time axis, sample rate, clean and raw PPG, optional plethysmogram, and missing indices.
+    """
     Fs, instarttime, incolumns, indata, incompressed, incolsource, inextrainfo = (
         tide_io.readbidstsv(
             f"{filenameroot}.json",
@@ -2148,8 +2118,8 @@ def generate_synthetic_ppg(
     """
     Generate synthetic PPG signal for testing.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     duration : float
         Duration in seconds
     fs : float
@@ -2162,6 +2132,11 @@ def generate_synthetic_ppg(
         Percentage of data points to randomly remove
     motion_artifacts : bool
         Whether to add motion artifacts
+
+    Returns
+    -------
+    tuple
+        Time, clean signal, noisy signal, corrupted signal, and missing indices.
     """
     t = np.arange(0, duration, 1 / fs)
 

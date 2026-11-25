@@ -25,6 +25,7 @@ def test_ICC_rep_anova():
     # see table 2 in P. E. Shrout & Joseph L. Fleiss (1979). "Intraclass
     # Correlations: Uses in Assessing Rater Reliability". Psychological
     # Bulletin 86 (2): 420-428
+    """Verify ICC rep anova."""
     Y = np.array(
         [
             [9, 2, 5, 8],

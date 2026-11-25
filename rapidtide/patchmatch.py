@@ -50,6 +50,22 @@ def interpolate_masked_voxels(
     Returns:
         NDArray: A new 3D array with interpolated (and optionally extrapolated)
                     values replacing masked regions.
+
+    Parameters
+    ----------
+    data : NDArray
+        Input data to filter.
+    mask : NDArray
+        Mask identifying included pixels or voxels.
+    method : str, optional
+        Interpolation method.
+    extrapolate : bool, optional
+        Extend values beyond the interpolation domain.
+
+    Returns
+    -------
+    NDArray
+        The interpolated data.
     """
     if data.shape != mask.shape:
         raise ValueError("Data and mask must have the same shape.")
@@ -233,6 +249,29 @@ def growregion(
     regionsize: int,
     debug: bool = False,
 ) -> int:
+    """
+    Grow a connected region from the given seed and label.
+
+    Parameters
+    ----------
+    image : NDArray
+        Image containing the voxel labels.
+    location : tuple[int, int, int]
+        Coordinates of the seed voxel.
+    value : int
+        Label assigned to the grown region.
+    separatedimage : NDArray
+        Destination image receiving the grown region.
+    regionsize : int
+        Size parameter used to constrain region growth.
+    debug : bool, optional
+        Enable diagnostic output.
+
+    Returns
+    -------
+    int
+        The regionsize.
+    """
     separatedimage[location[0], location[1], location[2]] = value
     regionsize += 1
     if debug:
@@ -257,6 +296,23 @@ def growregion(
 
 
 def separateclusters(image: NDArray, sizethresh: int = 0, debug: bool = False) -> NDArray:
+    """
+    Split connected components into separately labeled clusters.
+
+    Parameters
+    ----------
+    image : NDArray
+        Image containing the voxel labels.
+    sizethresh : int, optional
+        Minimum cluster size in voxels.
+    debug : bool, optional
+        Enable diagnostic output.
+
+    Returns
+    -------
+    NDArray
+        The separatedclusters.
+    """
     separatedclusters = np.zeros_like(image)
     stop = False
     value = 1
@@ -359,8 +415,8 @@ def clamp(low: int, high: int, value: int) -> int:
 
 def dehaze(fdata: NDArray, level: int, debug: bool = False) -> NDArray:
     """
-    use Otsu to threshold https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_multiotsu.html
-    n.b. threshold used to mask image: dark values are zeroed, but result is NOT binary
+    Use Otsu to threshold https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_multiotsu.html
+    n.b. threshold used to mask image: dark values are zeroed, but result is NOT binary.
 
     Parameters
     ----------
@@ -381,7 +437,8 @@ def dehaze(fdata: NDArray, level: int, debug: bool = False) -> NDArray:
 
     Returns
     -------
-    :class:`nibabel.nifti1.Nifti1Image`
+    numpy.ndarray
+        Input image with voxels below the threshold set to zero.
     """
     level = clamp(1, 5, level)
     n_classes = abs(3 - level) + 2
@@ -488,14 +545,17 @@ def _smooth_array(
 
 def binary_zero_crossing(fdata: NDArray) -> NDArray:
     """
-    binarize (negative voxels are zero)
+    Identify positive voxels at the edge of a binary region.
 
     Parameters
     ----------
-    fdata : numpy.memmap from Niimg-like object
+    fdata : numpy.ndarray
+        Input voxel values.
+
     Returns
     -------
-    :class:`nibabel.nifti1.Nifti1Image`
+    numpy.ndarray
+        Unsigned byte array marking the positive-side edge.
     """
     edge = np.where(fdata > 0.0, 1, 0)
     edge = distance_transform_edt(edge)
@@ -512,10 +572,12 @@ def difference_of_gaussian(
     Apply Difference of Gaussian (DoG) filter.
     https://en.wikipedia.org/wiki/Difference_of_Gaussians
     https://en.wikipedia.org/wiki/Marr–Hildreth_algorithm
-    D. Marr and E. C. Hildreth. Theory of edge detection. Proceedings of the Royal Society, London B, 207:187-217, 1980
+    D. Marr and E. C. Hildreth. Theory of edge detection. Proceedings of the Royal Society, London B, 207:187-217, 1980.
+
     Parameters
     ----------
     fdata : numpy.memmap from Niimg-like object
+        Image voxel values to filter.
     affine : :class:`NDArray`
         (4, 4) matrix, giving affine transformation for image. (3, 3) matrices
         are also accepted (only these coefficients are used).
@@ -523,12 +585,16 @@ def difference_of_gaussian(
         Narrow kernel width, in millimeters. Is an arbitrary ratio of wide to narrow kernel.
             human cortex about 2.5mm thick
             Large values yield smoother results
+    ratioopt : bool, optional
+        Use the optimized ratio between Gaussian kernel widths.
     debug : :obj:`bool`, optional
         Controls the amount of verbosity: True give more messages
         (False means no messages). Default=False.
+
     Returns
     -------
-    :class:`nibabel.nifti1.Nifti1Image`
+    numpy.ndarray
+        Image filtered by subtracting the wide Gaussian response.
     """
 
     # Hardcode 1.6 as ratio of wide versus narrow FWHM
@@ -561,19 +627,28 @@ def calc_DoG(
 ) -> NDArray:
     """
     Find edges of a NIfTI image using the Difference of Gaussian (DoG).
+
     Parameters
     ----------
     thedata : 3D data array
         Image(s) to run DoG on (see :ref:`extracting_data`
         for a detailed description of the valid input types).
-    fwhm : int
+    theaffine : NDArray
+        Image-to-world affine transformation.
+    thesizes : tuple
+        Voxel dimensions along the spatial axes.
+    fwhm : int, optional
         Edge detection strength, as a full-width at half maximum, in millimeters.
+    ratioopt : bool, optional
+        Use the optimized ratio between Gaussian kernel widths.
     debug : :obj:`bool`, optional
         Controls the amount of verbosity: True give more messages
         (False means no messages). Default=False.
+
     Returns
     -------
-    :class:`nibabel.nifti1.Nifti1Image`
+    numpy.ndarray
+        Difference-of-Gaussian response of the dehazed image.
     """
 
     if debug:
@@ -593,6 +668,31 @@ def getclusters(
     sizethresh: int = 10,
     debug: bool = False,
 ) -> NDArray:
+    """
+    Identify and characterize connected clusters in an image.
+
+    Parameters
+    ----------
+    theimage : NDArray
+        Input voxel image.
+    theaffine : NDArray
+        Image-to-world affine transformation.
+    thesizes : tuple
+        Voxel dimensions along the spatial axes.
+    fwhm : float, optional
+        Filter kernel full width at half maximum.
+    ratioopt : bool, optional
+        Use the optimized ratio between Gaussian kernel widths.
+    sizethresh : int, optional
+        Minimum cluster size in voxels.
+    debug : bool, optional
+        Enable diagnostic output.
+
+    Returns
+    -------
+    numpy.ndarray
+        Labeled clusters of voxels in the image.
+    """
     if debug:
         print("Detecting clusters..")
         print(f"\t{theimage.shape=}")

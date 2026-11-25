@@ -30,17 +30,52 @@ import rapidtide.io as tide_io
 
 
 def _get_parser():
+    """
+    Build the command-line argument parser.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Parser configured for this command.
+    """
+
     class FullPaths(argparse.Action):
         """Expand user- and relative-paths"""
 
         def __call__(self, parser, namespace, values, option_string=None):
+            """
+            Apply the custom command-line argument action.
+
+            Parameters
+            ----------
+            parser : argparse.ArgumentParser
+                Parser that invoked this action.
+            namespace : argparse.Namespace
+                Namespace receiving the parsed value.
+            values : object
+                Values supplied to the operation.
+            option_string : str or None, optional
+                Option spelling used on the command line.
+            """
             if values == "":
                 setattr(namespace, self.dest, "__EMPTY__")
             else:
                 setattr(namespace, self.dest, os.path.abspath(os.path.expanduser(values)))
 
     def is_file(filename):
-        """Checks if a file exists"""
+        """
+        Checks if a file exists.
+
+        Parameters
+        ----------
+        filename : path-like
+            Path to the input or output file.
+
+        Returns
+        -------
+        object
+            The filename.
+        """
         if not os.path.exists(filename):
             msg = "{0} does not exist".format(filename)
             raise argparse.ArgumentTypeError(msg)
@@ -130,6 +165,22 @@ def _get_parser():
 
 
 def filterintime(filelist, extractedfile, workdir, filtcycles, dumpinput=False):
+    """
+    Filter the extracted image data along the time dimension.
+
+    Parameters
+    ----------
+    filelist : sequence of path-like
+        Input files in temporal order.
+    extractedfile : path-like
+        Filename for the extracted data.
+    workdir : path-like
+        Directory for temporary workflow files.
+    filtcycles : int
+        Number of cycles used for temporal filtering.
+    dumpinput : bool, optional
+        Save the extracted data before filtering.
+    """
     numpoints = len(filelist)
     filelist = filelist * filtcycles
     filterinput = os.path.join(workdir, "filterinput")
@@ -174,6 +225,32 @@ def dohappywarp(
     redofinalalignment=False,
     debug=False,
 ):
+    """
+    Run the image registration and temporal filtering workflow.
+
+    Parameters
+    ----------
+    sourceimage : path-like
+        Input image to register.
+    transformtype : str, optional
+        Registration transform type.
+    scalefac : float, optional
+        Image rescaling factor.
+    threads : int, optional
+        Number of threads for registration.
+    splinesize : int, optional
+        Spline grid size used for the warp.
+    rescaleonly : bool, optional
+        Restrict processing to rescaling.
+    fake : bool, optional
+        Print the registration commands without executing them.
+    finaltarget : path-like or None, optional
+        Reference image for the final alignment.
+    redofinalalignment : bool, optional
+        Repeat the final alignment even when an output already exists.
+    debug : bool, optional
+        Enable diagnostic output.
+    """
     if debug:
         print("arguments to dohappywarp:")
         print("\tsourceimage:", sourceimage)
@@ -327,6 +404,7 @@ def dohappywarp(
 
 def entrypoint():
     # get the command line parameters
+    """Run the `happywarp` command."""
     try:
         args = _get_parser().parse_args()
     except SystemExit:

@@ -29,7 +29,14 @@ import rapidtide.ffttools as ffttools
 
 
 def primefacs_small_primes(debug=False):
-    """Test prime factorization of small prime numbers."""
+    """
+    Test prime factorization of small prime numbers.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     assert ffttools.primefacs(2) == [2]
     assert ffttools.primefacs(3) == [3]
     assert ffttools.primefacs(5) == [5]
@@ -41,7 +48,14 @@ def primefacs_small_primes(debug=False):
 
 
 def primefacs_composite(debug=False):
-    """Test prime factorization of composite numbers."""
+    """
+    Test prime factorization of composite numbers.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     assert ffttools.primefacs(4) == [2, 2]
     assert ffttools.primefacs(6) == [2, 3]
     assert ffttools.primefacs(8) == [2, 2, 2]
@@ -53,7 +67,14 @@ def primefacs_composite(debug=False):
 
 
 def primefacs_product_check(debug=False):
-    """Verify that the product of prime factors equals the original number."""
+    """
+    Verify that the product of prime factors equals the original number.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     test_values = [2, 6, 12, 17, 60, 100, 128, 255, 360, 1024, 2000, 4096]
     for val in test_values:
         factors = ffttools.primefacs(val)
@@ -66,9 +87,29 @@ def primefacs_product_check(debug=False):
 
 
 def primefacs_all_factors_prime(debug=False):
-    """Verify every returned factor is actually prime."""
+    """
+    Verify every returned factor is actually prime.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
 
     def is_prime(n):
+        """
+        Provide the ``is_prime`` test substitute.
+
+        Parameters
+        ----------
+        n : object
+            Value supplied as ``n`` by the test case.
+
+        Returns
+        -------
+        bool
+            Value returned to the caller in this test case.
+        """
         if n < 2:
             return False
         for i in range(2, int(n**0.5) + 1):
@@ -86,7 +127,14 @@ def primefacs_all_factors_prime(debug=False):
 
 
 def primefacs_powers_of_two(debug=False):
-    """Test prime factorization of powers of 2."""
+    """
+    Test prime factorization of powers of 2.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     for exp in range(1, 13):
         val = 2**exp
         factors = ffttools.primefacs(val)
@@ -96,7 +144,14 @@ def primefacs_powers_of_two(debug=False):
 
 
 def primefacs_one(debug=False):
-    """Test prime factorization of 1 (edge case)."""
+    """
+    Test prime factorization of 1 (edge case).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # primefacs(1): the while loop doesn't execute (2*2 > 1),
     # then it appends thelen=1 at the end
     result = ffttools.primefacs(1)
@@ -106,7 +161,14 @@ def primefacs_one(debug=False):
 
 
 def primefacs_large_prime(debug=False):
-    """Test prime factorization of a large prime number."""
+    """
+    Test prime factorization of a large prime number.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # 997 is prime
     result = ffttools.primefacs(997)
     assert result == [997]
@@ -121,7 +183,14 @@ def primefacs_large_prime(debug=False):
 
 
 def optfftlen_basic(debug=False):
-    """Test optfftlen returns sensible values for basic inputs."""
+    """
+    Test optfftlen returns sensible values for basic inputs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # Result must be >= input
     for length in [64, 100, 128, 256, 500, 1000, 1024, 2000]:
         result = ffttools.optfftlen(length)
@@ -131,7 +200,14 @@ def optfftlen_basic(debug=False):
 
 
 def optfftlen_powers_of_two(debug=False):
-    """Test that powers of 2 are returned as-is (already optimal)."""
+    """
+    Test that powers of 2 are returned as-is (already optimal).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     for exp in range(4, 14):
         val = 2**exp
         result = ffttools.optfftlen(val)
@@ -142,7 +218,14 @@ def optfftlen_powers_of_two(debug=False):
 
 
 def optfftlen_with_padding(debug=False):
-    """Test optfftlen with padlen parameter."""
+    """
+    Test optfftlen with padlen parameter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     length = 100
     padlen = 20
     result = ffttools.optfftlen(length, padlen=padlen)
@@ -155,7 +238,14 @@ def optfftlen_with_padding(debug=False):
 
 
 def optfftlen_caching(debug=False):
-    """Test that optfftlen uses the cache (lencache)."""
+    """
+    Test that optfftlen uses the cache (lencache).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # Clear cache first
     ffttools.lencache.clear()
 
@@ -177,7 +267,14 @@ def optfftlen_caching(debug=False):
 
 
 def optfftlen_debug_output(debug=False):
-    """Test optfftlen debug mode produces output."""
+    """
+    Test optfftlen debug mode produces output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     ffttools.lencache.clear()
     captured = io.StringIO()
     old_stdout = sys.stdout
@@ -196,7 +293,14 @@ def optfftlen_debug_output(debug=False):
 
 
 def optfftlen_various_lengths(debug=False):
-    """Test optfftlen with a range of input lengths and verify factors are small."""
+    """
+    Test optfftlen with a range of input lengths and verify factors are small.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     ffttools.lencache.clear()
     for length in [33, 65, 99, 127, 129, 255, 257, 500, 1000, 2001]:
         result = ffttools.optfftlen(length)
@@ -214,7 +318,14 @@ def optfftlen_various_lengths(debug=False):
 
 
 def optfftlen_zero_padlen(debug=False):
-    """Test that padlen=0 is equivalent to default."""
+    """
+    Test that padlen=0 is equivalent to default.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     ffttools.lencache.clear()
     for length in [64, 100, 256]:
         r1 = ffttools.optfftlen(length)
@@ -230,7 +341,14 @@ def optfftlen_zero_padlen(debug=False):
 
 
 def showfftcache_empty(debug=False):
-    """Test showfftcache with an empty cache."""
+    """
+    Test showfftcache with an empty cache.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     ffttools.lencache.clear()
     captured = io.StringIO()
     old_stdout = sys.stdout
@@ -246,7 +364,14 @@ def showfftcache_empty(debug=False):
 
 
 def showfftcache_with_entries(debug=False):
-    """Test showfftcache after populating the cache."""
+    """
+    Test showfftcache after populating the cache.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     ffttools.lencache.clear()
     # Populate cache with a few entries
     ffttools.optfftlen(64)
@@ -274,7 +399,14 @@ def showfftcache_with_entries(debug=False):
 
 
 def integration_primefacs_optfftlen(debug=False):
-    """Test that optfftlen results can be factored correctly."""
+    """
+    Test that optfftlen results can be factored correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     ffttools.lencache.clear()
     for length in [50, 100, 200, 500, 1000]:
         opt_len = ffttools.optfftlen(length)
@@ -295,6 +427,14 @@ def integration_primefacs_optfftlen(debug=False):
 
 def test_ffttools(debug=False):
     # primefacs tests
+    """
+    Verify ffttools.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     primefacs_small_primes(debug=debug)
     primefacs_composite(debug=debug)
     primefacs_product_check(debug=debug)

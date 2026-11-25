@@ -328,20 +328,41 @@ class TestCoherer:
 
     @pytest.fixture
     def sample_filter(self):
-        """Create a sample filter for testing."""
+        """
+        Create a sample filter for testing.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         # Use LFO filter - requires low sampling frequency to avoid frequency limit issues
         return tide_filt.NoncausalFilter(filtertype="lfo")
 
     @pytest.fixture
     def sample_timecourse(self):
-        """Create a sample timecourse for testing."""
+        """
+        Create a sample timecourse for testing.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         # Use Fs=2.0 which is compatible with LFO filter
         t = np.linspace(0, 100, 200)  # 100 seconds at 2 Hz
         return np.sin(2 * np.pi * 0.05 * t) + 0.5 * np.sin(2 * np.pi * 0.1 * t)
 
     @pytest.fixture
     def sample_fs(self):
-        """Sample frequency for testing."""
+        """
+        Sample frequency for testing.
+
+        Returns
+        -------
+        float
+            Value returned to the caller in this test case.
+        """
         return 2.0
 
     def test_init_basic(self):
@@ -375,7 +396,18 @@ class TestCoherer:
         assert coherer.windowfunc == "hanning"
 
     def test_init_with_reftc(self, sample_filter, sample_timecourse, sample_fs):
-        """Test initialization with reference timecourse."""
+        """
+        Test initialization with reference timecourse.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        sample_fs : float
+            Sampling frequency of the test signal in Hz.
+        """
         coherer = tide_classes.Coherer(
             Fs=sample_fs, ncprefilter=sample_filter, reftc=sample_timecourse
         )
@@ -384,7 +416,18 @@ class TestCoherer:
         assert coherer.freqaxisvalid is True
 
     def test_setlimits(self, sample_filter, sample_timecourse, sample_fs):
-        """Test setlimits method."""
+        """
+        Test setlimits method.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        sample_fs : float
+            Sampling frequency of the test signal in Hz.
+        """
         coherer = tide_classes.Coherer(Fs=sample_fs, ncprefilter=sample_filter)
         coherer.setreftc(sample_timecourse)
 
@@ -396,7 +439,18 @@ class TestCoherer:
         assert hasattr(coherer, "freqmaxinpts")
 
     def test_setreftc(self, sample_filter, sample_timecourse, sample_fs):
-        """Test setreftc method."""
+        """
+        Test setreftc method.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        sample_fs : float
+            Sampling frequency of the test signal in Hz.
+        """
         coherer = tide_classes.Coherer(Fs=sample_fs, ncprefilter=sample_filter)
 
         coherer.setreftc(sample_timecourse)
@@ -409,7 +463,18 @@ class TestCoherer:
         assert coherer.similarityfunclen > 0
 
     def test_preptc(self, sample_filter, sample_timecourse, sample_fs):
-        """Test preptc method."""
+        """
+        Test preptc method.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        sample_fs : float
+            Sampling frequency of the test signal in Hz.
+        """
         coherer = tide_classes.Coherer(Fs=sample_fs, ncprefilter=sample_filter)
 
         result = coherer.preptc(sample_timecourse)
@@ -418,7 +483,18 @@ class TestCoherer:
         assert len(result) == len(sample_timecourse)
 
     def test_getaxisinfo(self, sample_filter, sample_timecourse, sample_fs):
-        """Test getaxisinfo method."""
+        """
+        Test getaxisinfo method.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        sample_fs : float
+            Sampling frequency of the test signal in Hz.
+        """
         coherer = tide_classes.Coherer(
             Fs=sample_fs, ncprefilter=sample_filter, freqmin=0.02, freqmax=0.14
         )
@@ -432,7 +508,18 @@ class TestCoherer:
         assert numpts > 0
 
     def test_trim(self, sample_filter, sample_timecourse, sample_fs):
-        """Test trim method."""
+        """
+        Test trim method.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        sample_fs : float
+            Sampling frequency of the test signal in Hz.
+        """
         coherer = tide_classes.Coherer(
             Fs=sample_fs, ncprefilter=sample_filter, freqmin=0.02, freqmax=0.14
         )
@@ -447,7 +534,18 @@ class TestCoherer:
         assert len(trimmed) == expected_len
 
     def test_run_basic(self, sample_filter, sample_timecourse, sample_fs):
-        """Test run method with basic parameters."""
+        """
+        Test run method with basic parameters.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        sample_fs : float
+            Sampling frequency of the test signal in Hz.
+        """
         coherer = tide_classes.Coherer(
             Fs=sample_fs, ncprefilter=sample_filter, freqmin=0.02, freqmax=0.14
         )
@@ -466,7 +564,18 @@ class TestCoherer:
         assert coherer.datavalid is True
 
     def test_run_no_trim(self, sample_filter, sample_timecourse, sample_fs):
-        """Test run method without trimming."""
+        """
+        Test run method without trimming.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        sample_fs : float
+            Sampling frequency of the test signal in Hz.
+        """
         coherer = tide_classes.Coherer(
             Fs=sample_fs, ncprefilter=sample_filter, freqmin=0.02, freqmax=0.14
         )
@@ -481,7 +590,18 @@ class TestCoherer:
         assert len(coherence) == coherer.similarityfunclen
 
     def test_run_with_alt(self, sample_filter, sample_timecourse, sample_fs):
-        """Test run method with alt=True (CSD-based coherence)."""
+        """
+        Test run method with alt=True (CSD-based coherence).
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        sample_fs : float
+            Sampling frequency of the test signal in Hz.
+        """
         coherer = tide_classes.Coherer(
             Fs=sample_fs, ncprefilter=sample_filter, freqmin=0.02, freqmax=0.14
         )
@@ -501,7 +621,18 @@ class TestCoherer:
         assert csdxy is not None
 
     def test_run_with_alt_no_trim(self, sample_filter, sample_timecourse, sample_fs):
-        """Test run method with alt=True and trim=False."""
+        """
+        Test run method with alt=True and trim=False.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        sample_fs : float
+            Sampling frequency of the test signal in Hz.
+        """
         coherer = tide_classes.Coherer(
             Fs=sample_fs, ncprefilter=sample_filter, freqmin=0.02, freqmax=0.14
         )
@@ -517,7 +648,18 @@ class TestCoherer:
         assert len(coherence) == coherer.similarityfunclen
 
     def test_run_identical_signals(self, sample_filter, sample_timecourse, sample_fs):
-        """Test run with identical reference and test signals."""
+        """
+        Test run with identical reference and test signals.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        sample_fs : float
+            Sampling frequency of the test signal in Hz.
+        """
         coherer = tide_classes.Coherer(
             Fs=sample_fs, ncprefilter=sample_filter, freqmin=0.02, freqmax=0.14
         )
@@ -530,7 +672,18 @@ class TestCoherer:
         assert np.max(coherence) >= 0.9
 
     def test_coherence_values_in_range(self, sample_filter, sample_timecourse, sample_fs):
-        """Test that coherence values are between 0 and 1."""
+        """
+        Test that coherence values are between 0 and 1.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        sample_fs : float
+            Sampling frequency of the test signal in Hz.
+        """
         coherer = tide_classes.Coherer(
             Fs=sample_fs, ncprefilter=sample_filter, freqmin=0.02, freqmax=0.14
         )
@@ -546,7 +699,18 @@ class TestCoherer:
         assert np.all(coherence <= 1 + 1e-10)
 
     def test_run_trim_invalid_range_raises(self, sample_filter, sample_timecourse, sample_fs):
-        """Test run raises on invalid trim range."""
+        """
+        Test run raises on invalid trim range.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        sample_fs : float
+            Sampling frequency of the test signal in Hz.
+        """
         coherer = tide_classes.Coherer(Fs=sample_fs, ncprefilter=sample_filter)
         coherer.setreftc(sample_timecourse)
         coherer.setlimits(0.10, 0.10)

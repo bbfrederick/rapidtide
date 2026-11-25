@@ -34,7 +34,14 @@ from rapidtide.workflows.applydlfilter import (
 
 
 def findfirst_found_first_element(debug=False):
-    """Test findfirst when the first element of searchlist is in available."""
+    """
+    Test findfirst when the first element of searchlist is in available.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     available = ["alpha", "beta", "gamma", "delta"]
     searchlist = ["beta", "gamma"]
     index, name = findfirst(searchlist, available, debug=debug)
@@ -43,7 +50,14 @@ def findfirst_found_first_element(debug=False):
 
 
 def findfirst_found_second_element(debug=False):
-    """Test findfirst falls back to second element when first is not available."""
+    """
+    Test findfirst falls back to second element when first is not available.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     available = ["alpha", "beta", "gamma", "delta"]
     searchlist = ["missing", "gamma"]
     index, name = findfirst(searchlist, available, debug=debug)
@@ -52,7 +66,14 @@ def findfirst_found_second_element(debug=False):
 
 
 def findfirst_not_found(debug=False):
-    """Test findfirst when no element from searchlist is in available."""
+    """
+    Test findfirst when no element from searchlist is in available.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     available = ["alpha", "beta", "gamma"]
     searchlist = ["missing1", "missing2"]
     index, name = findfirst(searchlist, available, debug=debug)
@@ -61,7 +82,14 @@ def findfirst_not_found(debug=False):
 
 
 def findfirst_single_element_found(debug=False):
-    """Test findfirst with a single-element searchlist that is found."""
+    """
+    Test findfirst with a single-element searchlist that is found.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     available = ["x", "y", "z"]
     searchlist = ["z"]
     index, name = findfirst(searchlist, available, debug=debug)
@@ -70,7 +98,14 @@ def findfirst_single_element_found(debug=False):
 
 
 def findfirst_single_element_not_found(debug=False):
-    """Test findfirst with a single-element searchlist that is not found."""
+    """
+    Test findfirst with a single-element searchlist that is not found.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     available = ["x", "y", "z"]
     searchlist = ["w"]
     index, name = findfirst(searchlist, available, debug=debug)
@@ -79,7 +114,14 @@ def findfirst_single_element_not_found(debug=False):
 
 
 def findfirst_empty_available(debug=False):
-    """Test findfirst with an empty available list."""
+    """
+    Test findfirst with an empty available list.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     available = []
     searchlist = ["something"]
     index, name = findfirst(searchlist, available, debug=debug)
@@ -88,7 +130,14 @@ def findfirst_empty_available(debug=False):
 
 
 def findfirst_debug_output(debug=False):
-    """Test findfirst with debug=True to exercise debug print paths."""
+    """
+    Test findfirst with debug=True to exercise debug print paths.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     available = ["a", "b", "c"]
     searchlist = ["b"]
     index, name = findfirst(searchlist, available, debug=True)
@@ -103,7 +152,14 @@ def findfirst_debug_output(debug=False):
 
 
 def findfirst_duplicate_in_available(debug=False):
-    """Test findfirst when the available list has duplicates - should find first occurrence."""
+    """
+    Test findfirst when the available list has duplicates - should find first occurrence.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     available = ["a", "b", "a", "c"]
     searchlist = ["a"]
     index, name = findfirst(searchlist, available, debug=debug)
@@ -115,13 +171,27 @@ def findfirst_duplicate_in_available(debug=False):
 
 
 def get_parser_returns_parser(debug=False):
-    """Test that _get_parser returns an ArgumentParser."""
+    """
+    Test that _get_parser returns an ArgumentParser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
 
 
 def get_parser_default_model(debug=False):
-    """Test that the default model is correctly set."""
+    """
+    Test that the default model is correctly set.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     # Parse with dummy files (need to bypass is_valid_file check)
     # We test the default by inspecting the parser's defaults
@@ -130,7 +200,14 @@ def get_parser_default_model(debug=False):
 
 
 def get_parser_default_flags(debug=False):
-    """Test that default flag values are correct."""
+    """
+    Test that default flag values are correct.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     defaults = {action.dest: action.default for action in parser._actions}
     assert defaults["filesarelists"] is False
@@ -139,13 +216,29 @@ def get_parser_default_flags(debug=False):
 
 
 def get_parser_prog_name(debug=False):
-    """Test that the parser prog name is set correctly."""
+    """
+    Test that the parser prog name is set correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert parser.prog == "applydlfilter"
 
 
 def get_parser_with_model_option(testtemproot, debug=False):
-    """Test parser with --model option."""
+    """
+    Test parser with --model option.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # Create a dummy input file
     infile = os.path.join(testtemproot, "parser_test_input.txt")
     with open(infile, "w") as f:
@@ -157,7 +250,16 @@ def get_parser_with_model_option(testtemproot, debug=False):
 
 
 def get_parser_with_filesarelists(testtemproot, debug=False):
-    """Test parser with --filesarelists flag."""
+    """
+    Test parser with --filesarelists flag.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "parser_test_input2.txt")
     with open(infile, "w") as f:
         f.write("file1.txt\nfile2.txt\n")
@@ -168,7 +270,16 @@ def get_parser_with_filesarelists(testtemproot, debug=False):
 
 
 def get_parser_with_nodisplay(testtemproot, debug=False):
-    """Test parser with --nodisplay flag."""
+    """
+    Test parser with --nodisplay flag.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "parser_test_input3.txt")
     with open(infile, "w") as f:
         f.write("1.0 2.0 3.0\n")
@@ -179,7 +290,16 @@ def get_parser_with_nodisplay(testtemproot, debug=False):
 
 
 def get_parser_with_verbose(testtemproot, debug=False):
-    """Test parser with --verbose flag."""
+    """
+    Test parser with --verbose flag.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "parser_test_input4.txt")
     with open(infile, "w") as f:
         f.write("1.0 2.0 3.0\n")
@@ -190,7 +310,16 @@ def get_parser_with_verbose(testtemproot, debug=False):
 
 
 def get_parser_all_options(testtemproot, debug=False):
-    """Test parser with all options combined."""
+    """
+    Test parser with all options combined.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "parser_test_input5.txt")
     with open(infile, "w") as f:
         f.write("1.0\n")
@@ -217,7 +346,19 @@ def get_parser_all_options(testtemproot, debug=False):
 
 
 def _make_mock_dlfilter(usebadpts=False):
-    """Helper to create a mock DeepLearningFilter."""
+    """
+    Helper to create a mock DeepLearningFilter.
+
+    Parameters
+    ----------
+    usebadpts : bool, optional
+        Setting for ``usebadpts`` in the test case.
+
+    Returns
+    -------
+    MagicMock
+        Mock object configured for the test case.
+    """
     mock_filter = MagicMock()
     mock_filter.usebadpts = usebadpts
     mock_filter.apply.return_value = np.random.randn(100).astype(np.float32)
@@ -225,7 +366,16 @@ def _make_mock_dlfilter(usebadpts=False):
 
 
 def applydlfilter_single_file(testtemproot, debug=False):
-    """Test applydlfilter with a single input file (filesarelists=False)."""
+    """
+    Test applydlfilter with a single input file (filesarelists=False).
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "dlf_test_input.tsv")
     outfile = os.path.join(testtemproot, "dlf_test_output")
 
@@ -273,7 +423,16 @@ def applydlfilter_single_file(testtemproot, debug=False):
 
 
 def applydlfilter_single_file_with_pleth(testtemproot, debug=False):
-    """Test applydlfilter with pleth data present."""
+    """
+    Test applydlfilter with pleth data present.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "dlf_test_pleth_input.tsv")
     outfile = os.path.join(testtemproot, "dlf_test_pleth_output")
 
@@ -318,7 +477,16 @@ def applydlfilter_single_file_with_pleth(testtemproot, debug=False):
 
 
 def applydlfilter_single_file_with_badpts(testtemproot, debug=False):
-    """Test applydlfilter with bad points data present."""
+    """
+    Test applydlfilter with bad points data present.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "dlf_test_badpts_input.tsv")
     outfile = os.path.join(testtemproot, "dlf_test_badpts_output")
 
@@ -363,7 +531,16 @@ def applydlfilter_single_file_with_badpts(testtemproot, debug=False):
 
 
 def applydlfilter_filesarelists(testtemproot, debug=False):
-    """Test applydlfilter with filesarelists=True."""
+    """
+    Test applydlfilter with filesarelists=True.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     inlistfile = os.path.join(testtemproot, "dlf_inlist.txt")
     outlistfile = os.path.join(testtemproot, "dlf_outlist.txt")
 
@@ -417,7 +594,16 @@ def applydlfilter_filesarelists(testtemproot, debug=False):
 
 
 def applydlfilter_mismatched_lists(testtemproot, debug=False):
-    """Test applydlfilter exits when list lengths don't match."""
+    """
+    Test applydlfilter exits when list lengths don't match.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     inlistfile = os.path.join(testtemproot, "dlf_inlist_mismatch.txt")
     outlistfile = os.path.join(testtemproot, "dlf_outlist_mismatch.txt")
 
@@ -448,7 +634,16 @@ def applydlfilter_mismatched_lists(testtemproot, debug=False):
 
 
 def applydlfilter_no_usable_data(testtemproot, debug=False):
-    """Test applydlfilter exits when file has no usable data column."""
+    """
+    Test applydlfilter exits when file has no usable data column.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "dlf_nodata_input.tsv")
     outfile = os.path.join(testtemproot, "dlf_nodata_output")
 
@@ -485,7 +680,16 @@ def applydlfilter_no_usable_data(testtemproot, debug=False):
 
 
 def applydlfilter_wrong_samplerate(testtemproot, debug=False):
-    """Test applydlfilter exits when sample rate is not 25.0 Hz."""
+    """
+    Test applydlfilter exits when sample rate is not 25.0 Hz.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "dlf_wrongsr_input.tsv")
     outfile = os.path.join(testtemproot, "dlf_wrongsr_output")
 
@@ -523,7 +727,16 @@ def applydlfilter_wrong_samplerate(testtemproot, debug=False):
 
 
 def applydlfilter_usebadpts_missing_badpts(testtemproot, debug=False):
-    """Test applydlfilter exits when model requires badpts but file has none."""
+    """
+    Test applydlfilter exits when model requires badpts but file has none.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "dlf_nobadpts_input.tsv")
     outfile = os.path.join(testtemproot, "dlf_nobadpts_output")
 
@@ -561,7 +774,16 @@ def applydlfilter_usebadpts_missing_badpts(testtemproot, debug=False):
 
 
 def applydlfilter_verbose(testtemproot, debug=False):
-    """Test applydlfilter with verbose=True exercises verbose print paths."""
+    """
+    Test applydlfilter with verbose=True exercises verbose print paths.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "dlf_verbose_input.tsv")
     outfile = os.path.join(testtemproot, "dlf_verbose_output")
 
@@ -601,7 +823,16 @@ def applydlfilter_verbose(testtemproot, debug=False):
 
 
 def applydlfilter_alternative_datanames(testtemproot, debug=False):
-    """Test applydlfilter with alternative recognized data column names."""
+    """
+    Test applydlfilter with alternative recognized data column names.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "dlf_altnames_input.tsv")
     outfile = os.path.join(testtemproot, "dlf_altnames_output")
 
@@ -642,7 +873,16 @@ def applydlfilter_alternative_datanames(testtemproot, debug=False):
 
 
 def applydlfilter_all_columns_present(testtemproot, debug=False):
-    """Test applydlfilter with data, badpts, and pleth columns all present."""
+    """
+    Test applydlfilter with data, badpts, and pleth columns all present.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "dlf_allcols_input.tsv")
     outfile = os.path.join(testtemproot, "dlf_allcols_output")
 
@@ -700,7 +940,16 @@ def applydlfilter_all_columns_present(testtemproot, debug=False):
 
 
 def applydlfilter_writes_correct_output(testtemproot, debug=False):
-    """Test that applydlfilter passes the filtered data to writebidstsv."""
+    """
+    Test that applydlfilter passes the filtered data to writebidstsv.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "dlf_output_check_input.tsv")
     outfile = os.path.join(testtemproot, "dlf_output_check_output")
 
@@ -750,7 +999,14 @@ def applydlfilter_writes_correct_output(testtemproot, debug=False):
 
 
 def default_model_value(debug=False):
-    """Test that DEFAULT_MODEL has the expected value."""
+    """
+    Test that DEFAULT_MODEL has the expected value.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     assert DEFAULT_MODEL == "model_cnn_pytorch"
 
 
@@ -759,6 +1015,16 @@ def default_model_value(debug=False):
 
 def test_applydlfilter(debug=False, local=False):
     # set up temp directory
+    """
+    Verify applydlfilter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     testtemproot = get_test_temp_path(local)
     create_dir(testtemproot)
 

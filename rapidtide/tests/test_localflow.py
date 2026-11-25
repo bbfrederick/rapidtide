@@ -30,7 +30,25 @@ import rapidtide.workflows.parser_funcs as pf
 
 
 def _make_broadband_signal(timepoints, Fs, delay=0.0, seed=42):
-    """Generate a broadband signal as a sum of sinusoids."""
+    """
+    Generate a broadband signal as a sum of sinusoids.
+
+    Parameters
+    ----------
+    timepoints : int
+        Number of time samples.
+    Fs : object
+        Value supplied as ``Fs`` by the test case.
+    delay : float, optional
+        Time shift applied to the test signal in seconds.
+    seed : int, optional
+        Random seed for reproducible test data.
+
+    Returns
+    -------
+    numpy.ndarray
+        The ``signal`` value supplied to the caller.
+    """
     rng = np.random.RandomState(seed)
     t = np.arange(timepoints) / Fs
     signal = np.zeros(timepoints, dtype=float)
@@ -42,7 +60,25 @@ def _make_broadband_signal(timepoints, Fs, delay=0.0, seed=42):
 
 
 def _make_4d_nifti(tmpdir, shape=(6, 6, 4, 50), tr=2.0, name="test4d"):
-    """Create a 4D NIfTI file with correlated broadband signals and return path."""
+    """
+    Create a 4D NIfTI file with correlated broadband signals and return path.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    shape : tuple of int, optional
+        Dimensions of the test array.
+    tr : float, optional
+        Repetition time in seconds.
+    name : str, optional
+        Value supplied as ``name`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     nx, ny, nz, nt = shape
     Fs = 1.0 / tr
     rng = np.random.RandomState(42)
@@ -73,7 +109,14 @@ def _make_4d_nifti(tmpdir, shape=(6, 6, 4, 50), tr=2.0, name="test4d"):
 
 
 def xyz2index_basic(debug=False):
-    """Test xyz2index with basic coordinates."""
+    """
+    Test xyz2index with basic coordinates.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("xyz2index_basic")
     # For a (10, 10, 10) array, index = z + y*zsize + x*zsize*ysize
@@ -91,7 +134,14 @@ def xyz2index_basic(debug=False):
 
 
 def xyz2index_corners(debug=False):
-    """Test xyz2index with corner coordinates."""
+    """
+    Test xyz2index with corner coordinates.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("xyz2index_corners")
     xsize, ysize, zsize = 5, 7, 3
@@ -102,7 +152,14 @@ def xyz2index_corners(debug=False):
 
 
 def xyz2index_out_of_bounds(debug=False):
-    """Test xyz2index returns -1 for out-of-bounds coordinates."""
+    """
+    Test xyz2index returns -1 for out-of-bounds coordinates.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("xyz2index_out_of_bounds")
     assert lf.xyz2index(-1, 0, 0, 10, 10, 10) == -1
@@ -114,7 +171,14 @@ def xyz2index_out_of_bounds(debug=False):
 
 
 def xyz2index_boundary(debug=False):
-    """Test xyz2index at boundary values."""
+    """
+    Test xyz2index at boundary values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("xyz2index_boundary")
     # Last valid coordinate on each axis
@@ -128,7 +192,14 @@ def xyz2index_boundary(debug=False):
 
 
 def xyz2index_nonsquare(debug=False):
-    """Test xyz2index with non-square dimensions."""
+    """
+    Test xyz2index with non-square dimensions.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("xyz2index_nonsquare")
     xsize, ysize, zsize = 3, 5, 7
@@ -141,7 +212,14 @@ def xyz2index_nonsquare(debug=False):
 
 
 def index2xyz_basic(debug=False):
-    """Test index2xyz with basic indices."""
+    """
+    Test index2xyz with basic indices.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("index2xyz_basic")
     x, y, z = lf.index2xyz(0, 10, 10)
@@ -158,7 +236,14 @@ def index2xyz_basic(debug=False):
 
 
 def index2xyz_nonsquare(debug=False):
-    """Test index2xyz with non-square dimensions."""
+    """
+    Test index2xyz with non-square dimensions.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("index2xyz_nonsquare")
     ysize, zsize = 5, 7
@@ -169,7 +254,14 @@ def index2xyz_nonsquare(debug=False):
 
 
 def index2xyz_roundtrip(debug=False):
-    """Test that xyz2index and index2xyz are inverses."""
+    """
+    Test that xyz2index and index2xyz are inverses.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("index2xyz_roundtrip")
     xsize, ysize, zsize = 4, 5, 6
@@ -182,7 +274,14 @@ def index2xyz_roundtrip(debug=False):
 
 
 def index2xyz_sequential(debug=False):
-    """Test index2xyz produces sequential coordinates."""
+    """
+    Test index2xyz produces sequential coordinates.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("index2xyz_sequential")
     ysize, zsize = 3, 4
@@ -202,7 +301,14 @@ def index2xyz_sequential(debug=False):
 
 
 def getcorrloc_identical_signals(debug=False):
-    """Test getcorrloc with identical signals returns high correlation at lag 0."""
+    """
+    Test getcorrloc with identical signals returns high correlation at lag 0.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getcorrloc_identical_signals")
     Fs = 10.0
@@ -233,7 +339,14 @@ def getcorrloc_identical_signals(debug=False):
 
 
 def getcorrloc_delayed_signals(debug=False):
-    """Test getcorrloc with delayed signals returns correct lag."""
+    """
+    Test getcorrloc with delayed signals returns correct lag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getcorrloc_delayed_signals")
     Fs = 10.0
@@ -267,7 +380,14 @@ def getcorrloc_delayed_signals(debug=False):
 
 
 def getcorrloc_zero_signal(debug=False):
-    """Test getcorrloc with zero signals returns zeros."""
+    """
+    Test getcorrloc with zero signals returns zeros.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getcorrloc_zero_signal")
     Fs = 10.0
@@ -287,7 +407,14 @@ def getcorrloc_zero_signal(debug=False):
 
 
 def getcorrloc_with_fit(debug=False):
-    """Test getcorrloc with dofit=True."""
+    """
+    Test getcorrloc with dofit=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getcorrloc_with_fit")
     Fs = 10.0
@@ -319,7 +446,14 @@ def getcorrloc_with_fit(debug=False):
 
 
 def getcorrloc_one_zero_signal(debug=False):
-    """Test getcorrloc when one signal is all zeros."""
+    """
+    Test getcorrloc when one signal is all zeros.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getcorrloc_one_zero_signal")
     Fs = 10.0
@@ -341,7 +475,14 @@ def getcorrloc_one_zero_signal(debug=False):
 
 
 def getcorrloc_search_range(debug=False):
-    """Test getcorrloc with custom search ranges."""
+    """
+    Test getcorrloc with custom search ranges.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getcorrloc_search_range")
     Fs = 10.0
@@ -371,7 +512,14 @@ def getcorrloc_search_range(debug=False):
 
 
 def preprocdata_basic(debug=False):
-    """Test preprocdata returns correct shapes."""
+    """
+    Test preprocdata returns correct shapes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("preprocdata_basic")
     nx, ny, nz, nt = 3, 3, 2, 40
@@ -403,7 +551,14 @@ def preprocdata_basic(debug=False):
 
 
 def preprocdata_with_mask(debug=False):
-    """Test preprocdata only processes masked voxels."""
+    """
+    Test preprocdata only processes masked voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("preprocdata_with_mask")
     nx, ny, nz, nt = 4, 4, 2, 40
@@ -442,7 +597,14 @@ def preprocdata_with_mask(debug=False):
 
 
 def preprocdata_oversample_factor(debug=False):
-    """Test preprocdata with different oversample factors."""
+    """
+    Test preprocdata with different oversample factors.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("preprocdata_oversample_factor")
     nx, ny, nz, nt = 2, 2, 2, 30
@@ -474,7 +636,14 @@ def preprocdata_oversample_factor(debug=False):
 
 
 def preprocdata_detrend_order(debug=False):
-    """Test preprocdata with different detrend orders."""
+    """
+    Test preprocdata with different detrend orders.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("preprocdata_detrend_order")
     nx, ny, nz, nt = 2, 2, 2, 40
@@ -505,7 +674,14 @@ def preprocdata_detrend_order(debug=False):
 
 
 def get_parser_returns_parser(debug=False):
-    """Test _get_parser returns an ArgumentParser."""
+    """
+    Test _get_parser returns an ArgumentParser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_returns_parser")
     import argparse
@@ -515,7 +691,14 @@ def get_parser_returns_parser(debug=False):
 
 
 def get_parser_defaults(debug=False):
-    """Test _get_parser default values."""
+    """
+    Test _get_parser default values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_defaults")
     parser = lf._get_parser()
@@ -536,7 +719,14 @@ def get_parser_defaults(debug=False):
 
 
 def get_parser_npasses(debug=False):
-    """Test _get_parser accepts --npasses."""
+    """
+    Test _get_parser accepts --npasses.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_npasses")
     parser = lf._get_parser()
@@ -545,7 +735,14 @@ def get_parser_npasses(debug=False):
 
 
 def get_parser_radius(debug=False):
-    """Test _get_parser accepts --radius."""
+    """
+    Test _get_parser accepts --radius.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_radius")
     parser = lf._get_parser()
@@ -554,7 +751,14 @@ def get_parser_radius(debug=False):
 
 
 def get_parser_ampthresh(debug=False):
-    """Test _get_parser accepts --ampthresh."""
+    """
+    Test _get_parser accepts --ampthresh.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_ampthresh")
     parser = lf._get_parser()
@@ -563,7 +767,14 @@ def get_parser_ampthresh(debug=False):
 
 
 def get_parser_gausssigma(debug=False):
-    """Test _get_parser accepts --gausssigma."""
+    """
+    Test _get_parser accepts --gausssigma.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_gausssigma")
     parser = lf._get_parser()
@@ -572,7 +783,14 @@ def get_parser_gausssigma(debug=False):
 
 
 def get_parser_oversampfac(debug=False):
-    """Test _get_parser accepts --oversampfac."""
+    """
+    Test _get_parser accepts --oversampfac.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_oversampfac")
     parser = lf._get_parser()
@@ -581,7 +799,14 @@ def get_parser_oversampfac(debug=False):
 
 
 def get_parser_dofit(debug=False):
-    """Test _get_parser accepts --dofit."""
+    """
+    Test _get_parser accepts --dofit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_dofit")
     parser = lf._get_parser()
@@ -590,7 +815,14 @@ def get_parser_dofit(debug=False):
 
 
 def get_parser_detrendorder(debug=False):
-    """Test _get_parser accepts --detrendorder."""
+    """
+    Test _get_parser accepts --detrendorder.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_detrendorder")
     parser = lf._get_parser()
@@ -599,7 +831,14 @@ def get_parser_detrendorder(debug=False):
 
 
 def get_parser_nosphere(debug=False):
-    """Test _get_parser --nosphere disables sphere."""
+    """
+    Test _get_parser --nosphere disables sphere.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_nosphere")
     parser = lf._get_parser()
@@ -608,7 +847,14 @@ def get_parser_nosphere(debug=False):
 
 
 def get_parser_noprogressbar(debug=False):
-    """Test _get_parser --noprogressbar disables progress bar."""
+    """
+    Test _get_parser --noprogressbar disables progress bar.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_noprogressbar")
     parser = lf._get_parser()
@@ -617,7 +863,14 @@ def get_parser_noprogressbar(debug=False):
 
 
 def get_parser_debug(debug=False):
-    """Test _get_parser accepts --debug."""
+    """
+    Test _get_parser accepts --debug.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_debug")
     parser = lf._get_parser()
@@ -626,7 +879,14 @@ def get_parser_debug(debug=False):
 
 
 def get_parser_minlagdiff(debug=False):
-    """Test _get_parser accepts --minlagdiff."""
+    """
+    Test _get_parser accepts --minlagdiff.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_minlagdiff")
     parser = lf._get_parser()
@@ -635,7 +895,14 @@ def get_parser_minlagdiff(debug=False):
 
 
 def get_parser_windowfunc(debug=False):
-    """Test _get_parser accepts --windowfunc."""
+    """
+    Test _get_parser accepts --windowfunc.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_windowfunc")
     parser = lf._get_parser()
@@ -644,7 +911,14 @@ def get_parser_windowfunc(debug=False):
 
 
 def get_parser_filterband(debug=False):
-    """Test _get_parser accepts --filterband."""
+    """
+    Test _get_parser accepts --filterband.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_filterband")
     parser = lf._get_parser()
@@ -653,7 +927,14 @@ def get_parser_filterband(debug=False):
 
 
 def get_parser_required_args(debug=False):
-    """Test _get_parser requires inputfilename and outputroot."""
+    """
+    Test _get_parser requires inputfilename and outputroot.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_required_args")
     parser = lf._get_parser()
@@ -668,7 +949,14 @@ def get_parser_required_args(debug=False):
 
 
 def localflow_integration(debug=False):
-    """Test localflow end-to-end with small synthetic data."""
+    """
+    Test localflow end-to-end with small synthetic data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("localflow_integration")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -725,7 +1013,14 @@ def localflow_integration(debug=False):
 
 
 def localflow_with_gausssigma(debug=False):
-    """Test localflow with Gaussian spatial smoothing."""
+    """
+    Test localflow with Gaussian spatial smoothing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("localflow_with_gausssigma")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -758,7 +1053,19 @@ def localflow_with_gausssigma(debug=False):
 
 # We need tide_io for reading back NIfTI files in integration tests
 def tide_io_readfromnifti(filepath):
-    """Helper to read NIfTI files for verification."""
+    """
+    Helper to read NIfTI files for verification.
+
+    Parameters
+    ----------
+    filepath : path-like
+        Path to the test input or output file.
+
+    Returns
+    -------
+    object
+        Value returned to the caller in this test case.
+    """
     import rapidtide.io as tide_io
 
     return tide_io.readfromnifti(filepath)
@@ -769,6 +1076,14 @@ def tide_io_readfromnifti(filepath):
 
 def test_localflow(debug=False):
     # xyz2index tests
+    """
+    Verify localflow.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("Running xyz2index tests")
     xyz2index_basic(debug=debug)

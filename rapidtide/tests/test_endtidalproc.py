@@ -35,10 +35,23 @@ from rapidtide.workflows.endtidalproc import (
 
 
 def _make_co2_signal(samplerate=10.0, duration=60.0):
-    """Create a synthetic CO2-like signal with clear peaks.
+    """
+    Create a synthetic CO2-like signal with clear peaks.
 
     Generates a slow sinusoidal signal (period ~5s) with added noise,
     simulating a breathing CO2 trace with well-defined maxima.
+
+    Parameters
+    ----------
+    samplerate : float, optional
+        Sampling rate in Hz.
+    duration : float, optional
+        Value supplied as ``duration`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     npts = int(samplerate * duration)
     t = np.arange(npts) / samplerate
@@ -51,7 +64,19 @@ def _make_co2_signal(samplerate=10.0, duration=60.0):
 
 
 def _make_default_args(**overrides):
-    """Create a default args Namespace for endtidalproc."""
+    """
+    Create a default args Namespace for endtidalproc.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         infilename="dummy_in.txt",
         outfilename="dummy_out.txt",
@@ -70,7 +95,14 @@ def _make_default_args(**overrides):
 
 
 def phase_scalar(debug=False):
-    """Test phase() with scalar complex numbers."""
+    """
+    Test phase() with scalar complex numbers.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # 1+1j => pi/4
     result = phase(complex(1, 1))
     assert np.isclose(result, np.pi / 4), f"Expected pi/4, got {result}"
@@ -96,7 +128,14 @@ def phase_scalar(debug=False):
 
 
 def phase_array(debug=False):
-    """Test phase() with an array of complex numbers."""
+    """
+    Test phase() with an array of complex numbers.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     arr = np.array([1 + 1j, -1 - 1j, 1 + 0j, 0 + 1j])
     result = phase(arr)
     expected = np.array([np.pi / 4, -3 * np.pi / 4, 0.0, np.pi / 2])
@@ -108,7 +147,14 @@ def phase_array(debug=False):
 
 
 def phase_zero(debug=False):
-    """Test phase() with zero complex number."""
+    """
+    Test phase() with zero complex number.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     result = phase(complex(0, 0))
     assert np.isclose(result, 0.0), f"Expected 0, got {result}"
 
@@ -120,7 +166,14 @@ def phase_zero(debug=False):
 
 
 def parser_basic(debug=False):
-    """Test that _get_parser() returns a valid parser."""
+    """
+    Test that _get_parser() returns a valid parser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
     assert parser.prog == "endtidalproc"
@@ -130,7 +183,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
-    """Test that parser requires infilename and outfilename."""
+    """
+    Test that parser requires infilename and outfilename.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args([])
@@ -143,7 +203,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
-    """Test default values from the parser."""
+    """
+    Test default values from the parser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["input.txt", "output.txt"])
 
@@ -161,7 +228,14 @@ def parser_defaults(debug=False):
 
 
 def parser_isoxygen(debug=False):
-    """Test --isoxygen flag."""
+    """
+    Test --isoxygen flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["input.txt", "output.txt", "--isoxygen"])
     assert args.isoxygen is True
@@ -171,7 +245,14 @@ def parser_isoxygen(debug=False):
 
 
 def parser_samplerate(debug=False):
-    """Test --samplerate option."""
+    """
+    Test --samplerate option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["input.txt", "output.txt", "--samplerate", "10.0"])
     assert np.isclose(args.samplerate, 10.0)
@@ -181,7 +262,14 @@ def parser_samplerate(debug=False):
 
 
 def parser_sampletime(debug=False):
-    """Test --sampletime option (inverts to frequency)."""
+    """
+    Test --sampletime option (inverts to frequency).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["input.txt", "output.txt", "--sampletime", "0.1"])
     assert np.isclose(args.samplerate, 10.0)
@@ -191,7 +279,14 @@ def parser_sampletime(debug=False):
 
 
 def parser_samplerate_sampletime_mutual_exclusion(debug=False):
-    """Test that --samplerate and --sampletime are mutually exclusive."""
+    """
+    Test that --samplerate and --sampletime are mutually exclusive.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args(
@@ -203,7 +298,14 @@ def parser_samplerate_sampletime_mutual_exclusion(debug=False):
 
 
 def parser_starttime_endtime(debug=False):
-    """Test --starttime and --endtime options."""
+    """
+    Test --starttime and --endtime options.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(
         ["input.txt", "output.txt", "--starttime", "5.0", "--endtime", "50.0"]
@@ -216,7 +318,14 @@ def parser_starttime_endtime(debug=False):
 
 
 def parser_thresh(debug=False):
-    """Test --thresh option."""
+    """
+    Test --thresh option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["input.txt", "output.txt", "--thresh", "2.5"])
     assert np.isclose(args.thresh, 2.5)
@@ -226,7 +335,14 @@ def parser_thresh(debug=False):
 
 
 def parser_debug(debug=False):
-    """Test --debug flag."""
+    """
+    Test --debug flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["input.txt", "output.txt", "--debug"])
     assert args.debug is True
@@ -239,7 +355,14 @@ def parser_debug(debug=False):
 
 
 def process_args_default_samplerate(debug=False):
-    """Test that process_args sets samplerate to 1.0 when None."""
+    """
+    Test that process_args sets samplerate to 1.0 when None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = argparse.Namespace(samplerate=None, debug=False)
     result = process_args(args)
     assert result.samplerate == 1.0
@@ -249,7 +372,14 @@ def process_args_default_samplerate(debug=False):
 
 
 def process_args_preserves_samplerate(debug=False):
-    """Test that process_args keeps explicit samplerate."""
+    """
+    Test that process_args keeps explicit samplerate.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = argparse.Namespace(samplerate=25.0, debug=False)
     result = process_args(args)
     assert result.samplerate == 25.0
@@ -259,7 +389,14 @@ def process_args_preserves_samplerate(debug=False):
 
 
 def process_args_returns_args(debug=False):
-    """Test that process_args returns the modified args object."""
+    """
+    Test that process_args returns the modified args object.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = argparse.Namespace(samplerate=None, debug=False)
     result = process_args(args)
     assert result is args
@@ -269,7 +406,14 @@ def process_args_returns_args(debug=False):
 
 
 def process_args_debug_output(debug=False):
-    """Test that process_args prints args when debug=True."""
+    """
+    Test that process_args prints args when debug=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = argparse.Namespace(samplerate=5.0, debug=True)
     captured = io.StringIO()
     with patch("sys.stdout", captured):
@@ -282,7 +426,14 @@ def process_args_debug_output(debug=False):
 
 
 def process_args_no_debug_output(debug=False):
-    """Test that process_args is silent when debug=False."""
+    """
+    Test that process_args is silent when debug=False.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = argparse.Namespace(samplerate=5.0, debug=False)
     captured = io.StringIO()
     with patch("sys.stdout", captured):
@@ -298,16 +449,56 @@ def process_args_no_debug_output(debug=False):
 
 
 def _run_endtidalproc_with_args(signal, args):
-    """Run endtidalproc with mocked I/O and a fixed args Namespace.
+    """
+    Run endtidalproc with mocked I/O and a fixed args Namespace.
 
     Returns the array written by writevec.
+
+    Parameters
+    ----------
+    signal : object
+        Value supplied as ``signal`` by the test case.
+    args : object
+        Arguments passed to the test helper.
+
+    Returns
+    -------
+    dict
+        The ``saved`` value supplied to the caller.
     """
     saved = {}
 
     def mock_readvec(fname, **kwargs):
+        """
+        Simulate ``readvec`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return signal.copy()
 
     def mock_writevec(data, fname, **kwargs):
+        """
+        Simulate ``writevec`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         saved["data"] = np.array(data).copy()
         saved["fname"] = fname
 
@@ -329,7 +520,14 @@ def _run_endtidalproc_with_args(signal, args):
 
 
 def endtidalproc_co2_basic(debug=False):
-    """Test endtidalproc with a CO2 trace (fits maxima)."""
+    """
+    Test endtidalproc with a CO2 trace (fits maxima).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     samplerate = 10.0
     signal, t = _make_co2_signal(samplerate=samplerate, duration=60.0)
     args = _make_default_args(samplerate=samplerate, isoxygen=False)
@@ -357,7 +555,14 @@ def endtidalproc_co2_basic(debug=False):
 
 
 def endtidalproc_oxygen_basic(debug=False):
-    """Test endtidalproc with an oxygen trace (fits minima)."""
+    """
+    Test endtidalproc with an oxygen trace (fits minima).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     samplerate = 10.0
     signal, t = _make_co2_signal(samplerate=samplerate, duration=60.0)
     args = _make_default_args(samplerate=samplerate, isoxygen=True)
@@ -383,7 +588,14 @@ def endtidalproc_oxygen_basic(debug=False):
 
 
 def endtidalproc_output_length(debug=False):
-    """Test that output has the same length as input."""
+    """
+    Test that output has the same length as input.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     samplerate = 10.0
     signal, t = _make_co2_signal(samplerate=samplerate, duration=30.0)
     args = _make_default_args(samplerate=samplerate)
@@ -396,7 +608,14 @@ def endtidalproc_output_length(debug=False):
 
 
 def endtidalproc_output_smoothness(debug=False):
-    """Test that peak-interpolated output is smoother than input (piecewise linear)."""
+    """
+    Test that peak-interpolated output is smoother than input (piecewise linear).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     samplerate = 10.0
     signal, t = _make_co2_signal(samplerate=samplerate, duration=60.0)
     args = _make_default_args(samplerate=samplerate)
@@ -415,7 +634,14 @@ def endtidalproc_output_smoothness(debug=False):
 
 
 def endtidalproc_time_range(debug=False):
-    """Test endtidalproc with restricted start/end time."""
+    """
+    Test endtidalproc with restricted start/end time.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     samplerate = 10.0
     duration = 60.0
     signal, t = _make_co2_signal(samplerate=samplerate, duration=duration)
@@ -431,7 +657,14 @@ def endtidalproc_time_range(debug=False):
 
 
 def endtidalproc_invalid_time_range(debug=False):
-    """Test that endtidalproc exits when starttime >= endtime."""
+    """
+    Test that endtidalproc exits when starttime >= endtime.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_default_args(thestarttime=50.0, theendtime=10.0)
 
     with pytest.raises(SystemExit):
@@ -452,7 +685,14 @@ def endtidalproc_invalid_time_range(debug=False):
 
 
 def endtidalproc_equal_time_range(debug=False):
-    """Test that endtidalproc exits when starttime == endtime."""
+    """
+    Test that endtidalproc exits when starttime == endtime.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_default_args(thestarttime=10.0, theendtime=10.0)
 
     with pytest.raises(SystemExit):
@@ -473,7 +713,14 @@ def endtidalproc_equal_time_range(debug=False):
 
 
 def endtidalproc_co2_prints_message(debug=False):
-    """Test that CO2 mode prints the correct message."""
+    """
+    Test that CO2 mode prints the correct message.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     samplerate = 10.0
     signal, t = _make_co2_signal(samplerate=samplerate, duration=30.0)
     args = _make_default_args(samplerate=samplerate, isoxygen=False)
@@ -490,7 +737,14 @@ def endtidalproc_co2_prints_message(debug=False):
 
 
 def endtidalproc_oxygen_prints_message(debug=False):
-    """Test that oxygen mode prints the correct message."""
+    """
+    Test that oxygen mode prints the correct message.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     samplerate = 10.0
     signal, t = _make_co2_signal(samplerate=samplerate, duration=30.0)
     args = _make_default_args(samplerate=samplerate, isoxygen=True)
@@ -507,7 +761,14 @@ def endtidalproc_oxygen_prints_message(debug=False):
 
 
 def endtidalproc_high_samplerate(debug=False):
-    """Test endtidalproc with a higher sample rate."""
+    """
+    Test endtidalproc with a higher sample rate.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     samplerate = 100.0
     npts = int(samplerate * 30.0)
     t = np.arange(npts) / samplerate
@@ -522,7 +783,14 @@ def endtidalproc_high_samplerate(debug=False):
 
 
 def endtidalproc_no_noise(debug=False):
-    """Test endtidalproc with a clean sinusoidal signal (no noise)."""
+    """
+    Test endtidalproc with a clean sinusoidal signal (no noise).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     samplerate = 10.0
     npts = int(samplerate * 60.0)
     t = np.arange(npts) / samplerate
@@ -542,11 +810,17 @@ def endtidalproc_no_noise(debug=False):
 
 
 def endtidalproc_thresh_attribute_consistency(debug=False):
-    """Verify parser and workflow agree on the thresh attribute name.
+    """
+    Verify parser and workflow agree on the thresh attribute name.
 
     Previously the parser defined dest="thresh" but the workflow referenced
     args.thethresh, causing an AttributeError at runtime. Fixed by changing
     the workflow to use args.thresh.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     parser = _get_parser()
     args = parser.parse_args(["input.txt", "output.txt", "--thresh", "2.0"])
@@ -563,6 +837,14 @@ def endtidalproc_thresh_attribute_consistency(debug=False):
 
 def test_endtidalproc(debug=False):
     # phase tests
+    """
+    Verify endtidalproc.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     phase_scalar(debug=debug)
     phase_array(debug=debug)
     phase_zero(debug=debug)

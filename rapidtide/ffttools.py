@@ -93,9 +93,9 @@ def optfftlen(
     padlen : optional, int
         Number of points the data is symmetrically padded with.  Ensure that
         the optimal length accounts for symmetric padding.  Default is 0.
-    _depth: optional, int
+    _depth : int, optional
          How deep we are in the recursion
-    debug :optional, bool
+    debug : bool, optional
         Print out detailed information about how the length is calculated.  Default is False.
 
     Returns
@@ -153,6 +153,7 @@ def optfftlen(
 
 
 def showfftcache() -> None:
+    """Print the FFT-length cache."""
     print("FFT length cache entries:")
     for key, value in lencache.items():
         print(f"\t{key}: {value}, {primefacs(value)}")

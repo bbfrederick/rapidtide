@@ -51,6 +51,14 @@ class _FlatWave:
     """
 
     def __init__(self, thefunction):
+        """
+        Initialize the test double for ``_FlatWave``.
+
+        Parameters
+        ----------
+        thefunction : object
+            Value supplied as ``thefunction`` by the test case.
+        """
         self.thefunction = thefunction
 
     def yfromx(self, thetimes, debug=False):

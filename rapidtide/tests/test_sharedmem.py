@@ -20,6 +20,14 @@ import rapidtide.util as tide_util
 
 
 def test_numpy2shared(debug=False):
+    """
+    Verify numpy2shared.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     vectorlen = 1000
     for intype in [np.float32, np.float64]:
         sourcevector = np.random.normal(size=vectorlen).astype(intype)
@@ -41,6 +49,14 @@ def test_numpy2shared(debug=False):
 
 
 def test_allocshared(debug=False):
+    """
+    Verify allocshared.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     datashape = (10, 10, 10)
     for outtype in [np.float32, np.float64]:
         destarray, shm = tide_util.allocshared(datashape, outtype)

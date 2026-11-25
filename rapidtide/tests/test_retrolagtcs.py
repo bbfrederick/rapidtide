@@ -35,14 +35,44 @@ from rapidtide.workflows.retrolagtcs import (
 
 
 def _make_mock_header():
-    """Create a mock NIfTI header that supports getitem, setitem, and deepcopy."""
+    """
+    Create a mock NIfTI header that supports getitem, setitem, and deepcopy.
+
+    Returns
+    -------
+    MagicMock
+        Mock object configured for the test case.
+    """
     hdr = MagicMock()
     hdr_data = {}
 
     def getitem(key):
+        """
+        Provide the ``getitem`` test substitute.
+
+        Parameters
+        ----------
+        key : object
+            Value supplied as ``key`` by the test case.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return hdr_data.get(key, None)
 
     def setitem(key, value):
+        """
+        Set up ``setitem`` for the test.
+
+        Parameters
+        ----------
+        key : object
+            Value supplied as ``key`` by the test case.
+        value : object
+            Value supplied as ``value`` by the test case.
+        """
         hdr_data[key] = value
 
     hdr.__getitem__ = MagicMock(side_effect=getitem)
@@ -52,7 +82,19 @@ def _make_mock_header():
 
 
 def _make_default_args(**overrides):
-    """Create default args Namespace for retrolagtcs."""
+    """
+    Create default args Namespace for retrolagtcs.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         fmrifile="fmri.nii.gz",
         maskfile="mask.nii.gz",
@@ -70,9 +112,28 @@ def _make_default_args(**overrides):
 
 
 def _make_mock_nifti_data(xsize=4, ysize=4, numslices=3, timepoints=100, fmritr=2.0):
-    """Create consistent mock data for fMRI, mask, and lagtimes.
+    """
+    Create consistent mock data for fMRI, mask, and lagtimes.
 
     Returns a dict with all the mock objects needed for retrolagtcs.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+    fmritr : float, optional
+        Value supplied as ``fmritr`` by the test case.
+
+    Returns
+    -------
+    dict
+        Values supplied together for the test case.
     """
     numspatiallocs = xsize * ysize * numslices
 
@@ -122,13 +183,43 @@ def _make_mock_nifti_data(xsize=4, ysize=4, numslices=3, timepoints=100, fmritr=
 
 
 def _run_retrolagtcs_with_mocks(args, mock_data, makelagged_side_effect=None):
-    """Run retrolagtcs with fully mocked I/O.
+    """
+    Run retrolagtcs with fully mocked I/O.
 
     Returns a dict with captured calls and data.
+
+    Parameters
+    ----------
+    args : object
+        Arguments passed to the test helper.
+    mock_data : object
+        Test substitute for ``data``.
+    makelagged_side_effect : object or None, optional
+        Value supplied as ``makelagged_side_effect`` by the test case.
+
+    Returns
+    -------
+    dict
+        The ``captured`` value supplied to the caller.
     """
     captured = {"savemaplist_calls": [], "makelaggedtcs_call": None}
 
     def mock_readfromnifti(fname, headeronly=False):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        headeronly : bool, optional
+            Request header information only.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if "fmri" in fname or fname == args.fmrifile:
             return mock_data["fmri"]
         elif "mask" in fname or fname == args.maskfile:
@@ -138,17 +229,78 @@ def _run_retrolagtcs_with_mocks(args, mock_data, makelagged_side_effect=None):
         raise ValueError(f"Unexpected file: {fname}")
 
     def mock_parseniftidims(dims):
+        """
+        Simulate ``parseniftidims`` for the test.
+
+        Parameters
+        ----------
+        dims : array-like
+            Image dimensions.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return int(dims[1]), int(dims[2]), int(dims[3]), int(dims[4])
 
     def mock_parseniftisizes(sizes):
+        """
+        Simulate ``parseniftisizes`` for the test.
+
+        Parameters
+        ----------
+        sizes : array-like
+            Image voxel sizes.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return float(sizes[1]), float(sizes[2]), float(sizes[3]), float(sizes[4])
 
     def mock_checkspacematch(hdr1, hdr2):
+        """
+        Simulate ``checkspacematch`` for the test.
+
+        Parameters
+        ----------
+        hdr1 : object
+            Value supplied as ``hdr1`` by the test case.
+        hdr2 : object
+            Value supplied as ``hdr2`` by the test case.
+
+        Returns
+        -------
+        bool
+            Boolean result supplied by the test substitute.
+        """
         return True
 
     def mock_savemaplist(
         outputname, maplist, validvoxels, destshape, theheader, bidsdict, **kwargs
     ):
+        """
+        Simulate ``savemaplist`` for the test.
+
+        Parameters
+        ----------
+        outputname : path-like
+            Name of the output file.
+        maplist : object
+            Value supplied as ``maplist`` by the test case.
+        validvoxels : object
+            Value supplied as ``validvoxels`` by the test case.
+        destshape : object
+            Value supplied as ``destshape`` by the test case.
+        theheader : object
+            Value supplied as ``theheader`` by the test case.
+        bidsdict : object
+            Value supplied as ``bidsdict`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["savemaplist_calls"].append(
             {
                 "outputname": outputname,
@@ -162,6 +314,29 @@ def _run_retrolagtcs_with_mocks(args, mock_data, makelagged_side_effect=None):
     timepoints = mock_data["timepoints"]
 
     def mock_makelaggedtcs(genlagtc, timeaxis, lagmask, lagtimes, lagtc, **kwargs):
+        """
+        Simulate ``makelaggedtcs`` for the test.
+
+        Parameters
+        ----------
+        genlagtc : object
+            Value supplied as ``genlagtc`` by the test case.
+        timeaxis : numpy.ndarray
+            Sample times of the test signal.
+        lagmask : object
+            Value supplied as ``lagmask`` by the test case.
+        lagtimes : numpy.ndarray
+            Lag values used by the test.
+        lagtc : object
+            Value supplied as ``lagtc`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         captured["makelaggedtcs_call"] = {
             "timeaxis_shape": timeaxis.shape,
             "lagmask_shape": lagmask.shape,
@@ -181,11 +356,45 @@ def _run_retrolagtcs_with_mocks(args, mock_data, makelagged_side_effect=None):
     validtimepoints = timepoints - args.numskip
 
     def mock_allocarray(shape, dtype, shared=False):
+        """
+        Simulate ``allocarray`` for the test.
+
+        Parameters
+        ----------
+        shape : tuple of int
+            Dimensions of the test array.
+        dtype : object
+            Value supplied as ``dtype`` by the test case.
+        shared : bool, optional
+            Setting for ``shared`` in the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return np.zeros(shape, dtype=dtype), None
 
     mock_genlagtc = MagicMock()
 
     def mock_makevoxelspecificderivs(theevs, nderivs=1, debug=False):
+        """
+        Simulate ``makevoxelspecificderivs`` for the test.
+
+        Parameters
+        ----------
+        theevs : object
+            Value supplied as ``theevs`` by the test case.
+        nderivs : int, optional
+            Value supplied as ``nderivs`` by the test case.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        numpy.ndarray
+            Output values supplied to the caller.
+        """
         nvox, ntime = theevs.shape
         result = np.zeros((nvox, ntime, nderivs + 1), dtype=theevs.dtype)
         result[:, :, 0] = theevs
@@ -233,7 +442,14 @@ def _run_retrolagtcs_with_mocks(args, mock_data, makelagged_side_effect=None):
 
 
 def parser_basic(debug=False):
-    """Test that _get_parser returns a valid parser."""
+    """
+    Test that _get_parser returns a valid parser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
     assert parser.prog == "retrolagtcs"
@@ -243,7 +459,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
-    """Test that parser requires all five positional arguments."""
+    """
+    Test that parser requires all five positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
 
     # no args
@@ -271,7 +494,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
-    """Test default values from the parser."""
+    """
+    Test default values from the parser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     # fmrifile uses is_valid_file validation, so we need a real file for that arg
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
@@ -292,7 +522,14 @@ def parser_defaults(debug=False):
 
 
 def parser_regressderivs(debug=False):
-    """Test --regressderivs option."""
+    """
+    Test --regressderivs option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
         args = parser.parse_args(
@@ -313,7 +550,14 @@ def parser_regressderivs(debug=False):
 
 
 def parser_nprocs(debug=False):
-    """Test --nprocs option."""
+    """
+    Test --nprocs option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
         args = parser.parse_args(
@@ -334,7 +578,14 @@ def parser_nprocs(debug=False):
 
 
 def parser_numskip(debug=False):
-    """Test --numskip option."""
+    """
+    Test --numskip option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
         args = parser.parse_args(
@@ -355,7 +606,14 @@ def parser_numskip(debug=False):
 
 
 def parser_noprogressbar(debug=False):
-    """Test --noprogressbar flag."""
+    """
+    Test --noprogressbar flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
         args = parser.parse_args(
@@ -375,7 +633,14 @@ def parser_noprogressbar(debug=False):
 
 
 def parser_debug(debug=False):
-    """Test --debug flag."""
+    """
+    Test --debug flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".nii.gz") as f:
         args = parser.parse_args(
@@ -395,7 +660,14 @@ def parser_debug(debug=False):
 
 
 def parser_fmrifile_validation(debug=False):
-    """Test that fmrifile must exist (is_valid_file check)."""
+    """
+    Test that fmrifile must exist (is_valid_file check).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args(
@@ -413,7 +685,14 @@ def parser_fmrifile_validation(debug=False):
 
 
 def parser_default_constant(debug=False):
-    """Test that DEFAULT_REGRESSIONFILTDERIVS is 0."""
+    """
+    Test that DEFAULT_REGRESSIONFILTDERIVS is 0.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     assert DEFAULT_REGRESSIONFILTDERIVS == 0
 
     if debug:
@@ -424,7 +703,14 @@ def parser_default_constant(debug=False):
 
 
 def retrolagtcs_basic(debug=False):
-    """Test basic retrolagtcs workflow with default settings."""
+    """
+    Test basic retrolagtcs workflow with default settings.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args()
 
@@ -445,7 +731,14 @@ def retrolagtcs_basic(debug=False):
 
 
 def retrolagtcs_makelaggedtcs_args(debug=False):
-    """Test that makelaggedtcs is called with correct array shapes."""
+    """
+    Test that makelaggedtcs is called with correct array shapes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data(xsize=4, ysize=4, numslices=3, timepoints=100)
     args = _make_default_args()
 
@@ -469,7 +762,14 @@ def retrolagtcs_makelaggedtcs_args(debug=False):
 
 
 def retrolagtcs_numskip(debug=False):
-    """Test that numskip reduces validtimepoints correctly."""
+    """
+    Test that numskip reduces validtimepoints correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data(timepoints=100)
     args = _make_default_args(numskip=10)
 
@@ -489,7 +789,14 @@ def retrolagtcs_numskip(debug=False):
 
 
 def retrolagtcs_voxel_selection(debug=False):
-    """Test that only masked voxels are selected."""
+    """
+    Test that only masked voxels are selected.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args()
 
@@ -506,7 +813,14 @@ def retrolagtcs_voxel_selection(debug=False):
 
 
 def retrolagtcs_no_derivs(debug=False):
-    """Test retrolagtcs with regressderivs=0 (single EV path)."""
+    """
+    Test retrolagtcs with regressderivs=0 (single EV path).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args(regressderivs=0)
 
@@ -525,7 +839,14 @@ def retrolagtcs_no_derivs(debug=False):
 
 
 def retrolagtcs_with_derivs(debug=False):
-    """Test retrolagtcs with regressderivs > 0 (multiple EV path)."""
+    """
+    Test retrolagtcs with regressderivs > 0 (multiple EV path).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args(regressderivs=2)
 
@@ -546,7 +867,14 @@ def retrolagtcs_with_derivs(debug=False):
 
 
 def retrolagtcs_with_one_deriv(debug=False):
-    """Test retrolagtcs with regressderivs=1."""
+    """
+    Test retrolagtcs with regressderivs=1.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args(regressderivs=1)
 
@@ -562,7 +890,14 @@ def retrolagtcs_with_one_deriv(debug=False):
 
 
 def retrolagtcs_debug_mode(debug=False):
-    """Test retrolagtcs with debug=True produces extra savemaplist call."""
+    """
+    Test retrolagtcs with debug=True produces extra savemaplist call.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args(debug=True)
 
@@ -590,7 +925,14 @@ def retrolagtcs_debug_mode(debug=False):
 
 
 def retrolagtcs_debug_output(debug=False):
-    """Test that debug mode prints extra information."""
+    """
+    Test that debug mode prints extra information.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args(debug=True)
 
@@ -608,18 +950,55 @@ def retrolagtcs_debug_output(debug=False):
 
 
 def retrolagtcs_space_mismatch_mask(debug=False):
-    """Test that retrolagtcs raises ValueError on mask spatial mismatch."""
+    """
+    Test that retrolagtcs raises ValueError on mask spatial mismatch.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args()
 
     call_count = [0]
 
     def mock_checkspacematch(hdr1, hdr2):
+        """
+        Simulate ``checkspacematch`` for the test.
+
+        Parameters
+        ----------
+        hdr1 : object
+            Value supplied as ``hdr1`` by the test case.
+        hdr2 : object
+            Value supplied as ``hdr2`` by the test case.
+
+        Returns
+        -------
+        bool
+            Boolean result supplied by the test substitute.
+        """
         call_count[0] += 1
         # fail on first call (mask check)
         return False
 
     def mock_readfromnifti(fname, headeronly=False):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        headeronly : bool, optional
+            Request header information only.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if fname == args.fmrifile:
             return mock_data["fmri"]
         elif fname == args.maskfile:
@@ -629,9 +1008,35 @@ def retrolagtcs_space_mismatch_mask(debug=False):
         raise ValueError(f"Unexpected file: {fname}")
 
     def mock_parseniftidims(dims):
+        """
+        Simulate ``parseniftidims`` for the test.
+
+        Parameters
+        ----------
+        dims : array-like
+            Image dimensions.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return int(dims[1]), int(dims[2]), int(dims[3]), int(dims[4])
 
     def mock_parseniftisizes(sizes):
+        """
+        Simulate ``parseniftisizes`` for the test.
+
+        Parameters
+        ----------
+        sizes : array-like
+            Image voxel sizes.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return float(sizes[1]), float(sizes[2]), float(sizes[3]), float(sizes[4])
 
     with pytest.raises(ValueError, match="procmask dimensions do not match"):
@@ -660,19 +1065,56 @@ def retrolagtcs_space_mismatch_mask(debug=False):
 
 
 def retrolagtcs_space_mismatch_lagtimes(debug=False):
-    """Test that retrolagtcs raises ValueError on lagtimes spatial mismatch."""
+    """
+    Test that retrolagtcs raises ValueError on lagtimes spatial mismatch.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args()
 
     call_count = [0]
 
     def mock_checkspacematch(hdr1, hdr2):
+        """
+        Simulate ``checkspacematch`` for the test.
+
+        Parameters
+        ----------
+        hdr1 : object
+            Value supplied as ``hdr1`` by the test case.
+        hdr2 : object
+            Value supplied as ``hdr2`` by the test case.
+
+        Returns
+        -------
+        bool
+            Boolean result supplied by the test substitute.
+        """
         call_count[0] += 1
         if call_count[0] == 1:
             return True  # mask check passes
         return False  # lagtimes check fails
 
     def mock_readfromnifti(fname, headeronly=False):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        headeronly : bool, optional
+            Request header information only.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if fname == args.fmrifile:
             return mock_data["fmri"]
         elif fname == args.maskfile:
@@ -682,9 +1124,35 @@ def retrolagtcs_space_mismatch_lagtimes(debug=False):
         raise ValueError(f"Unexpected file: {fname}")
 
     def mock_parseniftidims(dims):
+        """
+        Simulate ``parseniftidims`` for the test.
+
+        Parameters
+        ----------
+        dims : array-like
+            Image dimensions.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return int(dims[1]), int(dims[2]), int(dims[3]), int(dims[4])
 
     def mock_parseniftisizes(sizes):
+        """
+        Simulate ``parseniftisizes`` for the test.
+
+        Parameters
+        ----------
+        sizes : array-like
+            Image voxel sizes.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return float(sizes[1]), float(sizes[2]), float(sizes[3]), float(sizes[4])
 
     with pytest.raises(ValueError, match="lagtimes dimensions do not match"):
@@ -713,7 +1181,14 @@ def retrolagtcs_space_mismatch_lagtimes(debug=False):
 
 
 def retrolagtcs_nprocs_auto(debug=False):
-    """Test that nprocs < 1 triggers maxcpus() and shared memory."""
+    """
+    Test that nprocs < 1 triggers maxcpus() and shared memory.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args(nprocs=-1)
 
@@ -723,6 +1198,21 @@ def retrolagtcs_nprocs_auto(debug=False):
     original_run = _run_retrolagtcs_with_mocks
 
     def mock_readfromnifti(fname, headeronly=False):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        headeronly : bool, optional
+            Request header information only.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if fname == args.fmrifile:
             return mock_data["fmri"]
         elif fname == args.maskfile:
@@ -732,15 +1222,81 @@ def retrolagtcs_nprocs_auto(debug=False):
         raise ValueError(f"Unexpected file: {fname}")
 
     def mock_parseniftidims(dims):
+        """
+        Simulate ``parseniftidims`` for the test.
+
+        Parameters
+        ----------
+        dims : array-like
+            Image dimensions.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return int(dims[1]), int(dims[2]), int(dims[3]), int(dims[4])
 
     def mock_parseniftisizes(sizes):
+        """
+        Simulate ``parseniftisizes`` for the test.
+
+        Parameters
+        ----------
+        sizes : array-like
+            Image voxel sizes.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return float(sizes[1]), float(sizes[2]), float(sizes[3]), float(sizes[4])
 
     def mock_allocarray(shape, dtype, shared=False):
+        """
+        Simulate ``allocarray`` for the test.
+
+        Parameters
+        ----------
+        shape : tuple of int
+            Dimensions of the test array.
+        dtype : object
+            Value supplied as ``dtype`` by the test case.
+        shared : bool, optional
+            Setting for ``shared`` in the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return np.zeros(shape, dtype=dtype), MagicMock() if shared else None
 
     def mock_makelaggedtcs(genlagtc, timeaxis, lagmask, lagtimes, lagtc, **kwargs):
+        """
+        Simulate ``makelaggedtcs`` for the test.
+
+        Parameters
+        ----------
+        genlagtc : object
+            Value supplied as ``genlagtc`` by the test case.
+        timeaxis : numpy.ndarray
+            Sample times of the test signal.
+        lagmask : object
+            Value supplied as ``lagmask`` by the test case.
+        lagtimes : numpy.ndarray
+            Lag values used by the test.
+        lagtc : object
+            Value supplied as ``lagtc`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         for i in range(lagtc.shape[0]):
             lagtc[i, :] = np.sin(2 * np.pi * 0.1 * np.arange(lagtc.shape[1]))
         return lagmask.shape[0]
@@ -790,11 +1346,33 @@ def retrolagtcs_nprocs_auto(debug=False):
 
 
 def retrolagtcs_single_proc_no_shm(debug=False):
-    """Test that nprocs=1 does not use shared memory or cleanup."""
+    """
+    Test that nprocs=1 does not use shared memory or cleanup.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args(nprocs=1)
 
     def mock_readfromnifti(fname, headeronly=False):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        headeronly : bool, optional
+            Request header information only.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if fname == args.fmrifile:
             return mock_data["fmri"]
         elif fname == args.maskfile:
@@ -804,16 +1382,82 @@ def retrolagtcs_single_proc_no_shm(debug=False):
         raise ValueError(f"Unexpected file: {fname}")
 
     def mock_parseniftidims(dims):
+        """
+        Simulate ``parseniftidims`` for the test.
+
+        Parameters
+        ----------
+        dims : array-like
+            Image dimensions.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return int(dims[1]), int(dims[2]), int(dims[3]), int(dims[4])
 
     def mock_parseniftisizes(sizes):
+        """
+        Simulate ``parseniftisizes`` for the test.
+
+        Parameters
+        ----------
+        sizes : array-like
+            Image voxel sizes.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return float(sizes[1]), float(sizes[2]), float(sizes[3]), float(sizes[4])
 
     def mock_allocarray(shape, dtype, shared=False):
+        """
+        Simulate ``allocarray`` for the test.
+
+        Parameters
+        ----------
+        shape : tuple of int
+            Dimensions of the test array.
+        dtype : object
+            Value supplied as ``dtype`` by the test case.
+        shared : bool, optional
+            Setting for ``shared`` in the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         assert not shared, "Single-proc should not use shared memory"
         return np.zeros(shape, dtype=dtype), None
 
     def mock_makelaggedtcs(genlagtc, timeaxis, lagmask, lagtimes, lagtc, **kwargs):
+        """
+        Simulate ``makelaggedtcs`` for the test.
+
+        Parameters
+        ----------
+        genlagtc : object
+            Value supplied as ``genlagtc`` by the test case.
+        timeaxis : numpy.ndarray
+            Sample times of the test signal.
+        lagmask : object
+            Value supplied as ``lagmask`` by the test case.
+        lagtimes : numpy.ndarray
+            Lag values used by the test.
+        lagtc : object
+            Value supplied as ``lagtc`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         for i in range(lagtc.shape[0]):
             lagtc[i, :] = 0.0
         return lagmask.shape[0]
@@ -853,7 +1497,14 @@ def retrolagtcs_single_proc_no_shm(debug=False):
 
 
 def retrolagtcs_output_root(debug=False):
-    """Test that output files use the correct outputroot."""
+    """
+    Test that output files use the correct outputroot.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args(outputroot="/tmp/myanalysis/results")
 
@@ -867,7 +1518,14 @@ def retrolagtcs_output_root(debug=False):
 
 
 def retrolagtcs_bids_metadata(debug=False):
-    """Test that BIDS metadata includes correct raw sources."""
+    """
+    Test that BIDS metadata includes correct raw sources.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args(
         fmrifile="/data/fmri.nii.gz",
@@ -883,9 +1541,44 @@ def retrolagtcs_bids_metadata(debug=False):
     def mock_savemaplist(
         outputname, maplist, validvoxels, destshape, theheader, bidsdict, **kwargs
     ):
+        """
+        Simulate ``savemaplist`` for the test.
+
+        Parameters
+        ----------
+        outputname : path-like
+            Name of the output file.
+        maplist : object
+            Value supplied as ``maplist`` by the test case.
+        validvoxels : object
+            Value supplied as ``validvoxels`` by the test case.
+        destshape : object
+            Value supplied as ``destshape`` by the test case.
+        theheader : object
+            Value supplied as ``theheader`` by the test case.
+        bidsdict : object
+            Value supplied as ``bidsdict`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         saved_bidsdicts.append(bidsdict.copy())
 
     def mock_readfromnifti(fname, headeronly=False):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        headeronly : bool, optional
+            Request header information only.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if fname == args.fmrifile:
             return mock_data["fmri"]
         elif fname == args.maskfile:
@@ -895,15 +1588,81 @@ def retrolagtcs_bids_metadata(debug=False):
         raise ValueError(f"Unexpected file: {fname}")
 
     def mock_parseniftidims(dims):
+        """
+        Simulate ``parseniftidims`` for the test.
+
+        Parameters
+        ----------
+        dims : array-like
+            Image dimensions.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return int(dims[1]), int(dims[2]), int(dims[3]), int(dims[4])
 
     def mock_parseniftisizes(sizes):
+        """
+        Simulate ``parseniftisizes`` for the test.
+
+        Parameters
+        ----------
+        sizes : array-like
+            Image voxel sizes.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return float(sizes[1]), float(sizes[2]), float(sizes[3]), float(sizes[4])
 
     def mock_allocarray(shape, dtype, shared=False):
+        """
+        Simulate ``allocarray`` for the test.
+
+        Parameters
+        ----------
+        shape : tuple of int
+            Dimensions of the test array.
+        dtype : object
+            Value supplied as ``dtype`` by the test case.
+        shared : bool, optional
+            Setting for ``shared`` in the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return np.zeros(shape, dtype=dtype), None
 
     def mock_makelaggedtcs(genlagtc, timeaxis, lagmask, lagtimes, lagtc, **kwargs):
+        """
+        Simulate ``makelaggedtcs`` for the test.
+
+        Parameters
+        ----------
+        genlagtc : object
+            Value supplied as ``genlagtc`` by the test case.
+        timeaxis : numpy.ndarray
+            Sample times of the test signal.
+        lagmask : object
+            Value supplied as ``lagmask`` by the test case.
+        lagtimes : numpy.ndarray
+            Lag values used by the test.
+        lagtc : object
+            Value supplied as ``lagtc`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         for i in range(lagtc.shape[0]):
             lagtc[i, :] = 0.0
         return lagmask.shape[0]
@@ -947,7 +1706,14 @@ def retrolagtcs_bids_metadata(debug=False):
 
 
 def retrolagtcs_validvoxels_passed_to_savemaplist(debug=False):
-    """Test that validvoxels array is correctly passed to savemaplist."""
+    """
+    Test that validvoxels array is correctly passed to savemaplist.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args()
 
@@ -963,7 +1729,14 @@ def retrolagtcs_validvoxels_passed_to_savemaplist(debug=False):
 
 
 def retrolagtcs_prints_progress(debug=False):
-    """Test that retrolagtcs prints progress messages."""
+    """
+    Test that retrolagtcs prints progress messages.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data()
     args = _make_default_args()
 
@@ -986,7 +1759,14 @@ def retrolagtcs_prints_progress(debug=False):
 
 
 def retrolagtcs_different_spatial_dims(debug=False):
-    """Test retrolagtcs with non-square spatial dimensions."""
+    """
+    Test retrolagtcs with non-square spatial dimensions.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data(xsize=8, ysize=6, numslices=2, timepoints=50)
     args = _make_default_args()
 
@@ -1000,13 +1780,43 @@ def retrolagtcs_different_spatial_dims(debug=False):
 
 
 def retrolagtcs_fmri_time_axis(debug=False):
-    """Test that the fMRI time axis is constructed correctly."""
+    """
+    Test that the fMRI time axis is constructed correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     mock_data = _make_mock_nifti_data(timepoints=100, fmritr=2.0)
     args = _make_default_args(numskip=5)
 
     captured_timeaxis = {}
 
     def mock_makelaggedtcs(genlagtc, timeaxis, lagmask, lagtimes, lagtc, **kwargs):
+        """
+        Simulate ``makelaggedtcs`` for the test.
+
+        Parameters
+        ----------
+        genlagtc : object
+            Value supplied as ``genlagtc`` by the test case.
+        timeaxis : numpy.ndarray
+            Sample times of the test signal.
+        lagmask : object
+            Value supplied as ``lagmask`` by the test case.
+        lagtimes : numpy.ndarray
+            Lag values used by the test.
+        lagtc : object
+            Value supplied as ``lagtc`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         captured_timeaxis["timeaxis"] = timeaxis.copy()
         for i in range(lagtc.shape[0]):
             lagtc[i, :] = 0.0
@@ -1034,6 +1844,14 @@ def retrolagtcs_fmri_time_axis(debug=False):
 
 def test_retrolagtcs(debug=False):
     # parser tests
+    """
+    Verify retrolagtcs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_defaults(debug=debug)

@@ -25,6 +25,14 @@ from rapidtide.tests.utils import mse
 
 
 def test_doresample(debug=False):
+    """
+    Verify doresample.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     tr = 1.0
     padtime = 30.0
     padlen = int(padtime // tr)

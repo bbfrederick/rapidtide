@@ -128,7 +128,16 @@ def _makeparcelciftifile(thedir, thename="parcel", numverts=12, numtimes=10, the
 
 
 def readfromcifti_dense(tmpdir, debug=False):
-    """A dense series is read transposed, space-major, with the TR recovered."""
+    """
+    A dense series is read transposed, space-major, with the TR recovered.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readfromcifti_dense")
 
@@ -153,11 +162,20 @@ def readfromcifti_dense(tmpdir, debug=False):
 
 
 def readfromcifti_parcellated(tmpdir, debug=False):
-    """A parcellated series carries a different intent code, and the reader only
+    """
+    A parcellated series carries a different intent code, and the reader only
     goes looking for a TR when the intent says the file is a dense series.
 
     So a ptseries comes back with no timestep at all, even though its SeriesAxis
-    knows perfectly well what the spacing is."""
+    knows perfectly well what the spacing is.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readfromcifti_parcellated")
 
@@ -169,7 +187,16 @@ def readfromcifti_parcellated(tmpdir, debug=False):
 
 
 def readfromcifti_finds_the_extension(tmpdir, debug=False):
-    """A CIFTI name may be given without its .nii, as elsewhere in the module."""
+    """
+    A CIFTI name may be given without its .nii, as elsewhere in the module.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readfromcifti_finds_the_extension")
 
@@ -180,7 +207,16 @@ def readfromcifti_finds_the_extension(tmpdir, debug=False):
 
 
 def readfromcifti_missing(tmpdir, debug=False):
-    """A name that resolves to nothing is an error, not an empty result."""
+    """
+    A name that resolves to nothing is an error, not an empty result.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readfromcifti_missing")
 
@@ -192,7 +228,16 @@ def readfromcifti_missing(tmpdir, debug=False):
 
 
 def getciftitr_reads_the_series_axis(tmpdir, debug=False):
-    """The TR is the gap between the first two elements of the series axis."""
+    """
+    The TR is the gap between the first two elements of the series axis.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getciftitr_reads_the_series_axis")
 
@@ -205,8 +250,17 @@ def getciftitr_reads_the_series_axis(tmpdir, debug=False):
 
 
 def getciftitr_needs_a_series_axis(tmpdir, debug=False):
-    """A scalar file has no time axis, so there is no TR to report and the routine
-    gives up rather than inventing one."""
+    """
+    A scalar file has no time axis, so there is no TR to report and the routine
+    gives up rather than inventing one.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getciftitr_needs_a_series_axis")
 
@@ -232,8 +286,17 @@ def getciftitr_needs_a_series_axis(tmpdir, debug=False):
 
 
 def checkifcifti_recognises_a_cifti(tmpdir, debug=False):
-    """The test is the nifti intent code, which is how a CIFTI announces itself
-    while still being, on disk, a nifti file."""
+    """
+    The test is the nifti intent code, which is how a CIFTI announces itself
+    while still being, on disk, a nifti file.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkifcifti_recognises_a_cifti")
 
@@ -267,7 +330,16 @@ def _roundtripcifti(thepath):
 
 
 def savetocifti_dense_roundtrip(tmpdir, debug=False):
-    """A dense file written back out has to survive being read again unchanged."""
+    """
+    A dense file written back out has to survive being read again unchanged.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savetocifti_dense_roundtrip")
 
@@ -288,7 +360,16 @@ def savetocifti_dense_roundtrip(tmpdir, debug=False):
 
 
 def savetocifti_dense_scalar(tmpdir, debug=False):
-    """A single map is a dscalar, and the supplied names become its scalar axis."""
+    """
+    A single map is a dscalar, and the supplied names become its scalar axis.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savetocifti_dense_scalar")
 
@@ -314,7 +395,16 @@ def savetocifti_dense_scalar(tmpdir, debug=False):
 
 
 def savetocifti_parcellated_roundtrip(tmpdir, debug=False):
-    """A parcellated source picks the p-flavoured suffixes on the way back out."""
+    """
+    A parcellated source picks the p-flavoured suffixes on the way back out.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savetocifti_parcellated_roundtrip")
 
@@ -335,7 +425,16 @@ def savetocifti_parcellated_roundtrip(tmpdir, debug=False):
 
 
 def savetocifti_checks_the_name_count(tmpdir, debug=False):
-    """One name per map, or the scalar axis and the data would disagree."""
+    """
+    One name per map, or the scalar axis and the data would disagree.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savetocifti_checks_the_name_count")
 
@@ -365,14 +464,22 @@ class _NoModelAxisHeader:
 
         @staticmethod
         def get_axis(theindex):
-            """Never called - there are no indices to ask about."""
+            """
+            Never called - there are no indices to ask about.
+
+            Parameters
+            ----------
+            theindex : object
+                Value supplied as ``theindex`` by the test case.
+            """
             raise AssertionError("there are no axes to fetch")
 
     matrix = _Matrix()
 
 
 def savetocifti_without_a_model_axis_raises_the_wrong_error(tmpdir, debug=False):
-    """A source with no BrainModelAxis and no ParcelsAxis fails with an
+    """
+    A source with no BrainModelAxis and no ParcelsAxis fails with an
     UnboundLocalError, not the KeyError the code intends.
 
     Pinned, not fixed.  ``modelaxis`` is preset to None before the axis scan, but
@@ -382,6 +489,13 @@ def savetocifti_without_a_model_axis_raises_the_wrong_error(tmpdir, debug=False)
     source file - exiting")`` a few lines below.  Both KeyError arms are therefore
     dead code, and a caller handed a malformed CIFTI sees an error that names a local
     variable rather than the problem with their file.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("savetocifti_without_a_model_axis_raises_the_wrong_error")
@@ -410,8 +524,17 @@ def savetocifti_without_a_model_axis_raises_the_wrong_error(tmpdir, debug=False)
 
 
 def savemaplist_cifti(tmpdir, debug=False):
-    """savemaplist is how a workflow writes its output maps, and it has to be able
-    to put them in the same format the input arrived in."""
+    """
+    Savemaplist is how a workflow writes its output maps, and it has to be able
+    to put them in the same format the input arrived in.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savemaplist_cifti")
 
@@ -453,7 +576,16 @@ def savemaplist_cifti(tmpdir, debug=False):
 
 
 def savemaplist_cifti_series(tmpdir, debug=False):
-    """A map with a time dimension goes out as a dtseries rather than a dscalar."""
+    """
+    A map with a time dimension goes out as a dtseries rather than a dscalar.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savemaplist_cifti_series")
 
@@ -478,7 +610,16 @@ def savemaplist_cifti_series(tmpdir, debug=False):
 
 
 def savemaplist_extraheaderinfo(tmpdir, debug=False):
-    """A six element entry carries extra sidecar keys, merged over the base dict."""
+    """
+    A six element entry carries extra sidecar keys, merged over the base dict.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savemaplist_extraheaderinfo")
 
@@ -501,8 +642,17 @@ def savemaplist_extraheaderinfo(tmpdir, debug=False):
 
 
 def savemaplist_rejects_a_malformed_entry(tmpdir, debug=False):
-    """Anything other than a five or six element entry is a programming error in the
-    caller, and has to be reported as one rather than silently unpacked."""
+    """
+    Anything other than a five or six element entry is a programming error in the
+    caller, and has to be reported as one rather than silently unpacked.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savemaplist_rejects_a_malformed_entry")
 
@@ -553,7 +703,8 @@ def _writefslmat(thedir, thename="design", thedata=None):
 
 
 def _writefsf(theroot, theevs, numreal=None):
-    """Write a .fsf design file declaring the given EVs.
+    """
+    Write a .fsf design file declaring the given EVs.
 
     Parameters
     ----------
@@ -564,10 +715,6 @@ def _writefsf(theroot, theevs, numreal=None):
     numreal : int, optional
         Value to declare for fmri(evs_real).  Defaults to the true count, which is
         one column per EV plus one more for each EV with its derivative on.
-
-    Returns
-    -------
-    None
     """
     if numreal is None:
         numreal = len(theevs) + sum(1 for dummy, thederiv in theevs if thederiv)
@@ -582,7 +729,16 @@ def _writefsf(theroot, theevs, numreal=None):
 
 
 def readfslmat_without_a_design_file(tmpdir, debug=False):
-    """With no .fsf alongside it, the columns get synthetic names."""
+    """
+    With no .fsf alongside it, the columns get synthetic names.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readfslmat_without_a_design_file")
 
@@ -595,11 +751,19 @@ def readfslmat_without_a_design_file(tmpdir, debug=False):
 
 
 def readfslmat_with_a_design_file(tmpdir, debug=False):
-    """The .fsf supplies the names the .mat itself does not carry.
+    """
+    The .fsf supplies the names the .mat itself does not carry.
 
     An EV with its temporal derivative switched on contributes two columns, and the
     second has to be named so the two lists stay aligned - otherwise every column
     after the first derivative would be mislabelled.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("readfslmat_with_a_design_file")
@@ -617,8 +781,17 @@ def readfslmat_with_a_design_file(tmpdir, debug=False):
 
 
 def readfslmatEVlabels_refuses_a_mismatch(tmpdir, debug=False):
-    """If the recovered names do not account for every real EV the mapping cannot be
-    trusted, so no names are returned at all rather than a partial guess."""
+    """
+    If the recovered names do not account for every real EV the mapping cannot be
+    trusted, so no names are returned at all rather than a partial guess.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readfslmatEVlabels_refuses_a_mismatch")
 
@@ -630,7 +803,16 @@ def readfslmatEVlabels_refuses_a_mismatch(tmpdir, debug=False):
 
 
 def readfslmat_falls_back_when_the_labels_are_unusable(tmpdir, debug=False):
-    """An unusable .fsf must not break the read - the data is still there."""
+    """
+    An unusable .fsf must not break the read - the data is still there.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readfslmat_falls_back_when_the_labels_are_unusable")
 
@@ -644,7 +826,16 @@ def readfslmat_falls_back_when_the_labels_are_unusable(tmpdir, debug=False):
 
 
 def readfslmat_missing(tmpdir, debug=False):
-    """A .mat that is not there is an error naming the file that is missing."""
+    """
+    A .mat that is not there is an error naming the file that is missing.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readfslmat_missing")
 
@@ -656,7 +847,16 @@ def readfslmat_missing(tmpdir, debug=False):
 
 
 def readvectorsfromtextfile_plaintext(tmpdir, debug=False):
-    """A bare text file knows nothing about itself: no rate, no names, no start."""
+    """
+    A bare text file knows nothing about itself: no rate, no names, no start.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readvectorsfromtextfile_plaintext")
 
@@ -674,7 +874,16 @@ def readvectorsfromtextfile_plaintext(tmpdir, debug=False):
 
 
 def readvectorsfromtextfile_plaintext_onecol(tmpdir, debug=False):
-    """onecol flattens the result, and refuses a file that offers a choice."""
+    """
+    Onecol flattens the result, and refuses a file that offers a choice.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readvectorsfromtextfile_plaintext_onecol")
 
@@ -693,8 +902,17 @@ def readvectorsfromtextfile_plaintext_onecol(tmpdir, debug=False):
 
 
 def readvectorsfromtextfile_plaintsv(tmpdir, debug=False):
-    """A .tsv with a header row but no .json sidecar is a plain tsv: named columns,
-    but still no sample rate."""
+    """
+    A .tsv with a header row but no .json sidecar is a plain tsv: named columns,
+    but still no sample rate.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readvectorsfromtextfile_plaintsv")
 
@@ -715,8 +933,17 @@ def readvectorsfromtextfile_plaintsv(tmpdir, debug=False):
 
 
 def readvectorsfromtextfile_plaintsv_colspec(tmpdir, debug=False):
-    """A column can be picked by name or by position, and asking for one that is not
-    there stops the run rather than returning something arbitrary."""
+    """
+    A column can be picked by name or by position, and asking for one that is not
+    there stops the run rather than returning something arbitrary.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readvectorsfromtextfile_plaintsv_colspec")
 
@@ -742,8 +969,17 @@ def readvectorsfromtextfile_plaintsv_colspec(tmpdir, debug=False):
 
 
 def readvectorsfromtextfile_bidscontinuous(tmpdir, debug=False):
-    """A .json sidecar promotes the same .tsv to a BIDS continuous file, which does
-    know its sample rate and start time."""
+    """
+    A .json sidecar promotes the same .tsv to a BIDS continuous file, which does
+    know its sample rate and start time.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readvectorsfromtextfile_bidscontinuous")
 
@@ -764,7 +1000,16 @@ def readvectorsfromtextfile_bidscontinuous(tmpdir, debug=False):
 
 
 def readvectorsfromtextfile_bidscontinuous_colspec(tmpdir, debug=False):
-    """Named and numbered column specs both work, and a name that is absent raises."""
+    """
+    Named and numbered column specs both work, and a name that is absent raises.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readvectorsfromtextfile_bidscontinuous_colspec")
 
@@ -786,7 +1031,16 @@ def readvectorsfromtextfile_bidscontinuous_colspec(tmpdir, debug=False):
 
 
 def readvectorsfromtextfile_csv(tmpdir, debug=False):
-    """A .csv is read through the csv reader, keyed by its header names."""
+    """
+    A .csv is read through the csv reader, keyed by its header names.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readvectorsfromtextfile_csv")
 
@@ -815,11 +1069,19 @@ def readvectorsfromtextfile_csv(tmpdir, debug=False):
 
 
 def readvectorsfromtextfile_fslmat(tmpdir, debug=False):
-    """An FSL design.mat is recognised by extension and read as a table.
+    """
+    An FSL design.mat is recognised by extension and read as a table.
 
     Its columns have synthetic names, so a numeric colspec has to be expanded into
     one of those names before it can be looked up - the fallback that makes
     ``design.mat:1`` mean the second column.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("readvectorsfromtextfile_fslmat")
@@ -867,7 +1129,16 @@ def _write4dnifti(thedir, thename="split4d", theshape=(3, 4, 2, 5)):
 
 
 def niftisplit_along_time(tmpdir, debug=False):
-    """Splitting on the time axis is what a 4D file is normally split for."""
+    """
+    Splitting on the time axis is what a 4D file is normally split for.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftisplit_along_time")
 
@@ -882,7 +1153,16 @@ def niftisplit_along_time(tmpdir, debug=False):
 
 
 def niftisplit_along_other_axes(tmpdir, debug=False):
-    """Every spatial axis is splittable too, and each takes its own branch."""
+    """
+    Every spatial axis is splittable too, and each takes its own branch.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftisplit_along_other_axes")
 
@@ -895,7 +1175,16 @@ def niftisplit_along_other_axes(tmpdir, debug=False):
 
 
 def niftisplit_rejects_a_bad_axis(tmpdir, debug=False):
-    """A 4D file has no fifth axis to split along."""
+    """
+    A 4D file has no fifth axis to split along.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftisplit_rejects_a_bad_axis")
 
@@ -908,7 +1197,16 @@ def niftisplit_rejects_a_bad_axis(tmpdir, debug=False):
 
 
 def writebidstsv_checks_the_column_count(tmpdir, debug=False):
-    """One name per row of data, since the names become the tsv header."""
+    """
+    One name per row of data, since the names become the tsv header.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writebidstsv_checks_the_column_count")
 
@@ -918,8 +1216,17 @@ def writebidstsv_checks_the_column_count(tmpdir, debug=False):
 
 
 def writebidstsv_refuses_an_incompatible_append(tmpdir, debug=False):
-    """Appending a column to an existing file only makes sense if the two share a
-    time axis; otherwise the merged file would silently misalign."""
+    """
+    Appending a column to an existing file only makes sense if the two share a
+    time axis; otherwise the merged file would silently misalign.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writebidstsv_refuses_an_incompatible_append")
 
@@ -940,8 +1247,17 @@ def writebidstsv_refuses_an_incompatible_append(tmpdir, debug=False):
 
 
 def writebidstsv_append_preserves_extra_header_info(tmpdir, debug=False):
-    """Keys already in the sidecar survive an append, so metadata written by an
-    earlier pass is not lost when a later pass adds a column."""
+    """
+    Keys already in the sidecar survive an append, so metadata written by an
+    earlier pass is not lost when a later pass adds a column.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writebidstsv_append_preserves_extra_header_info")
 
@@ -972,12 +1288,20 @@ def writebidstsv_append_preserves_extra_header_info(tmpdir, debug=False):
 
 
 def readvecs_rejects_out_of_range_columns(tmpdir, debug=False):
-    """A column index past the end of the file is a caller error.
+    """
+    A column index past the end of the file is a caller error.
 
     Two guards sit next to each other here: one compares the last requested column
     against the column count and exits, the other compares the largest requested
     column against the last valid index and raises.  Which one fires depends on
     whether the index is one past the end or further out, so both are checked.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("readvecs_rejects_out_of_range_columns")
@@ -995,7 +1319,16 @@ def readvecs_rejects_out_of_range_columns(tmpdir, debug=False):
 
 
 def readcolfromtextfile_wants_exactly_one_column(tmpdir, debug=False):
-    """The routine returns a single vector, so a spec matching several is refused."""
+    """
+    The routine returns a single vector, so a spec matching several is refused.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readcolfromtextfile_wants_exactly_one_column")
 
@@ -1014,8 +1347,17 @@ def readcolfromtextfile_wants_exactly_one_column(tmpdir, debug=False):
 
 
 def savetonifti_rejects_an_unsupported_dtype(tmpdir, debug=False):
-    """The datatype code written into the header is looked up from a fixed table, so
-    a type with no entry has to be refused rather than written with a wrong code."""
+    """
+    The datatype code written into the header is looked up from a fixed table, so
+    a type with no entry has to be refused rather than written with a wrong code.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savetonifti_rejects_an_unsupported_dtype")
 
@@ -1030,7 +1372,16 @@ def savetonifti_rejects_an_unsupported_dtype(tmpdir, debug=False):
 
 
 def readfromnifti_finds_an_uncompressed_file(tmpdir, debug=False):
-    """A name without an extension resolves to .nii.gz first, then to plain .nii."""
+    """
+    A name without an extension resolves to .nii.gz first, then to plain .nii.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readfromnifti_finds_an_uncompressed_file")
 
@@ -1043,8 +1394,15 @@ def readfromnifti_finds_an_uncompressed_file(tmpdir, debug=False):
 
 
 def makeMNI_half_millimetre(debug=False):
-    """The half millimetre template is the largest of the three, and the only one
-    whose affine is not otherwise exercised."""
+    """
+    The half millimetre template is the largest of the three, and the only one
+    whose affine is not otherwise exercised.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makeMNI_half_millimetre")
 
@@ -1054,7 +1412,16 @@ def makeMNI_half_millimetre(debug=False):
 
 
 def niftisplit_5d(tmpdir, debug=False):
-    """A 5D file has its own set of slicing branches, one per axis."""
+    """
+    A 5D file has its own set of slicing branches, one per axis.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftisplit_5d")
 
@@ -1071,8 +1438,17 @@ def niftisplit_5d(tmpdir, debug=False):
 
 
 def niftisplit_needs_data(tmpdir, debug=False):
-    """readfromnifti can be asked for a header alone; a splitter handed one of those
-    has nothing to write and says so."""
+    """
+    Readfromnifti can be asked for a header alone; a splitter handed one of those
+    has nothing to write and says so.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftisplit_needs_data")
 
@@ -1084,8 +1460,17 @@ def niftisplit_needs_data(tmpdir, debug=False):
 
 
 def niftimerge_roundtrip(tmpdir, debug=False):
-    """Merging is the inverse of splitting, and can hand back the array as well as
-    writing it, which is how the workflows use it in memory."""
+    """
+    Merging is the inverse of splitting, and can hand back the array as well as
+    writing it, which is how the workflows use it in memory.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftimerge_roundtrip")
 
@@ -1111,7 +1496,16 @@ def niftimerge_roundtrip(tmpdir, debug=False):
 
 
 def niftiroi_5d(tmpdir, debug=False):
-    """Taking a time range out of a 5D file needs its own slice expression."""
+    """
+    Taking a time range out of a 5D file needs its own slice expression.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftiroi_5d")
 
@@ -1160,8 +1554,17 @@ def _writeniftiinmsec(thedir, thename, tr=2000.0, timepoints=6):
 
 
 def timeinfo_converts_milliseconds(tmpdir, debug=False):
-    """A TR recorded in milliseconds has to come back in seconds, or every lag in
-    the analysis would be out by a factor of a thousand."""
+    """
+    A TR recorded in milliseconds has to come back in seconds, or every lag in
+    the analysis would be out by a factor of a thousand.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("timeinfo_converts_milliseconds")
 
@@ -1177,8 +1580,19 @@ def timeinfo_converts_milliseconds(tmpdir, debug=False):
 
 
 def checkniftifilematch_reports_each_kind_of_mismatch(tmpdir, capsys, debug=False):
-    """The comparison is staged - space, then time, then data - and each stage has
-    its own message, which is what tells a user which check failed."""
+    """
+    The comparison is staged - space, then time, then data - and each stage has
+    its own message, which is what tells a user which check failed.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkniftifilematch_reports_each_kind_of_mismatch")
 
@@ -1206,7 +1620,16 @@ def checkniftifilematch_reports_each_kind_of_mismatch(tmpdir, capsys, debug=Fals
 
 
 def checkspacedimmatch_can_explain_itself(capsys, debug=False):
-    """The verbose form names the offending axis, not just the fact of a mismatch."""
+    """
+    The verbose form names the offending axis, not just the fact of a mismatch.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkspacedimmatch_can_explain_itself")
 
@@ -1222,7 +1645,16 @@ def checkspacedimmatch_can_explain_itself(capsys, debug=False):
 
 
 def readlabelledtsv_missing(tmpdir, debug=False):
-    """A labelled tsv that is not there is an error naming the file."""
+    """
+    A labelled tsv that is not there is an error naming the file.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readlabelledtsv_missing")
 
@@ -1231,8 +1663,19 @@ def readlabelledtsv_missing(tmpdir, debug=False):
 
 
 def readcsv_missing_and_headerless(tmpdir, capsys, debug=False):
-    """A csv may or may not have a header row, and the reader works out which by
-    trying to parse the first row as numbers."""
+    """
+    A csv may or may not have a header row, and the reader works out which by
+    trying to parse the first row as numbers.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readcsv_missing_and_headerless")
 
@@ -1258,8 +1701,17 @@ def readcsv_missing_and_headerless(tmpdir, capsys, debug=False):
 
 
 def readconfounds_names_unnamed_columns(tmpdir, debug=False):
-    """A confound file with no column names still has to produce a keyed dict, so
-    the reader invents stable names for it."""
+    """
+    A confound file with no column names still has to produce a keyed dict, so
+    the reader invents stable names for it.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readconfounds_names_unnamed_columns")
 
@@ -1272,8 +1724,17 @@ def readconfounds_names_unnamed_columns(tmpdir, debug=False):
 
 
 def readmotion_needs_six_columns(tmpdir, debug=False):
-    """A motion file with an unrecognised extension has to have exactly six columns,
-    because there is nothing else to tell the reader which column is which."""
+    """
+    A motion file with an unrecognised extension has to have exactly six columns,
+    because there is nothing else to tell the reader which column is which.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("readmotion_needs_six_columns")
 
@@ -1284,8 +1745,17 @@ def readmotion_needs_six_columns(tmpdir, debug=False):
 
 
 def getslicetimesfromfile_rejects_a_json_without_slicetiming(tmpdir, debug=False):
-    """A .json is assumed to be a BIDS sidecar, and a sidecar without SliceTiming
-    cannot supply what was asked for."""
+    """
+    A .json is assumed to be a BIDS sidecar, and a sidecar without SliceTiming
+    cannot supply what was asked for.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getslicetimesfromfile_rejects_a_json_without_slicetiming")
 
@@ -1297,8 +1767,15 @@ def getslicetimesfromfile_rejects_a_json_without_slicetiming(tmpdir, debug=False
 
 
 def parsefilespec_handles_a_windows_drive_letter(debug=False):
-    """On Windows a leading drive letter is followed by a colon, which would
-    otherwise be mistaken for the start of a column specification."""
+    """
+    On Windows a leading drive letter is followed by a colon, which would
+    otherwise be mistaken for the start of a column specification.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parsefilespec_handles_a_windows_drive_letter")
 
@@ -1314,8 +1791,17 @@ def parsefilespec_handles_a_windows_drive_letter(debug=False):
 
 
 def colspectolist_expands_a_macro(capsys, debug=False):
-    """The macros stand in for the FreeSurfer label sets, which are long enough that
-    typing them out is where mistakes come from."""
+    """
+    The macros stand in for the FreeSurfer label sets, which are long enough that
+    typing them out is where mistakes come from.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("colspectolist_expands_a_macro")
 
@@ -1328,8 +1814,17 @@ def colspectolist_expands_a_macro(capsys, debug=False):
 
 
 def colspectolist_rejects_nonintegers(capsys, debug=False):
-    """Every part of a spec has to be an integer; a typo returns nothing rather than
-    a silently truncated column list."""
+    """
+    Every part of a spec has to be an integer; a typo returns nothing rather than
+    a silently truncated column list.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("colspectolist_rejects_nonintegers")
 
@@ -1341,7 +1836,16 @@ def colspectolist_rejects_nonintegers(capsys, debug=False):
 
 
 def writevectorstotextfile_covers_every_format(tmpdir, debug=False):
-    """The writer dispatches on a format name, and an unknown one is a caller error."""
+    """
+    The writer dispatches on a format name, and an unknown one is a caller error.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writevectorstotextfile_covers_every_format")
 
@@ -1390,12 +1894,20 @@ def writevectorstotextfile_covers_every_format(tmpdir, debug=False):
 
 
 def io_debug_output_is_well_formed(tmpdir, debug=False):
-    """Run the main readers and writers with debug on.
+    """
+    Run the main readers and writers with debug on.
 
     Debug blocks are f-strings referencing local names, so a rename elsewhere in a
     routine can leave one raising NameError - a failure that only shows up when
     someone actually turns debugging on, usually while chasing a different problem.
     Exercising them keeps that from happening silently.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("io_debug_output_is_well_formed")
@@ -1514,8 +2026,17 @@ def io_debug_output_is_well_formed(tmpdir, debug=False):
 
 
 def savetonifti_writes_nifti2(tmpdir, debug=False):
-    """NIFTI-2 is what an array too large for NIFTI-1 needs, and asking for it
-    explicitly does produce one."""
+    """
+    NIFTI-2 is what an array too large for NIFTI-1 needs, and asking for it
+    explicitly does produce one.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("savetonifti_writes_nifti2")
 
@@ -1532,13 +2053,21 @@ def savetonifti_writes_nifti2(tmpdir, debug=False):
 
 
 def savetonifti_honours_a_nifti2_header(tmpdir, debug=False):
-    """A NIFTI-2 header produces a NIFTI-2 file without needing nifti2=True.
+    """
+    A NIFTI-2 header produces a NIFTI-2 file without needing nifti2=True.
 
     This is the read-modify-write case: a caller who reads a NIFTI-2 file, changes the
     data and writes it back should not silently get a NIFTI-1 file.  The detection has
     to compare against bytes, since nibabel keeps the magic string as
     ``array(b'n+2', dtype='|S4')`` and comparing that to the str ``"n+2"`` is always
     False - which is exactly how this used to break.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("savetonifti_honours_a_nifti2_header")
@@ -1566,11 +2095,19 @@ def savetonifti_honours_a_nifti2_header(tmpdir, debug=False):
 
 
 def savetonifti_roundtrips_nifti2(tmpdir, debug=False):
-    """Reading a NIFTI-2 file and writing it back keeps it NIFTI-2.
+    """
+    Reading a NIFTI-2 file and writing it back keeps it NIFTI-2.
 
     The header comparison is done on what readfromnifti hands back, which is a
     ``.copy()`` of the loaded header rather than the object nibabel built, so this
     checks the path an actual caller takes rather than a freshly constructed header.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("savetonifti_roundtrips_nifti2")
@@ -1589,7 +2126,16 @@ def savetonifti_roundtrips_nifti2(tmpdir, debug=False):
 
 
 def niftisplit_5d_rejects_a_bad_axis(tmpdir, debug=False):
-    """Even a 5D file has only five axes."""
+    """
+    Even a 5D file has only five axes.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("niftisplit_5d_rejects_a_bad_axis")
 
@@ -1602,8 +2148,15 @@ def niftisplit_5d_rejects_a_bad_axis(tmpdir, debug=False):
 
 
 def checkifcifti_on_something_with_no_nifti_header(debug=False):
-    """Not every image nibabel can load has a nifti header to interrogate, and the
-    absence of one means the file is certainly not a CIFTI."""
+    """
+    Not every image nibabel can load has a nifti header to interrogate, and the
+    absence of one means the file is certainly not a CIFTI.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkifcifti_on_something_with_no_nifti_header")
 
@@ -1613,7 +2166,16 @@ def checkifcifti_on_something_with_no_nifti_header(debug=False):
 
 
 def checktimematch_can_explain_itself(capsys, debug=False):
-    """The verbose form reports the two lengths, after the skips are taken off."""
+    """
+    The verbose form reports the two lengths, after the skips are taken off.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checktimematch_can_explain_itself")
 
@@ -1629,11 +2191,21 @@ def checktimematch_can_explain_itself(capsys, debug=False):
 
 
 def checkniftifilematch_notices_a_single_bad_voxel(tmpdir, capsys, debug=False):
-    """One wildly wrong voxel in a large volume barely moves the mean squared error,
+    """
+    One wildly wrong voxel in a large volume barely moves the mean squared error,
     so the absolute difference check is what catches it.
 
     This is the case the two thresholds exist to separate: without the absolute
     check, a file with a single corrupted voxel would be declared a match.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("checkniftifilematch_notices_a_single_bad_voxel")
@@ -1654,12 +2226,20 @@ def checkniftifilematch_notices_a_single_bad_voxel(tmpdir, capsys, debug=False):
 
 
 def readcolfrombidstsv_selects_by_number_or_name(tmpdir, debug=False):
-    """Columns are 0-based, so column 0 - which is also the default - has to work.
+    """
+    Columns are 0-based, so column 0 - which is also the default - has to work.
 
     The range check reads ``0 <= columnnum < len(columns)``; an earlier ``0 <``
     excluded the first column, which made the parameter's own default useless and
     contradicted the docstring's ``columnnum=0`` example.  Both ends of the range are
     checked here, since that guard is where an off-by-one lands.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("readcolfrombidstsv_selects_by_number_or_name")
@@ -1703,8 +2283,17 @@ def readcolfrombidstsv_selects_by_number_or_name(tmpdir, debug=False):
 
 
 def writebidstsv_append_creates_a_missing_file(tmpdir, debug=False):
-    """Appending to a file that does not exist yet just creates it, so a caller can
-    append unconditionally without checking first."""
+    """
+    Appending to a file that does not exist yet just creates it, so a caller can
+    append unconditionally without checking first.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("writebidstsv_append_creates_a_missing_file")
 
@@ -1719,7 +2308,16 @@ def writebidstsv_append_creates_a_missing_file(tmpdir, debug=False):
 
 
 def processnamespec_can_be_verbose(capsys, debug=False):
-    """The report is how a run records which label values a mask actually selected."""
+    """
+    The report is how a run records which label values a mask actually selected.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("processnamespec_can_be_verbose")
 
@@ -1735,7 +2333,18 @@ def processnamespec_can_be_verbose(capsys, debug=False):
 
 
 def test_ioextra3(tmpdir, capsys, debug=False):
-    """Entry point for the third wave of sub-tests."""
+    """
+    Entry point for the third wave of sub-tests.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     savetonifti_writes_nifti2(tmpdir, debug=debug)
     savetonifti_honours_a_nifti2_header(tmpdir, debug=debug)
     savetonifti_roundtrips_nifti2(tmpdir, debug=debug)
@@ -1749,7 +2358,18 @@ def test_ioextra3(tmpdir, capsys, debug=False):
 
 
 def test_ioextra2(tmpdir, capsys, debug=False):
-    """Entry point for the second wave, including the sub-tests that read stdout."""
+    """
+    Entry point for the second wave, including the sub-tests that read stdout.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     savetonifti_rejects_an_unsupported_dtype(tmpdir, debug=debug)
     readfromnifti_finds_an_uncompressed_file(tmpdir, debug=debug)
     makeMNI_half_millimetre(debug=debug)
@@ -1773,7 +2393,16 @@ def test_ioextra2(tmpdir, capsys, debug=False):
 
 
 def test_ioextra(tmpdir, debug=False):
-    """Entry point for the CIFTI, FSL and text vector coverage."""
+    """
+    Entry point for the CIFTI, FSL and text vector coverage.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     readfromcifti_dense(tmpdir, debug=debug)
     readfromcifti_parcellated(tmpdir, debug=debug)
     readfromcifti_finds_the_extension(tmpdir, debug=debug)

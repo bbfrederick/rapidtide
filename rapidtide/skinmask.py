@@ -20,6 +20,14 @@ SKIN_LABELS = ("face-skin", "body-skin")
 
 
 def _mediapipe():
+    """
+    Import the optional MediaPipe dependency.
+
+    Returns
+    -------
+    module
+        Imported MediaPipe module.
+    """
     try:
         import mediapipe
     except ImportError as exc:
@@ -28,6 +36,19 @@ def _mediapipe():
 
 
 def _sha256(path: Path) -> str:
+    """
+    Compute the hexadecimal SHA-256 digest of a file.
+
+    Parameters
+    ----------
+    path : Path
+        Path to the file.
+
+    Returns
+    -------
+    str
+        Hexadecimal digest of the file contents.
+    """
     digest = hashlib.sha256()
     with path.open("rb") as stream:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
@@ -36,11 +57,22 @@ def _sha256(path: Path) -> str:
 
 
 def prepare_skin_model(filename: str | None = None) -> tuple[Path, dict]:
-    """Resolve a supplied model or download Google's versioned model into a user cache.
+    """
+    Resolve a supplied model or download Google's versioned model into a user cache.
 
     The default download is verified and published atomically. A local model
     override supports offline use; its skin-class labels are checked at inference.
     No video data is sent to the model host.
+
+    Parameters
+    ----------
+    filename : str | None, optional
+        Path to the input or output file.
+
+    Returns
+    -------
+    tuple
+        Local model path and model provenance metadata.
     """
     mp = _mediapipe()
     if filename is not None:
@@ -97,6 +129,14 @@ class SkinSegmenter:
     """
 
     def __init__(self, model: str | Path):
+        """
+        Initialize `SkinSegmenter`.
+
+        Parameters
+        ----------
+        model : str | Path
+            Model instance or model file used by this routine.
+        """
         self.mp = _mediapipe()
         options = self.mp.tasks.vision.ImageSegmenterOptions(
             base_options=self.mp.tasks.BaseOptions(
@@ -122,13 +162,43 @@ class SkinSegmenter:
         self.timestamp_origin = None
 
     def __enter__(self):
+        """
+        Return the detector for use in a context manager.
+
+        Returns
+        -------
+        SkinSegmenter
+            Active detector instance.
+        """
         return self
 
     def __exit__(self, *args):
+        """
+        Close the detector when leaving the context manager.
+
+        Parameters
+        ----------
+        *args : object
+            Additional positional arguments.
+        """
         self.segmenter.close()
 
     def mask(self, rgb: np.ndarray, timestamp: float) -> np.ndarray:
-        """Return a native (y, x) skin mask without changing source RGB values."""
+        """
+        Return a native (y, x) skin mask without changing source RGB values.
+
+        Parameters
+        ----------
+        rgb : np.ndarray
+            Image or samples with red, green, and blue channels.
+        timestamp : float
+            Frame time in seconds.
+
+        Returns
+        -------
+        numpy.ndarray of bool
+            Pixels assigned to any of the selected skin classes.
+        """
         rgb = np.asarray(rgb)
         if rgb.ndim != 3 or rgb.shape[-1] != 3 or min(rgb.shape) == 0:
             raise ValueError("Skin segmentation requires RGB frames with shape (height, width, 3)")
@@ -162,7 +232,21 @@ class SkinSegmenter:
 
 
 def skin_segmented_frames(frames, model: str | Path):
-    """Yield original RGB frames, timestamps, and skin masks without applying them."""
+    """
+    Yield original RGB frames, timestamps, and skin masks without applying them.
+
+    Parameters
+    ----------
+    frames : iterable
+        Input video frames and their timing information.
+    model : str | Path
+        Model instance or model file used by this routine.
+
+    Yields
+    ------
+    object
+        Next item produced by the iterator.
+    """
     with SkinSegmenter(model) as segmenter:
         for rgb, timestamp in frames:
             mask = segmenter.mask(rgb, timestamp)
@@ -170,6 +254,20 @@ def skin_segmented_frames(frames, model: str | Path):
 
 
 def skinmasked_frames(frames, model: str | Path):
-    """Apply skin masks directly to unfiltered frames (convenience iterator)."""
+    """
+    Apply skin masks directly to unfiltered frames (convenience iterator).
+
+    Parameters
+    ----------
+    frames : iterable
+        Input video frames and their timing information.
+    model : str | Path
+        Model instance or model file used by this routine.
+
+    Yields
+    ------
+    object
+        Next item produced by the iterator.
+    """
     for rgb, timestamp, mask in skin_segmented_frames(frames, model):
         yield np.where(mask[..., None], rgb, 0), timestamp

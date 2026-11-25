@@ -124,6 +124,16 @@ def run_multiproc(
     if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments
         def theconsumerfunc(inQ, outQ):
+            """
+            Consume queued work and send results to the output queue.
+
+            Parameters
+            ----------
+            inQ : queue-like
+                Queue supplying work items.
+            outQ : queue-like
+                Queue receiving processed results.
+            """
             while True:
                 try:
                     # get a new message

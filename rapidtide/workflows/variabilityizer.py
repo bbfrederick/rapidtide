@@ -93,9 +93,8 @@ def cvttovariability(windowhalfwidth: Any, data: Any) -> None:
 
     Returns
     -------
-    None
-        The function currently returns None but appears to be intended to return the computed
-        variability values (thestd + themean) as shown in the implementation.
+    numpy.ndarray
+        Spatial image of the requested variability measure.
 
     Notes
     -----

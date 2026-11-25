@@ -39,7 +39,25 @@ from rapidtide.workflows.niftidecomp import (
 
 
 def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
-    """Create a mock NIfTI header that supports __getitem__, __setitem__, copy."""
+    """
+    Create a mock NIfTI header that supports __getitem__, __setitem__, copy.
+
+    Parameters
+    ----------
+    xsize : int
+        Number of voxels along the x axis.
+    ysize : int
+        Number of voxels along the y axis.
+    numslices : int
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+
+    Returns
+    -------
+    MagicMock
+        Mock object configured for the test case.
+    """
     store = {
         "dim": [4, xsize, ysize, numslices, timepoints, 1, 1, 1],
         "pixdim": [1.0, 2.0, 2.0, 2.0, 1.5, 1.0, 1.0, 1.0],
@@ -49,6 +67,14 @@ def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
     hdr.__setitem__ = MagicMock(side_effect=lambda key, val: store.__setitem__(key, val))
 
     def copy_fn():
+        """
+        Copy fn.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         new_store = {
             "dim": list(store["dim"]),
             "pixdim": list(store["pixdim"]),
@@ -63,7 +89,25 @@ def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
 
 
 def _make_4d_data(xsize=4, ysize=4, numslices=3, numtimepoints=20):
-    """Create 4D data with varying timecourses suitable for decomposition."""
+    """
+    Create 4D data with varying timecourses suitable for decomposition.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    numtimepoints : int, optional
+        Number of time samples.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     rng = np.random.RandomState(42)
     # Create data with actual signal structure for PCA to work on
     numvoxels = xsize * ysize * numslices
@@ -92,7 +136,14 @@ def _make_4d_data(xsize=4, ysize=4, numslices=3, numtimepoints=20):
 
 
 def parser_temporal_basic(debug=False):
-    """Test parser creation for temporal mode."""
+    """
+    Test parser creation for temporal mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_temporal_basic")
     parser = _get_parser("temporal")
@@ -101,7 +152,14 @@ def parser_temporal_basic(debug=False):
 
 
 def parser_spatial_basic(debug=False):
-    """Test parser creation for spatial mode."""
+    """
+    Test parser creation for spatial mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_spatial_basic")
     parser = _get_parser("spatial")
@@ -110,7 +168,14 @@ def parser_spatial_basic(debug=False):
 
 
 def parser_invalid_axis(debug=False):
-    """Test that invalid axis raises ValueError."""
+    """
+    Test that invalid axis raises ValueError.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_invalid_axis")
     with pytest.raises(ValueError):
@@ -118,7 +183,14 @@ def parser_invalid_axis(debug=False):
 
 
 def parser_defaults(debug=False):
-    """Test parser default values."""
+    """
+    Test parser default values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     parser = _get_parser("temporal")
@@ -133,7 +205,14 @@ def parser_defaults(debug=False):
 
 
 def parser_decomptype_choices(debug=False):
-    """Test that decomptype accepts pca, ica, sparse."""
+    """
+    Test that decomptype accepts pca, ica, sparse.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_decomptype_choices")
     parser = _get_parser("temporal")
@@ -144,7 +223,14 @@ def parser_decomptype_choices(debug=False):
 
 
 def parser_nodemean(debug=False):
-    """Test --nodemean flag."""
+    """
+    Test --nodemean flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_nodemean")
     parser = _get_parser("temporal")
@@ -154,7 +240,14 @@ def parser_nodemean(debug=False):
 
 
 def parser_novarnorm(debug=False):
-    """Test --novarnorm flag."""
+    """
+    Test --novarnorm flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_novarnorm")
     parser = _get_parser("temporal")
@@ -164,7 +257,14 @@ def parser_novarnorm(debug=False):
 
 
 def parser_ncomp(debug=False):
-    """Test --ncomp option."""
+    """
+    Test --ncomp option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_ncomp")
     parser = _get_parser("temporal")
@@ -174,7 +274,14 @@ def parser_ncomp(debug=False):
 
 
 def parser_smooth(debug=False):
-    """Test --smooth option."""
+    """
+    Test --smooth option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_smooth")
     parser = _get_parser("spatial")
@@ -187,7 +294,14 @@ def parser_smooth(debug=False):
 
 
 def parser_temporal_wrapper(debug=False):
-    """Test _get_parser_temporal convenience wrapper."""
+    """
+    Test _get_parser_temporal convenience wrapper.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_temporal_wrapper")
     parser = _get_parser_temporal()
@@ -195,7 +309,14 @@ def parser_temporal_wrapper(debug=False):
 
 
 def parser_spatial_wrapper(debug=False):
-    """Test _get_parser_spatial convenience wrapper."""
+    """
+    Test _get_parser_spatial convenience wrapper.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_spatial_wrapper")
     parser = _get_parser_spatial()
@@ -206,7 +327,14 @@ def parser_spatial_wrapper(debug=False):
 
 
 def transpose_spatial(debug=False):
-    """Test that spatial axis transposes data."""
+    """
+    Test that spatial axis transposes data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("transpose_spatial")
     data = np.array([[1, 2, 3], [4, 5, 6]])
@@ -216,7 +344,14 @@ def transpose_spatial(debug=False):
 
 
 def transpose_temporal(debug=False):
-    """Test that temporal axis does not transpose data."""
+    """
+    Test that temporal axis does not transpose data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("transpose_temporal")
     data = np.array([[1, 2, 3], [4, 5, 6]])
@@ -225,7 +360,14 @@ def transpose_temporal(debug=False):
 
 
 def transpose_default(debug=False):
-    """Test that default axis is temporal (no transpose)."""
+    """
+    Test that default axis is temporal (no transpose).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("transpose_default")
     data = np.array([[1, 2], [3, 4], [5, 6]])
@@ -234,7 +376,14 @@ def transpose_default(debug=False):
 
 
 def transpose_1d(debug=False):
-    """Test transposeifspatial with 1D array."""
+    """
+    Test transposeifspatial with 1D array.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("transpose_1d")
     data = np.array([1, 2, 3])
@@ -244,7 +393,14 @@ def transpose_1d(debug=False):
 
 
 def transpose_3d(debug=False):
-    """Test transposeifspatial with 3D array."""
+    """
+    Test transposeifspatial with 3D array.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("transpose_3d")
     data = np.ones((2, 3, 4))
@@ -268,7 +424,39 @@ def _run_workflow(
     mask_dims=None,
     debug=False,
 ):
-    """Helper to run niftidecomp_workflow with mocked IO."""
+    """
+    Helper to run niftidecomp_workflow with mocked IO.
+
+    Parameters
+    ----------
+    decompaxis : str, optional
+        Value supplied as ``decompaxis`` by the test case.
+    decomptype : str, optional
+        Value supplied as ``decomptype`` by the test case.
+    pcacomponents : float, optional
+        Value supplied as ``pcacomponents`` by the test case.
+    icacomponents : object or None, optional
+        Value supplied as ``icacomponents`` by the test case.
+    varnorm : bool, optional
+        Setting for ``varnorm`` in the test case.
+    demean : bool, optional
+        Setting for ``demean`` in the test case.
+    sigma : float, optional
+        Value supplied as ``sigma`` by the test case.
+    datamaskname : object or None, optional
+        Value supplied as ``datamaskname`` by the test case.
+    mask_data : object or None, optional
+        Value supplied as ``mask_data`` by the test case.
+    mask_dims : object or None, optional
+        Value supplied as ``mask_dims`` by the test case.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     xsize, ysize, numslices, numtimepoints = 4, 4, 3, 20
     input_data, input_hdr, input_dims, input_sizes = _make_4d_data(
         xsize, ysize, numslices, numtimepoints
@@ -277,6 +465,21 @@ def _run_workflow(
     call_count = {"n": 0}
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         call_count["n"] += 1
         if datamaskname is not None and "mask" in fname:
             mask_hdr = _make_mock_hdr(xsize, ysize, numslices, 1)
@@ -315,7 +518,14 @@ def _run_workflow(
 
 
 def workflow_pca_temporal(debug=False):
-    """Test PCA temporal decomposition."""
+    """
+    Test PCA temporal decomposition.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_pca_temporal")
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
@@ -339,7 +549,14 @@ def workflow_pca_temporal(debug=False):
 
 
 def workflow_pca_spatial(debug=False):
-    """Test PCA spatial decomposition."""
+    """
+    Test PCA spatial decomposition.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_pca_spatial")
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
@@ -359,7 +576,14 @@ def workflow_pca_spatial(debug=False):
 
 
 def workflow_pca_ncomp_fixed(debug=False):
-    """Test PCA with fixed number of components."""
+    """
+    Test PCA with fixed number of components.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_pca_ncomp_fixed")
     ncomp = 3
@@ -376,7 +600,14 @@ def workflow_pca_ncomp_fixed(debug=False):
 
 
 def workflow_nodemean(debug=False):
-    """Test workflow with demeaning disabled."""
+    """
+    Test workflow with demeaning disabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_nodemean")
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
@@ -392,7 +623,14 @@ def workflow_nodemean(debug=False):
 
 
 def workflow_novarnorm(debug=False):
-    """Test workflow with variance normalization disabled."""
+    """
+    Test workflow with variance normalization disabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_novarnorm")
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
@@ -408,7 +646,14 @@ def workflow_novarnorm(debug=False):
 
 
 def workflow_nodemean_novarnorm(debug=False):
-    """Test workflow with both demeaning and varnorm disabled."""
+    """
+    Test workflow with both demeaning and varnorm disabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_nodemean_novarnorm")
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
@@ -425,7 +670,14 @@ def workflow_nodemean_novarnorm(debug=False):
 
 
 def workflow_with_3d_mask(debug=False):
-    """Test workflow with a 3D mask."""
+    """
+    Test workflow with a 3D mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_with_3d_mask")
     xsize, ysize, numslices = 4, 4, 3
@@ -448,7 +700,14 @@ def workflow_with_3d_mask(debug=False):
 
 
 def workflow_sparse_pca(debug=False):
-    """Test SparsePCA decomposition returns zero explained variance."""
+    """
+    Test SparsePCA decomposition returns zero explained variance.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_sparse_pca")
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
@@ -466,7 +725,14 @@ def workflow_sparse_pca(debug=False):
 
 
 def workflow_ica_temporal(debug=False):
-    """Test ICA temporal decomposition."""
+    """
+    Test ICA temporal decomposition.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_ica_temporal")
     result, xsize, ysize, numslices, numtimepoints = _run_workflow(
@@ -490,7 +756,14 @@ def workflow_ica_temporal(debug=False):
 
 
 def workflow_multiple_files(debug=False):
-    """Test workflow with multiple input files (dimension matching)."""
+    """
+    Test workflow with multiple input files (dimension matching).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_multiple_files")
     xsize, ysize, numslices, numtimepoints = 4, 4, 3, 20
@@ -499,6 +772,21 @@ def workflow_multiple_files(debug=False):
     )
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return MagicMock(), input_data, input_hdr, input_dims, input_sizes
 
     with (
@@ -532,7 +820,14 @@ def workflow_multiple_files(debug=False):
 
 
 def workflow_spatial_pca_fixed(debug=False):
-    """Test spatial PCA with fixed number of components."""
+    """
+    Test spatial PCA with fixed number of components.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_spatial_pca_fixed")
     ncomp = 3
@@ -551,7 +846,14 @@ def workflow_spatial_pca_fixed(debug=False):
 
 
 def workflow_smoothing(debug=False):
-    """Test workflow with spatial smoothing enabled."""
+    """
+    Test workflow with spatial smoothing enabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("workflow_smoothing")
     xsize, ysize, numslices, numtimepoints = 4, 4, 3, 20
@@ -562,9 +864,45 @@ def workflow_smoothing(debug=False):
     smooth_called = {"count": 0}
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return MagicMock(), input_data.copy(), input_hdr, input_dims, input_sizes
 
     def mock_ssmooth(xd, yd, sd, sigma, data):
+        """
+        Simulate ``ssmooth`` for the test.
+
+        Parameters
+        ----------
+        xd : object
+            Value supplied as ``xd`` by the test case.
+        yd : object
+            Value supplied as ``yd`` by the test case.
+        sd : object
+            Value supplied as ``sd`` by the test case.
+        sigma : object
+            Value supplied as ``sigma`` by the test case.
+        data : array-like
+            Data passed to the test helper.
+
+        Returns
+        -------
+        object
+            Output values supplied to the caller.
+        """
         smooth_called["count"] += 1
         return data  # Return data unchanged
 
@@ -601,7 +939,14 @@ def workflow_smoothing(debug=False):
 
 
 def main_temporal_pca(debug=False):
-    """Test main function with temporal PCA."""
+    """
+    Test main function with temporal PCA.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("main_temporal_pca")
     xsize, ysize, numslices, numtimepoints = 4, 4, 3, 20
@@ -610,6 +955,21 @@ def main_temporal_pca(debug=False):
     )
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return MagicMock(), input_data, input_hdr, input_dims, input_sizes
 
     args = {
@@ -654,7 +1014,14 @@ def main_temporal_pca(debug=False):
 
 
 def main_spatial_pca(debug=False):
-    """Test main function with spatial PCA."""
+    """
+    Test main function with spatial PCA.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("main_spatial_pca")
     xsize, ysize, numslices, numtimepoints = 4, 4, 3, 20
@@ -663,6 +1030,21 @@ def main_spatial_pca(debug=False):
     )
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return MagicMock(), input_data, input_hdr, input_dims, input_sizes
 
     args = {
@@ -708,7 +1090,14 @@ def main_spatial_pca(debug=False):
 
 
 def main_ncomp_fractional(debug=False):
-    """Test main with fractional ncomp (between 0 and 1)."""
+    """
+    Test main with fractional ncomp (between 0 and 1).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("main_ncomp_fractional")
     xsize, ysize, numslices, numtimepoints = 4, 4, 3, 20
@@ -717,6 +1106,21 @@ def main_ncomp_fractional(debug=False):
     )
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return MagicMock(), input_data, input_hdr, input_dims, input_sizes
 
     args = {
@@ -756,7 +1160,14 @@ def main_ncomp_fractional(debug=False):
 
 
 def main_temporal_wrapper_test(debug=False):
-    """Test main_temporal convenience wrapper."""
+    """
+    Test main_temporal convenience wrapper.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("main_temporal_wrapper_test")
     xsize, ysize, numslices, numtimepoints = 4, 4, 3, 20
@@ -765,6 +1176,21 @@ def main_temporal_wrapper_test(debug=False):
     )
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return MagicMock(), input_data, input_hdr, input_dims, input_sizes
 
     ns = argparse.Namespace(
@@ -801,7 +1227,14 @@ def main_temporal_wrapper_test(debug=False):
 
 
 def main_spatial_wrapper_test(debug=False):
-    """Test main_spatial convenience wrapper."""
+    """
+    Test main_spatial convenience wrapper.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("main_spatial_wrapper_test")
     xsize, ysize, numslices, numtimepoints = 4, 4, 3, 20
@@ -810,6 +1243,21 @@ def main_spatial_wrapper_test(debug=False):
     )
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return MagicMock(), input_data, input_hdr, input_dims, input_sizes
 
     ns = argparse.Namespace(
@@ -850,6 +1298,14 @@ def main_spatial_wrapper_test(debug=False):
 
 def test_niftidecomp(debug=False):
     # _get_parser tests
+    """
+    Verify niftidecomp.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("Running parser tests")
     parser_temporal_basic(debug=debug)

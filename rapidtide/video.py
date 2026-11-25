@@ -36,6 +36,14 @@ class RGBBloodProjector:
     """
 
     def __init__(self, method: str = "grgb") -> None:
+        """
+        Initialize `RGBBloodProjector`.
+
+        Parameters
+        ----------
+        method : str, optional
+            Color normalization method.
+        """
         if method not in ("grgb", "pos", "chrom"):
             raise ValueError("method must be grgb, pos, or chrom")
         self.method = method
@@ -43,7 +51,14 @@ class RGBBloodProjector:
         self.ready = False
 
     def update(self, rgb: NDArray) -> None:
-        """Accumulate one frame in native RGB order, with shape (height, width, 3)."""
+        """
+        Accumulate one frame in native RGB order, with shape (height, width, 3).
+
+        Parameters
+        ----------
+        rgb : NDArray
+            Image or samples with red, green, and blue channels.
+        """
         if self.ready:
             raise ValueError("Cannot update a finalized projector")
         rgb = np.asarray(rgb, dtype=np.float64)
@@ -117,7 +132,19 @@ class RGBBloodProjector:
         self.ready = True
 
     def transform(self, rgb: NDArray) -> NDArray:
-        """Return a mean-removed float32 blood frame; invalid pixels contain NaN."""
+        """
+        Return a mean-removed float32 blood frame; invalid pixels contain NaN.
+
+        Parameters
+        ----------
+        rgb : NDArray
+            Image or samples with red, green, and blue channels.
+
+        Returns
+        -------
+        numpy.ndarray
+            Normalized pixel signal with invalid locations set to NaN.
+        """
         if not self.ready:
             raise ValueError("Finalize whole-recording statistics before transforming")
         rgb = np.asarray(rgb, dtype=np.float64)
@@ -135,7 +162,19 @@ class RGBBloodProjector:
 
 
 def _video_frames(filename: str):
-    """Decode the first video stream in presentation order, retaining 16-bit RGB."""
+    """
+    Decode the first video stream in presentation order, retaining 16-bit RGB.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the input or output file.
+
+    Yields
+    ------
+    object
+        Next item produced by the iterator.
+    """
     import av
 
     with av.open(str(filename)) as container:
@@ -148,7 +187,19 @@ def _video_frames(filename: str):
 
 
 def _timing(timestamps: NDArray) -> dict:
-    """Describe timing without interpolating, duplicating, or dropping samples."""
+    """
+    Describe timing without interpolating, duplicating, or dropping samples.
+
+    Parameters
+    ----------
+    timestamps : NDArray
+        Frame timestamps in seconds.
+
+    Returns
+    -------
+    dict
+        Sampling interval, time range, and related timing metadata.
+    """
     if len(timestamps) < 2:
         raise ValueError("At least two video frames are required")
     intervals = np.diff(timestamps)
@@ -164,7 +215,23 @@ def _timing(timestamps: NDArray) -> dict:
 
 
 def _regular_times(filename: str, source_times: NDArray, framerate: float | None) -> NDArray:
-    """Choose a fixed acquisition grid within the observed interval, without extrapolation."""
+    """
+    Choose a fixed acquisition grid within the observed interval, without extrapolation.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the input or output file.
+    source_times : NDArray
+        Timestamps of the decoded frames in seconds.
+    framerate : float | None
+        Output sampling frequency in frames per second.
+
+    Returns
+    -------
+    numpy.ndarray
+        Uniformly spaced output frame times in seconds.
+    """
     import av
 
     _timing(source_times)
@@ -183,10 +250,27 @@ def _regular_times(filename: str, source_times: NDArray, framerate: float | None
 def _spatial_frame(
     rgb: NDArray, downsamp: int = 1, lpf: float = 0.0, skin_mask: NDArray | None = None
 ) -> NDArray:
-    """Filter RGB planes, apply a precomputed skin mask, crop, and average blocks.
+    """
+    Filter RGB planes, apply a precomputed skin mask, crop, and average blocks.
 
     Gaussian sigma is in source pixels, with reflected boundary conditions.
     Float64 filtering and averaging preserve fractional channel intensities.
+
+    Parameters
+    ----------
+    rgb : NDArray
+        Image or samples with red, green, and blue channels.
+    downsamp : int, optional
+        Spatial downsampling factor.
+    lpf : float, optional
+        Spatial low-pass filter setting.
+    skin_mask : NDArray | None, optional
+        Mask of pixels classified as skin.
+
+    Returns
+    -------
+    NDArray
+        The rgb.
     """
     height, width = rgb.shape[:2]
     ystart, xstart = (height % downsamp) // 2, (width % downsamp) // 2
@@ -217,7 +301,31 @@ def _regular_frames(
     source_shape: tuple | None = None,
     skinmask_model: str | Path | None = None,
 ):
-    """Stream linear RGB interpolation using only the two neighboring source frames."""
+    """
+    Stream linear RGB interpolation using only the two neighboring source frames.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the input or output file.
+    source_times : NDArray
+        Timestamps of the decoded frames in seconds.
+    target_times : NDArray
+        Output frame times in seconds.
+    downsamp : int, optional
+        Spatial downsampling factor.
+    lpf : float, optional
+        Spatial low-pass filter setting.
+    source_shape : tuple | None, optional
+        Height and width of the source images.
+    skinmask_model : str | Path | None, optional
+        Optional model file used for skin segmentation.
+
+    Yields
+    ------
+    object
+        Next item produced by the iterator.
+    """
     previous = None
     output_index = 0
     count = 0

@@ -28,6 +28,27 @@ from rapidtide.tests.utils import mse
 
 
 def gen2d(xsize=150, xcycles=11, tsize=200, tcycles=13, mean=10.0):
+    """
+    Set up ``gen2d`` for the test.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    xcycles : int, optional
+        Value supplied as ``xcycles`` by the test case.
+    tsize : int, optional
+        Value supplied as ``tsize`` by the test case.
+    tcycles : int, optional
+        Value supplied as ``tcycles`` by the test case.
+    mean : float, optional
+        Value supplied as ``mean`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     thearray = np.zeros((xsize, tsize), dtype=np.float64)
     xwaves = np.zeros((xsize, tsize), dtype=np.float64)
     twaves = np.zeros((xsize, tsize), dtype=np.float64)
@@ -45,6 +66,16 @@ def gen2d(xsize=150, xcycles=11, tsize=200, tcycles=13, mean=10.0):
 
 
 def test_linfitfiltpass(debug=True, displayplots=False):
+    """
+    Verify linfitfiltpass.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     np.random.seed(12345)
     xsize = 150
     xcycles = 7
@@ -150,7 +181,14 @@ def test_linfitfiltpass(debug=True, displayplots=False):
 
 
 def test_linfitfiltpass_coefficientsonly_constantevs_paths(debug=False):
-    """Exercise coefficientsonly=True with constantevs both False and True."""
+    """
+    Exercise coefficientsonly=True with constantevs both False and True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfiltpass_coefficientsonly_constantevs_paths")
 
@@ -178,6 +216,25 @@ def test_linfitfiltpass_coefficientsonly_constantevs_paths(debug=False):
         received_evs = []
 
         def _mock_proc(item, evs, data, rt_floattype=np.dtype(np.float64)):
+            """
+            Simulate ``proc`` for the test.
+
+            Parameters
+            ----------
+            item : object
+                Value supplied as ``item`` by the test case.
+            evs : object
+                Value supplied as ``evs`` by the test case.
+            data : array-like
+                Data passed to the test helper.
+            rt_floattype : object, optional
+                Value supplied as ``rt_floattype`` by the test case.
+
+            Returns
+            -------
+            tuple
+                Values supplied together for the test case.
+            """
             received_evs.append(np.array(evs, copy=True))
             return (
                 item,  # index
@@ -257,7 +314,14 @@ def _fitdata(nvox=4, tpts=24, seed=0):
 
 
 def test_procOneRegressionFitItem_univariate(debug=False):
-    """Test the 1D regressor path recovers a known slope and intercept."""
+    """
+    Test the 1D regressor path recovers a known slope and intercept.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("procOneRegressionFitItem_univariate")
     theev = np.linspace(0.0, 1.0, 20)
@@ -277,7 +341,14 @@ def test_procOneRegressionFitItem_univariate(debug=False):
 
 
 def test_procOneRegressionFitItem_negative_coefficient(debug=False):
-    """Test a negative fit coefficient makes the returned r value negative."""
+    """
+    Test a negative fit coefficient makes the returned r value negative.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("procOneRegressionFitItem_negative_coefficient")
     theev = np.linspace(0.0, 1.0, 20)
@@ -291,7 +362,16 @@ def test_procOneRegressionFitItem_negative_coefficient(debug=False):
 @pytest.mark.parametrize("multivariate", [False, True])
 @pytest.mark.parametrize("sign", [-1.0, 1.0])
 def test_procOneRegressionFitItem_weak_float32_correlation(multivariate, sign):
-    """Weak correlations must survive float32 storage without negative R-squared."""
+    """
+    Weak correlations must survive float32 storage without negative R-squared.
+
+    Parameters
+    ----------
+    multivariate : object
+        Value supplied as ``multivariate`` by the test case.
+    sign : object
+        Value supplied as ``sign`` by the test case.
+    """
     phase = np.arange(939, dtype=np.float64) * (2.0 * np.pi / 939)
     ev = np.sin(phase).astype(np.float32)
     data = (3.0 + np.cos(phase) + sign * 1e-4 * ev).astype(np.float32)
@@ -315,7 +395,14 @@ def test_procOneRegressionFitItem_weak_float32_correlation(multivariate, sign):
 
 @pytest.mark.parametrize("multivariate", [False, True])
 def test_procOneRegressionFitItem_negative_roundoff(multivariate):
-    """Roundoff below zero must not produce an invalid correlation square root."""
+    """
+    Roundoff below zero must not produce an invalid correlation square root.
+
+    Parameters
+    ----------
+    multivariate : object
+        Value supplied as ``multivariate`` by the test case.
+    """
     ev = np.linspace(-1.0, 1.0, 20)
     evs = np.column_stack((ev, ev**2)) if multivariate else ev
     coeffs = np.array([[3.0, 1e-10, 0.0]]) if multivariate else np.array([[3.0, 1e-10]])
@@ -328,7 +415,14 @@ def test_procOneRegressionFitItem_negative_roundoff(multivariate):
 
 
 def test_procOneRegressionFitItem_multivariate(debug=False):
-    """Test the 2D regressor path recovers both coefficients."""
+    """
+    Test the 2D regressor path recovers both coefficients.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("procOneRegressionFitItem_multivariate")
     npts = 40
@@ -347,7 +441,14 @@ def test_procOneRegressionFitItem_multivariate(debug=False):
 
 
 def test_procOneRegressionFitItem_multivariate_negative_first_coeff(debug=False):
-    """Test the coefficient sign is taken from the first coefficient in the 2D path."""
+    """
+    Test the coefficient sign is taken from the first coefficient in the 2D path.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("procOneRegressionFitItem_multivariate_negative_first_coeff")
     npts = 40
@@ -359,10 +460,16 @@ def test_procOneRegressionFitItem_multivariate_negative_first_coeff(debug=False)
 
 
 def test_procOneRegressionFitItem_zero_coefficients(debug=False):
-    """Test constant data drives the coefficients and R2 to zero in both paths.
+    """
+    Test constant data drives the coefficients and R2 to zero in both paths.
 
     Constant data is the reachable route into the "all coefficients are zero" guards; the
     regression returns the constant as the intercept and nothing for the slopes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("procOneRegressionFitItem_zero_coefficients")
@@ -385,7 +492,14 @@ def test_procOneRegressionFitItem_zero_coefficients(debug=False):
 
 
 def test_linfitfiltpass_threshval_mean_mask(debug=False):
-    """Test a threshold masks out voxels by mean when the data mean exceeds its stdev."""
+    """
+    Test a threshold masks out voxels by mean when the data mean exceeds its stdev.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfiltpass_threshval_mean_mask")
     tpts = 20
@@ -427,10 +541,16 @@ def test_linfitfiltpass_threshval_mean_mask(debug=False):
 
 
 def test_linfitfiltpass_threshval_std_mask(debug=False):
-    """Test the threshold falls back to the standard deviation when it exceeds the mean.
+    """
+    Test the threshold falls back to the standard deviation when it exceeds the mean.
 
     ``linfitfiltpass`` picks between a mean-based and a stdev-based mask by comparing the
     two averaged over the image, so zero-mean data with large swings takes the stdev branch.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("linfitfiltpass_threshval_std_mask")
@@ -463,7 +583,14 @@ def test_linfitfiltpass_threshval_std_mask(debug=False):
 
 
 def test_linfitfiltpass_explicit_validmask(debug=False):
-    """Test an explicit validmask overrides the threshold based mask entirely."""
+    """
+    Test an explicit validmask overrides the threshold based mask entirely.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfiltpass_explicit_validmask")
     tpts = 20
@@ -550,12 +677,18 @@ def _run_constantevs(nprocs, procbyvoxel, nvox=4, tpts=24):
 
 
 def test_linfitfiltpass_constantevs_single_matches_multiproc(debug=False):
-    """Test constantevs gives identical results single threaded and multiprocessed.
+    """
+    Test constantevs gives identical results single threaded and multiprocessed.
 
     The single process path used to ignore ``constantevs`` outside the ``coefficientsonly``
     branch and index the shared regressor per voxel, raising IndexError, while the
     multiprocessing path handled it correctly - so the same call behaved differently
     depending only on ``nprocs``.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("linfitfiltpass_constantevs_single_matches_multiproc")
@@ -574,7 +707,14 @@ def test_linfitfiltpass_constantevs_single_matches_multiproc(debug=False):
 
 
 def test_linfitfiltpass_constantevs_passes_whole_regressor(debug=False):
-    """Test constantevs hands the whole regressor to the fitter rather than a slice."""
+    """
+    Test constantevs hands the whole regressor to the fitter rather than a slice.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfiltpass_constantevs_passes_whole_regressor")
     nvox, tpts = 3, 10
@@ -583,6 +723,25 @@ def test_linfitfiltpass_constantevs_passes_whole_regressor(debug=False):
     received = []
 
     def _mock_proc(item, evs, data, rt_floattype=np.dtype(np.float64)):
+        """
+        Simulate ``proc`` for the test.
+
+        Parameters
+        ----------
+        item : object
+            Value supplied as ``item`` by the test case.
+        evs : object
+            Value supplied as ``evs`` by the test case.
+        data : array-like
+            Data passed to the test helper.
+        rt_floattype : object, optional
+            Value supplied as ``rt_floattype`` by the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         received.append(np.array(evs, copy=True))
         return (item, 1.0, 0.5, 0.25, 2.0, 0.7, np.zeros_like(data), np.zeros_like(data))
 
@@ -644,6 +803,19 @@ def _run_both_procs(procbyvoxel, mode, twodcoeffs=False, nvox=5, tpts=30):
     voxdata = np.outer(np.arange(1.0, nvox + 1), base) + 0.001 * rng.randn(nvox, tpts)
 
     def _once(nprocs):
+        """
+        Provide the ``_once`` test substitute.
+
+        Parameters
+        ----------
+        nprocs : object
+            Value supplied as ``nprocs`` by the test case.
+
+        Returns
+        -------
+        dict
+            The ``arrays`` value supplied to the caller.
+        """
         thedata = voxdata if procbyvoxel else np.ascontiguousarray(voxdata.T)
         coeffshape = (nvox, 2) if twodcoeffs and procbyvoxel else (nvox,)
         if twodcoeffs and not procbyvoxel:
@@ -683,7 +855,14 @@ def _run_both_procs(procbyvoxel, mode, twodcoeffs=False, nvox=5, tpts=30):
 
 
 def test_linfitfiltpass_multiproc_matches_singleproc(debug=False):
-    """Test every output mode agrees between the single and multiprocessing paths."""
+    """
+    Test every output mode agrees between the single and multiprocessing paths.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfiltpass_multiproc_matches_singleproc")
     for procbyvoxel in [True, False]:
@@ -701,7 +880,14 @@ def test_linfitfiltpass_multiproc_matches_singleproc(debug=False):
 
 
 def test_linfitfiltpass_multiproc_2d_coefficients(debug=False):
-    """Test the 2D coefficient array branches agree between both processing paths."""
+    """
+    Test the 2D coefficient array branches agree between both processing paths.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfiltpass_multiproc_2d_coefficients")
     for procbyvoxel in [True, False]:
@@ -718,7 +904,14 @@ def test_linfitfiltpass_multiproc_2d_coefficients(debug=False):
 
 
 def test_linfitfiltpass_alwaysmultiproc(debug=False):
-    """Test alwaysmultiproc forces the multiprocessing path even with nprocs of 1."""
+    """
+    Test alwaysmultiproc forces the multiprocessing path even with nprocs of 1.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfiltpass_alwaysmultiproc")
     nvox, tpts = 4, 24
@@ -749,12 +942,18 @@ def test_linfitfiltpass_alwaysmultiproc(debug=False):
 
 
 def test_linfitfiltpass_debug_with_optional_arrays_absent(debug=False):
-    """Test the debug report copes with the output arrays that are legitimately None.
+    """
+    Test the debug report copes with the output arrays that are legitimately None.
 
     ``confoundregress`` and ``coefficientsonly`` modes leave several of the output arrays
     unallocated, but the end of run debug report used to dereference all of them
     unconditionally - so passing debug=True crashed, which is how ``retroregress --debug``
     came to be unusable.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("linfitfiltpass_debug_with_optional_arrays_absent")
@@ -807,7 +1006,14 @@ def test_linfitfiltpass_debug_with_optional_arrays_absent(debug=False):
 
 
 def test_linfitfiltpass_debug_and_progressbar(debug=False):
-    """Test the debug reporting and progress bar paths run without error."""
+    """
+    Test the debug reporting and progress bar paths run without error.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("linfitfiltpass_debug_and_progressbar")
     nvox, tpts = 3, 16
@@ -846,7 +1052,14 @@ def test_linfitfiltpass_debug_and_progressbar(debug=False):
 
 
 def test_makevoxelspecificderivs_zero_derivatives(debug=False):
-    """Test requesting zero derivatives returns the input unchanged."""
+    """
+    Test requesting zero derivatives returns the input unchanged.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makevoxelspecificderivs_zero_derivatives")
     theevs = np.arange(12, dtype=np.float64).reshape((3, 4))
@@ -855,7 +1068,14 @@ def test_makevoxelspecificderivs_zero_derivatives(debug=False):
 
 
 def test_makevoxelspecificderivs_first_derivative(debug=False):
-    """Test the first derivative column is the gradient of the input timecourse."""
+    """
+    Test the first derivative column is the gradient of the input timecourse.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makevoxelspecificderivs_first_derivative")
     tpts = 20
@@ -870,7 +1090,14 @@ def test_makevoxelspecificderivs_first_derivative(debug=False):
 
 
 def test_makevoxelspecificderivs_second_derivative(debug=False):
-    """Test higher derivatives are scaled by the reciprocal factorial of their order."""
+    """
+    Test higher derivatives are scaled by the reciprocal factorial of their order.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makevoxelspecificderivs_second_derivative")
     tpts = 25
@@ -915,7 +1142,14 @@ def _confounddata(nvox=6, tpts=60, nregressors=3, seed=5):
 
 
 def test_confoundregress_removes_confounds(debug=False):
-    """Test confound regression reduces the variance explained by the regressors."""
+    """
+    Test confound regression reduces the variance explained by the regressors.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("confoundregress_removes_confounds")
     theregressors, labels, thedata = _confounddata()
@@ -934,11 +1168,17 @@ def test_confoundregress_removes_confounds(debug=False):
 
 
 def test_confoundregress_does_not_mutate_input(debug=False):
-    """Test the caller's regressor array survives the call unmodified.
+    """
+    Test the caller's regressor array survives the call unmodified.
 
     The regressors are normalized, optionally filtered and orthogonalized in place; because
     the leading slice produced a view rather than a copy, all of that used to be written
     straight back into the array the caller passed in.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("confoundregress_does_not_mutate_input")
@@ -955,7 +1195,14 @@ def test_confoundregress_does_not_mutate_input(debug=False):
 
 
 def test_confoundregress_no_orthogonalization(debug=False):
-    """Test skipping orthogonalization keeps the original regressor labels and count."""
+    """
+    Test skipping orthogonalization keeps the original regressor labels and count.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("confoundregress_no_orthogonalization")
     theregressors, labels, thedata = _confounddata()
@@ -968,7 +1215,14 @@ def test_confoundregress_no_orthogonalization(debug=False):
 
 
 def test_confoundregress_orthogonalization_relabels(debug=False):
-    """Test orthogonalization replaces the labels with generated orthogconfound names."""
+    """
+    Test orthogonalization replaces the labels with generated orthogconfound names.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("confoundregress_orthogonalization_relabels")
     theregressors, labels, thedata = _confounddata()
@@ -981,7 +1235,14 @@ def test_confoundregress_orthogonalization_relabels(debug=False):
 
 
 def test_confoundregress_timecourse_trimming(debug=False):
-    """Test tcstart and tcend trim the regressors before fitting."""
+    """
+    Test tcstart and tcend trim the regressors before fitting.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("confoundregress_timecourse_trimming")
     tpts = 60
@@ -1001,7 +1262,14 @@ def test_confoundregress_timecourse_trimming(debug=False):
 
 
 def test_confoundregress_with_filtering(debug=False):
-    """Test the optional high and low pass filtering of the regressors runs."""
+    """
+    Test the optional high and low pass filtering of the regressors runs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("confoundregress_with_filtering")
     theregressors, labels, thedata = _confounddata(tpts=100)
@@ -1020,11 +1288,17 @@ def test_confoundregress_with_filtering(debug=False):
 
 
 def test_confoundregress_no_surviving_regressors(debug=False):
-    """Test the early return when orthogonalization removes every regressor.
+    """
+    Test the early return when orthogonalization removes every regressor.
 
     Gram-Schmidt drops regressors that are linear combinations of earlier ones, so a set of
     all-identical regressors collapses; the function returns the data untouched and a None
     R2 rather than attempting a fit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("confoundregress_no_surviving_regressors")

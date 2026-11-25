@@ -22,6 +22,14 @@ from rapidtide.util import valtoindex
 
 
 def test_valtoindex(debug=False):
+    """
+    Verify valtoindex.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     tr = 1.0
     testtr = 0.7
     xaxislen = 100

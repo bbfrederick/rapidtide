@@ -21,6 +21,7 @@ import rapidtide.workflows.retrolagtcs as theworkflow
 
 
 def entrypoint():
+    """Run the `retrolagtcs` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.retrolagtcs)
 
 

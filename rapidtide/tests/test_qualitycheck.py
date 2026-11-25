@@ -25,6 +25,20 @@ import rapidtide.qualitycheck as tide_quality
 
 class DummyOverlay:
     def __init__(self, data, xsize=1.0, ysize=1.0, zsize=1.0):
+        """
+        Initialize the test double for ``DummyOverlay``.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        xsize : int, optional
+            Number of voxels along the x axis.
+        ysize : int, optional
+            Number of voxels along the y axis.
+        zsize : float, optional
+            Value supplied as ``zsize`` by the test case.
+        """
         self.data = data
         self.xsize = xsize
         self.ysize = ysize
@@ -32,17 +46,37 @@ class DummyOverlay:
         self.funcmask = None
 
     def setFuncMask(self, themask):
+        """
+        Set up ``setFuncMask`` for the test.
+
+        Parameters
+        ----------
+        themask : object
+            Value supplied as ``themask`` by the test case.
+        """
         self.funcmask = themask
 
     def updateStats(self):
+        """Set up ``updateStats`` for the test."""
         return None
 
     def summarize(self):
+        """Set up ``summarize`` for the test."""
         return None
 
 
 class DummyRegressor:
     def __init__(self, specaxis, specdata):
+        """
+        Initialize the test double for ``DummyRegressor``.
+
+        Parameters
+        ----------
+        specaxis : object
+            Value supplied as ``specaxis`` by the test case.
+        specdata : object
+            Value supplied as ``specdata`` by the test case.
+        """
         self.specaxis = specaxis
         self.specdata = specdata
         self.kurtosis = 0.5
@@ -73,6 +107,40 @@ class DummyDataset:
     ):
         # Keep masks large enough that post-erosion voxel counts still satisfy
         # SciPy skew/kurtosis test sample-size requirements.
+        """
+        Initialize the test double for ``DummyDataset``.
+
+        Parameters
+        ----------
+        name : object
+            Value supplied as ``name`` by the test case.
+        rootname : object
+            Value supplied as ``rootname`` by the test case.
+        anatname : object or None, optional
+            Value supplied as ``anatname`` by the test case.
+        geommaskname : object or None, optional
+            Value supplied as ``geommaskname`` by the test case.
+        graymaskspec : object or None, optional
+            Value supplied as ``graymaskspec`` by the test case.
+        whitemaskspec : object or None, optional
+            Value supplied as ``whitemaskspec`` by the test case.
+        userise : bool, optional
+            Setting for ``userise`` in the test case.
+        usecorrout : bool, optional
+            Setting for ``usecorrout`` in the test case.
+        useatlas : bool, optional
+            Setting for ``useatlas`` in the test case.
+        forcetr : bool, optional
+            Setting for ``forcetr`` in the test case.
+        forceoffset : bool, optional
+            Setting for ``forceoffset`` in the test case.
+        offsettime : float, optional
+            Value supplied as ``offsettime`` by the test case.
+        verbose : bool, optional
+            Setting for ``verbose`` in the test case.
+        init_LUT : bool, optional
+            Setting for ``init_LUT`` in the test case.
+        """
         shape = (8, 8, 8)
         lagmask = np.ones(shape, dtype=int)
         lagtimes = np.random.RandomState(1).randn(*shape)
@@ -113,6 +181,14 @@ class DummyDataset:
 
 
 def prepmask_and_getmasksize_tests(debug=False):
+    """
+    Check prepmask and getmasksize tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("prepmask_and_getmasksize_tests")
     mask = np.ones((5, 5, 5), dtype=int)
@@ -123,6 +199,14 @@ def prepmask_and_getmasksize_tests(debug=False):
 
 
 def checkregressors_tests(debug=False):
+    """
+    Check checkregressors tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("checkregressors_tests")
     regressors = {
@@ -154,6 +238,14 @@ def checkregressors_tests(debug=False):
 
 
 def gethistmetrics_and_checkmap_tests(debug=False):
+    """
+    Check gethistmetrics and checkmap tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("gethistmetrics_and_checkmap_tests")
     rng = np.random.RandomState(12)
@@ -210,6 +302,14 @@ def gethistmetrics_and_checkmap_tests(debug=False):
 
 
 def qualitycheck_tests(debug=False):
+    """
+    Check qualitycheck tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("qualitycheck_tests")
     with patch("rapidtide.qualitycheck.RapidtideDataset", DummyDataset):
@@ -251,6 +351,16 @@ def qualitycheck_tests(debug=False):
 
 
 def test_qualitycheck(debug=False, displayplots=False):
+    """
+    Verify qualitycheck.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     np.random.seed(12345)
     prepmask_and_getmasksize_tests(debug=debug)
     checkregressors_tests(debug=debug)

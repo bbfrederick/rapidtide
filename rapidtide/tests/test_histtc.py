@@ -31,6 +31,19 @@ from rapidtide.workflows.histtc import _get_parser, histtc
 
 
 def _make_default_args(**overrides):
+    """
+    Create default args.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         inputfilename="input.txt",
         outputroot="output",
@@ -48,10 +61,39 @@ def _make_default_args(**overrides):
 
 
 def _make_mock_readvectors(inputdata_1d):
-    """Return a mock readvectorsfromtextfile that returns inputdata as a 2D array (row vector)."""
+    """
+    Return a mock readvectorsfromtextfile that returns inputdata as a 2D array (row vector).
+
+    Parameters
+    ----------
+    inputdata_1d : object
+        Value supplied as ``inputdata_1d`` by the test case.
+
+    Returns
+    -------
+    object
+        The ``_mock`` value supplied to the caller.
+    """
     data_2d = np.atleast_2d(inputdata_1d)
 
     def _mock(filepath, onecol=False, debug=False):
+        """
+        Provide the ``_mock`` test substitute.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (None, None, None, data_2d.copy(), None, "text")
 
     return _mock
@@ -63,6 +105,14 @@ def _make_mock_readvectors(inputdata_1d):
 
 
 def parser_basic(debug=False):
+    """
+    Check that the command-line parser initializes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -71,6 +121,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
+    """
+    Check that the parser requires the mandatory arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -79,6 +137,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
+    """
+    Check the parser defaults.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -98,6 +164,14 @@ def parser_defaults(debug=False):
 
 
 def parser_numbins(debug=False):
+    """
+    Check parser handling of numbins.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_numbins")
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -109,6 +183,14 @@ def parser_numbins(debug=False):
 
 
 def parser_minval_maxval(debug=False):
+    """
+    Check parser handling of minval maxval.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_minval_maxval")
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -121,6 +203,14 @@ def parser_minval_maxval(debug=False):
 
 
 def parser_robustrange(debug=False):
+    """
+    Check parser handling of robustrange.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_robustrange")
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -132,6 +222,14 @@ def parser_robustrange(debug=False):
 
 
 def parser_nozero(debug=False):
+    """
+    Check parser handling of nozero.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_nozero")
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -143,6 +241,14 @@ def parser_nozero(debug=False):
 
 
 def parser_nozerothresh(debug=False):
+    """
+    Check parser handling of nozerothresh.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_nozerothresh")
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -154,6 +260,14 @@ def parser_nozerothresh(debug=False):
 
 
 def parser_normhist(debug=False):
+    """
+    Check parser handling of normhist.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_normhist")
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -165,6 +279,14 @@ def parser_normhist(debug=False):
 
 
 def parser_debug(debug=False):
+    """
+    Check parser handling of debug.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_debug")
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -176,6 +298,14 @@ def parser_debug(debug=False):
 
 
 def parser_all_flags(debug=False):
+    """
+    Parse a command line with all optional flags enabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_all_flags")
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -216,7 +346,14 @@ def parser_all_flags(debug=False):
 
 
 def histtc_basic(debug=False):
-    """Test basic histogram generation with default settings."""
+    """
+    Test basic histogram generation with default settings.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histtc_basic")
 
@@ -224,9 +361,42 @@ def histtc_basic(debug=False):
     captured = {}
 
     def _mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         return [np.percentile(data, f * 100) for f in fracs]
 
     def _mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
+        """
+        Simulate ``makeandsavehistogram`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        histlen : int
+            Number of bins in the test histogram.
+        endtrim : int
+            Number of samples trimmed at the end.
+        outname : path-like
+            Name of the output file.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["indata"] = indata.copy()
         captured["histlen"] = histlen
         captured["endtrim"] = endtrim
@@ -264,7 +434,14 @@ def histtc_basic(debug=False):
 
 
 def histtc_nozero(debug=False):
-    """Test that nozero filtering removes near-zero values."""
+    """
+    Test that nozero filtering removes near-zero values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histtc_nozero")
 
@@ -272,9 +449,42 @@ def histtc_nozero(debug=False):
     captured = {}
 
     def _mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         return [np.percentile(data, f * 100) for f in fracs]
 
     def _mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
+        """
+        Simulate ``makeandsavehistogram`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        histlen : int
+            Number of bins in the test histogram.
+        endtrim : int
+            Number of samples trimmed at the end.
+        outname : path-like
+            Name of the output file.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["indata"] = indata.copy()
 
     args = _make_default_args(nozero=True, nozerothresh=0.01)
@@ -302,7 +512,14 @@ def histtc_nozero(debug=False):
 
 
 def histtc_nozero_custom_thresh(debug=False):
-    """Test nozero with a custom threshold."""
+    """
+    Test nozero with a custom threshold.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histtc_nozero_custom_thresh")
 
@@ -310,9 +527,42 @@ def histtc_nozero_custom_thresh(debug=False):
     captured = {}
 
     def _mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         return [np.percentile(data, f * 100) for f in fracs]
 
     def _mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
+        """
+        Simulate ``makeandsavehistogram`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        histlen : int
+            Number of bins in the test histogram.
+        endtrim : int
+            Number of samples trimmed at the end.
+        outname : path-like
+            Name of the output file.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["indata"] = indata.copy()
 
     args = _make_default_args(nozero=True, nozerothresh=0.5)
@@ -339,7 +589,14 @@ def histtc_nozero_custom_thresh(debug=False):
 
 
 def histtc_robustrange(debug=False):
-    """Test that robustrange uses 2nd and 98th percentiles for range."""
+    """
+    Test that robustrange uses 2nd and 98th percentiles for range.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histtc_robustrange")
 
@@ -349,10 +606,43 @@ def histtc_robustrange(debug=False):
     call_count = {"n": 0}
 
     def _mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         call_count["n"] += 1
         return [np.percentile(data, f * 100) for f in fracs]
 
     def _mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
+        """
+        Simulate ``makeandsavehistogram`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        histlen : int
+            Number of bins in the test histogram.
+        endtrim : int
+            Number of samples trimmed at the end.
+        outname : path-like
+            Name of the output file.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["therange"] = kwargs.get("therange")
 
     args = _make_default_args(robustrange=True)
@@ -382,7 +672,14 @@ def histtc_robustrange(debug=False):
 
 
 def histtc_minval_maxval(debug=False):
-    """Test that explicit minval/maxval override data range."""
+    """
+    Test that explicit minval/maxval override data range.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histtc_minval_maxval")
 
@@ -390,9 +687,42 @@ def histtc_minval_maxval(debug=False):
     captured = {}
 
     def _mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         return [np.percentile(data, f * 100) for f in fracs]
 
     def _mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
+        """
+        Simulate ``makeandsavehistogram`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        histlen : int
+            Number of bins in the test histogram.
+        endtrim : int
+            Number of samples trimmed at the end.
+        outname : path-like
+            Name of the output file.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["therange"] = kwargs.get("therange")
 
     args = _make_default_args(minval=-10.0, maxval=200.0)
@@ -417,7 +747,14 @@ def histtc_minval_maxval(debug=False):
 
 
 def histtc_minval_only(debug=False):
-    """Test that only minval is specified; maxval uses data max."""
+    """
+    Test that only minval is specified; maxval uses data max.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histtc_minval_only")
 
@@ -425,9 +762,42 @@ def histtc_minval_only(debug=False):
     captured = {}
 
     def _mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         return [np.percentile(data, f * 100) for f in fracs]
 
     def _mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
+        """
+        Simulate ``makeandsavehistogram`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        histlen : int
+            Number of bins in the test histogram.
+        endtrim : int
+            Number of samples trimmed at the end.
+        outname : path-like
+            Name of the output file.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["therange"] = kwargs.get("therange")
 
     args = _make_default_args(minval=-5.0, maxval=None)
@@ -452,7 +822,14 @@ def histtc_minval_only(debug=False):
 
 
 def histtc_maxval_only(debug=False):
-    """Test that only maxval is specified; minval uses data min."""
+    """
+    Test that only maxval is specified; minval uses data min.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histtc_maxval_only")
 
@@ -460,9 +837,42 @@ def histtc_maxval_only(debug=False):
     captured = {}
 
     def _mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         return [np.percentile(data, f * 100) for f in fracs]
 
     def _mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
+        """
+        Simulate ``makeandsavehistogram`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        histlen : int
+            Number of bins in the test histogram.
+        endtrim : int
+            Number of samples trimmed at the end.
+        outname : path-like
+            Name of the output file.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["therange"] = kwargs.get("therange")
 
     args = _make_default_args(minval=None, maxval=100.0)
@@ -487,7 +897,14 @@ def histtc_maxval_only(debug=False):
 
 
 def histtc_normhist(debug=False):
-    """Test that normhist is forwarded to makeandsavehistogram as normalize."""
+    """
+    Test that normhist is forwarded to makeandsavehistogram as normalize.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histtc_normhist")
 
@@ -495,9 +912,42 @@ def histtc_normhist(debug=False):
     captured = {}
 
     def _mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         return [np.percentile(data, f * 100) for f in fracs]
 
     def _mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
+        """
+        Simulate ``makeandsavehistogram`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        histlen : int
+            Number of bins in the test histogram.
+        endtrim : int
+            Number of samples trimmed at the end.
+        outname : path-like
+            Name of the output file.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["normalize"] = kwargs.get("normalize")
 
     args = _make_default_args(normhist=True)
@@ -522,13 +972,37 @@ def histtc_normhist(debug=False):
 
 
 def histtc_debug_mode(debug=False):
-    """Test that debug mode runs without error."""
+    """
+    Test that debug mode runs without error.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histtc_debug_mode")
 
     inputdata = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
 
     def _mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         return [np.percentile(data, f * 100) for f in fracs]
 
     args = _make_default_args(debug=True)
@@ -536,6 +1010,22 @@ def histtc_debug_mode(debug=False):
     captured = {}
 
     def _mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
+        """
+        Simulate ``makeandsavehistogram`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        histlen : int
+            Number of bins in the test histogram.
+        endtrim : int
+            Number of samples trimmed at the end.
+        outname : path-like
+            Name of the output file.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["debug"] = kwargs.get("debug")
 
     with (
@@ -558,13 +1048,37 @@ def histtc_debug_mode(debug=False):
 
 
 def histtc_percentiles_printed(debug=False):
-    """Verify that percentile values are printed."""
+    """
+    Verify that percentile values are printed.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histtc_percentiles_printed")
 
     inputdata = np.arange(100, dtype=float)
 
     def _mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         return [np.percentile(data, f * 100) for f in fracs]
 
     args = _make_default_args()
@@ -589,7 +1103,14 @@ def histtc_percentiles_printed(debug=False):
 
 
 def histtc_inputfilename_forwarded(debug=False):
-    """Verify the input filename is passed to readvectorsfromtextfile."""
+    """
+    Verify the input filename is passed to readvectorsfromtextfile.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histtc_inputfilename_forwarded")
 
@@ -597,10 +1118,44 @@ def histtc_inputfilename_forwarded(debug=False):
     captured = {}
 
     def _mock_readvectors(filepath, onecol=False, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         captured["filepath"] = filepath
         return (None, None, None, np.atleast_2d(inputdata), None, "text")
 
     def _mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         return [np.percentile(data, f * 100) for f in fracs]
 
     args = _make_default_args(inputfilename="special_data.txt")
@@ -622,7 +1177,14 @@ def histtc_inputfilename_forwarded(debug=False):
 
 
 def histtc_custom_histlen(debug=False):
-    """Test that a custom histlen value is forwarded."""
+    """
+    Test that a custom histlen value is forwarded.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histtc_custom_histlen")
 
@@ -630,9 +1192,42 @@ def histtc_custom_histlen(debug=False):
     captured = {}
 
     def _mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         return [np.percentile(data, f * 100) for f in fracs]
 
     def _mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
+        """
+        Simulate ``makeandsavehistogram`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        histlen : int
+            Number of bins in the test histogram.
+        endtrim : int
+            Number of samples trimmed at the end.
+        outname : path-like
+            Name of the output file.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["histlen"] = histlen
 
     args = _make_default_args(histlen=50)
@@ -657,7 +1252,14 @@ def histtc_custom_histlen(debug=False):
 
 
 def histtc_extracts_first_row(debug=False):
-    """Verify the function extracts row [0] from the 2D array returned by readvectors."""
+    """
+    Verify the function extracts row [0] from the 2D array returned by readvectors.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("histtc_extracts_first_row")
 
@@ -667,12 +1269,62 @@ def histtc_extracts_first_row(debug=False):
     captured = {}
 
     def _mock_readvectors(filepath, onecol=False, debug=False):
+        """
+        Simulate ``readvectors`` for the test.
+
+        Parameters
+        ----------
+        filepath : path-like
+            Path to the test input or output file.
+        onecol : bool, optional
+            Use a single column of test data.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (None, None, None, data_2d.copy(), None, "text")
 
     def _mock_getfracvals(data, fracs, **kwargs):
+        """
+        Simulate ``getfracvals`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fracs : sequence of float
+            Fractions at which to evaluate the distribution.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         return [np.percentile(data, f * 100) for f in fracs]
 
     def _mock_makeandsavehistogram(indata, histlen, endtrim, outname, **kwargs):
+        """
+        Simulate ``makeandsavehistogram`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        histlen : int
+            Number of bins in the test histogram.
+        endtrim : int
+            Number of samples trimmed at the end.
+        outname : path-like
+            Name of the output file.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["indata"] = indata.copy()
 
     args = _make_default_args()
@@ -703,6 +1355,14 @@ def histtc_extracts_first_row(debug=False):
 
 def test_histtc(debug=False):
     # Parser tests
+    """
+    Verify histtc.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_defaults(debug=debug)

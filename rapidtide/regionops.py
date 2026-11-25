@@ -23,7 +23,19 @@ import numpy as np
 
 
 def _neighbor_offsets(connectivity: int) -> np.ndarray:
-    """Return integer neighbor offsets for a requested 3D connectivity."""
+    """
+    Return integer neighbor offsets for a requested 3D connectivity.
+
+    Parameters
+    ----------
+    connectivity : int
+        Neighborhood connectivity used to select adjacent voxels.
+
+    Returns
+    -------
+    numpy.ndarray
+        Integer offsets for the requested neighboring voxels.
+    """
     if connectivity == 6:
         return np.array(
             [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)], dtype=int
@@ -56,6 +68,18 @@ def _coerce_tensor_field(
     Accepted input layouts are ``(X, Y, Z, 3, 3)``, ``(X, Y, Z, 6)`` with
     ``[xx, yy, zz, xy, xz, yz]`` ordering, and ``(X, Y, Z, 9)`` storing the
     flattened 3x3 tensor.
+
+    Parameters
+    ----------
+    anisotropy_field : Optional[np.ndarray]
+        Local diffusion tensors controlling directional preference.
+    expected_shape : tuple[int, int, int]
+        Required spatial dimensions of the tensor field.
+
+    Returns
+    -------
+    numpy.ndarray or None
+        Tensor field with logical shape (X, Y, Z, 3, 3), if supplied.
     """
     if anisotropy_field is None:
         return None
@@ -94,6 +118,18 @@ def _directional_preference_score(tensor: np.ndarray, step: np.ndarray) -> float
 
     The score ranges from 0 to 1 for positive semidefinite tensors and is larger
     when the step aligns with high-conductance / low-penalty directions.
+
+    Parameters
+    ----------
+    tensor : np.ndarray
+        Local tensor defining directional preferences.
+    step : np.ndarray
+        Spatial offset from the current voxel.
+
+    Returns
+    -------
+    float
+        Normalized preference for the offset under the local tensor.
     """
     stepvec = np.asarray(step, dtype=np.float64)
     stepnorm = np.linalg.norm(stepvec)
@@ -163,6 +199,23 @@ def partition_3d(
 
     # --- helper to check bounds ---
     def in_bounds(x, y, z):
+        """
+        Check whether a voxel index is inside the image.
+
+        Parameters
+        ----------
+        x : int
+            Voxel index along the x axis.
+        y : int
+            Voxel index along the y axis.
+        z : int
+            Voxel index along the z axis.
+
+        Returns
+        -------
+        bool
+            Whether all three indices are inside the image.
+        """
         return (0 <= z < Z) and (0 <= y < Y) and (0 <= x < X)
 
     # --- choose N random seed voxels inside mask ---
@@ -188,6 +241,16 @@ def partition_3d(
 
     # optional jitter: maintain a parallel random priority queue via shuffling chunks
     def maybe_shuffle(q: deque, prob=0.1):
+        """
+        Randomize the queue order with the given probability.
+
+        Parameters
+        ----------
+        q : deque
+            Pending frontier entries.
+        prob : float, optional
+            Probability of shuffling the queue on this call.
+        """
         if jitter > 0 and rng.random() < prob:
             tmp = list(q)
             rng.shuffle(tmp)

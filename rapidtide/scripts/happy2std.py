@@ -21,6 +21,7 @@ import rapidtide.workflows.parser_funcs as pf
 
 
 def entrypoint():
+    """Run the `happy2std` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.happy2std)
 
 

@@ -35,7 +35,21 @@ import rapidtide.workflows.fingerprint as fp
 
 
 def _make_synthetic_atlas(shape=(10, 12, 8), numregions=3):
-    """Create a synthetic atlas with numregions territories."""
+    """
+    Create a synthetic atlas with numregions territories.
+
+    Parameters
+    ----------
+    shape : tuple of int, optional
+        Dimensions of the test array.
+    numregions : int, optional
+        Number of regions in the test atlas.
+
+    Returns
+    -------
+    numpy.ndarray
+        The ``atlas`` value supplied to the caller.
+    """
     rng = np.random.RandomState(42)
     atlas = np.zeros(shape, dtype=int)
     nvox = shape[0] * shape[1] * shape[2]
@@ -48,7 +62,23 @@ def _make_synthetic_atlas(shape=(10, 12, 8), numregions=3):
 
 
 def _make_synthetic_template(atlas, slope=2.0, offset=1.0):
-    """Create a synthetic template that varies linearly within each region."""
+    """
+    Create a synthetic template that varies linearly within each region.
+
+    Parameters
+    ----------
+    atlas : object
+        Value supplied as ``atlas`` by the test case.
+    slope : float, optional
+        Value supplied as ``slope`` by the test case.
+    offset : float, optional
+        Value supplied as ``offset`` by the test case.
+
+    Returns
+    -------
+    numpy.ndarray
+        The ``template`` value supplied to the caller.
+    """
     rng = np.random.RandomState(99)
     template = np.zeros_like(atlas, dtype=float)
     for region in range(1, np.max(atlas) + 1):
@@ -59,7 +89,23 @@ def _make_synthetic_template(atlas, slope=2.0, offset=1.0):
 
 
 def _make_synthetic_inputmap(template, atlas, noise_level=0.1):
-    """Create a synthetic input map that is a linear function of the template + noise."""
+    """
+    Create a synthetic input map that is a linear function of the template + noise.
+
+    Parameters
+    ----------
+    template : object
+        Value supplied as ``template`` by the test case.
+    atlas : object
+        Value supplied as ``atlas`` by the test case.
+    noise_level : float, optional
+        Value supplied as ``noise_level`` by the test case.
+
+    Returns
+    -------
+    numpy.ndarray
+        The ``inputmap`` value supplied to the caller.
+    """
     rng = np.random.RandomState(7)
     inputmap = np.zeros_like(template, dtype=float)
     for region in range(1, np.max(atlas) + 1):
@@ -73,7 +119,23 @@ def _make_synthetic_inputmap(template, atlas, noise_level=0.1):
 
 
 def _make_nifti_file(tmpdir, data, name):
-    """Write a NIfTI file and return the path."""
+    """
+    Write a NIfTI file and return the path.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    data : array-like
+        Data passed to the test helper.
+    name : object
+        Value supplied as ``name`` by the test case.
+
+    Returns
+    -------
+    str
+        The ``filepath`` value supplied to the caller.
+    """
     img = nib.Nifti1Image(data, affine=np.eye(4))
     filepath = os.path.join(tmpdir, name)
     nib.save(img, filepath)
@@ -150,7 +212,8 @@ def _read_as_tuple(tmpdir, data, name):
 
 
 def _run_with_stubbed_reads(tmpdir, whichtemplate, whichatlas, numregions, **kwargs):
-    """Run fingerprint with all NIfTI reads stubbed, recording the paths it requests.
+    """
+    Run fingerprint with all NIfTI reads stubbed, recording the paths it requests.
 
     This exercises the atlas and template filename resolution logic without needing the
     full sized reference volumes, which keeps the test fast while still asserting that the
@@ -166,7 +229,7 @@ def _run_with_stubbed_reads(tmpdir, whichtemplate, whichatlas, numregions, **kwa
         Atlas selector passed through to ``fingerprint``.
     numregions : int
         Number of regions in the region name file of the selected atlas.
-    **kwargs
+    **kwargs : object
         Additional keyword arguments forwarded to ``fingerprint``.
 
     Returns
@@ -189,6 +252,21 @@ def _run_with_stubbed_reads(tmpdir, whichtemplate, whichatlas, numregions, **kwa
     recorded = []
 
     def _stubreader(thename, **readkwargs):
+        """
+        Provide the ``_stubreader`` test substitute.
+
+        Parameters
+        ----------
+        thename : object
+            Value supplied as ``thename`` by the test case.
+        **readkwargs : object
+            Additional keyword arguments passed by the caller.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         recorded.append(thename)
         return copy.deepcopy(sequence[len(recorded) - 1])
 
@@ -208,7 +286,14 @@ def _run_with_stubbed_reads(tmpdir, whichtemplate, whichatlas, numregions, **kwa
 
 
 def get_parser_returns_parser(debug=False):
-    """Test _get_parser returns an ArgumentParser."""
+    """
+    Test _get_parser returns an ArgumentParser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_returns_parser")
     import argparse
@@ -218,7 +303,14 @@ def get_parser_returns_parser(debug=False):
 
 
 def get_parser_required_args(debug=False):
-    """Test _get_parser requires inputfile and outputroot."""
+    """
+    Test _get_parser requires inputfile and outputroot.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_required_args")
     parser = fp._get_parser()
@@ -231,7 +323,14 @@ def get_parser_required_args(debug=False):
 
 
 def get_parser_defaults(debug=False):
-    """Test _get_parser default values."""
+    """
+    Test _get_parser default values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_defaults")
     parser = fp._get_parser()
@@ -253,7 +352,14 @@ def get_parser_defaults(debug=False):
 
 
 def get_parser_atlas_choices(debug=False):
-    """Test _get_parser accepts all valid atlas choices."""
+    """
+    Test _get_parser accepts all valid atlas choices.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_atlas_choices")
     parser = fp._get_parser()
@@ -264,7 +370,14 @@ def get_parser_atlas_choices(debug=False):
 
 
 def get_parser_template_choices(debug=False):
-    """Test _get_parser accepts all valid template choices."""
+    """
+    Test _get_parser accepts all valid template choices.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_template_choices")
     parser = fp._get_parser()
@@ -275,7 +388,14 @@ def get_parser_template_choices(debug=False):
 
 
 def get_parser_fitorder(debug=False):
-    """Test _get_parser accepts --fitorder."""
+    """
+    Test _get_parser accepts --fitorder.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_fitorder")
     parser = fp._get_parser()
@@ -285,7 +405,14 @@ def get_parser_fitorder(debug=False):
 
 
 def get_parser_nointercept(debug=False):
-    """Test _get_parser accepts --nointercept."""
+    """
+    Test _get_parser accepts --nointercept.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_nointercept")
     parser = fp._get_parser()
@@ -295,7 +422,14 @@ def get_parser_nointercept(debug=False):
 
 
 def get_parser_limittomask(debug=False):
-    """Test _get_parser accepts --limittomask."""
+    """
+    Test _get_parser accepts --limittomask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_limittomask")
     parser = fp._get_parser()
@@ -305,7 +439,14 @@ def get_parser_limittomask(debug=False):
 
 
 def get_parser_entropybins(debug=False):
-    """Test _get_parser accepts --entropybins."""
+    """
+    Test _get_parser accepts --entropybins.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_entropybins")
     parser = fp._get_parser()
@@ -315,7 +456,14 @@ def get_parser_entropybins(debug=False):
 
 
 def get_parser_entropyrange(debug=False):
-    """Test _get_parser accepts --entropyrange."""
+    """
+    Test _get_parser accepts --entropyrange.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_entropyrange")
     parser = fp._get_parser()
@@ -325,7 +473,14 @@ def get_parser_entropyrange(debug=False):
 
 
 def get_parser_debug(debug=False):
-    """Test _get_parser accepts --debug."""
+    """
+    Test _get_parser accepts --debug.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_debug")
     parser = fp._get_parser()
@@ -335,7 +490,14 @@ def get_parser_debug(debug=False):
 
 
 def get_parser_includemask(debug=False):
-    """Test _get_parser accepts --includemask."""
+    """
+    Test _get_parser accepts --includemask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_includemask")
     parser = fp._get_parser()
@@ -345,7 +507,14 @@ def get_parser_includemask(debug=False):
 
 
 def get_parser_excludemask(debug=False):
-    """Test _get_parser accepts --excludemask."""
+    """
+    Test _get_parser accepts --excludemask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_excludemask")
     parser = fp._get_parser()
@@ -355,7 +524,14 @@ def get_parser_excludemask(debug=False):
 
 
 def get_parser_invalid_atlas(debug=False):
-    """Test _get_parser rejects invalid atlas."""
+    """
+    Test _get_parser rejects invalid atlas.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_invalid_atlas")
     parser = fp._get_parser()
@@ -368,7 +544,14 @@ def get_parser_invalid_atlas(debug=False):
 
 
 def get_parser_invalid_template(debug=False):
-    """Test _get_parser rejects invalid template."""
+    """
+    Test _get_parser rejects invalid template.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_invalid_template")
     parser = fp._get_parser()
@@ -381,7 +564,14 @@ def get_parser_invalid_template(debug=False):
 
 
 def get_parser_fullpaths_expands(debug=False):
-    """Test the FullPaths action turns a relative output root into an absolute path."""
+    """
+    Test the FullPaths action turns a relative output root into an absolute path.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_fullpaths_expands")
     parser = fp._get_parser()
@@ -392,7 +582,14 @@ def get_parser_fullpaths_expands(debug=False):
 
 
 def get_parser_fullpaths_empty_string(debug=False):
-    """Test the FullPaths action maps an empty path to the __EMPTY__ sentinel."""
+    """
+    Test the FullPaths action maps an empty path to the __EMPTY__ sentinel.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_fullpaths_empty_string")
     parser = fp._get_parser()
@@ -402,7 +599,14 @@ def get_parser_fullpaths_empty_string(debug=False):
 
 
 def get_parser_rejects_missing_input(debug=False):
-    """Test _get_parser rejects an input file that does not exist."""
+    """
+    Test _get_parser rejects an input file that does not exist.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_rejects_missing_input")
     parser = fp._get_parser()
@@ -414,7 +618,14 @@ def get_parser_rejects_missing_input(debug=False):
 
 
 def get_parser_customatlas(debug=False):
-    """Test _get_parser accepts --customatlas for an existing file."""
+    """
+    Test _get_parser accepts --customatlas for an existing file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_customatlas")
     parser = fp._get_parser()
@@ -424,7 +635,14 @@ def get_parser_customatlas(debug=False):
 
 
 def get_parser_extramask(debug=False):
-    """Test _get_parser accepts --extramask for an existing file."""
+    """
+    Test _get_parser accepts --extramask for an existing file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_extramask")
     parser = fp._get_parser()
@@ -437,7 +655,14 @@ def get_parser_extramask(debug=False):
 
 
 def fingerprint_selects_builtin_atlases(debug=False):
-    """Test each built-in atlas name resolves to the expected pair of reference files."""
+    """
+    Test each built-in atlas name resolves to the expected pair of reference files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_selects_builtin_atlases")
     referencedir = tide_util.findreferencedir()
@@ -459,7 +684,14 @@ def fingerprint_selects_builtin_atlases(debug=False):
 
 
 def fingerprint_selects_templates(debug=False):
-    """Test each named template resolves to the expected HCP1200 reference file."""
+    """
+    Test each named template resolves to the expected HCP1200 reference file.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_selects_templates")
     referencedir = tide_util.findreferencedir()
@@ -480,7 +712,14 @@ def fingerprint_selects_templates(debug=False):
 
 
 def fingerprint_user_atlas_derives_region_file(debug=False):
-    """Test a USER_ atlas derives its region name file by swapping the extension."""
+    """
+    Test a USER_ atlas derives its region name file by swapping the extension.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_user_atlas_derives_region_file")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -494,7 +733,14 @@ def fingerprint_user_atlas_derives_region_file(debug=False):
 
 
 def fingerprint_illegal_template(debug=False):
-    """Test fingerprint exits on an unrecognized template name."""
+    """
+    Test fingerprint exits on an unrecognized template name.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_illegal_template")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -506,7 +752,14 @@ def fingerprint_illegal_template(debug=False):
 
 
 def fingerprint_illegal_atlas(debug=False):
-    """Test fingerprint exits on an unrecognized atlas name."""
+    """
+    Test fingerprint exits on an unrecognized atlas name.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_illegal_atlas")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -521,7 +774,14 @@ def fingerprint_illegal_atlas(debug=False):
 
 
 def territorydecomp_3d_basic(debug=False):
-    """Test territorydecomp with 3D input, linear fit."""
+    """
+    Test territorydecomp with 3D input, linear fit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("territorydecomp_3d_basic")
     shape = (10, 12, 8)
@@ -548,7 +808,14 @@ def territorydecomp_3d_basic(debug=False):
 
 
 def territorydecomp_3d_no_intercept(debug=False):
-    """Test territorydecomp without intercept."""
+    """
+    Test territorydecomp without intercept.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("territorydecomp_3d_no_intercept")
     shape = (10, 12, 8)
@@ -573,7 +840,14 @@ def territorydecomp_3d_no_intercept(debug=False):
 
 
 def territorydecomp_3d_fitorder0(debug=False):
-    """Test territorydecomp with fitorder=0 (constant fit)."""
+    """
+    Test territorydecomp with fitorder=0 (constant fit).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("territorydecomp_3d_fitorder0")
     shape = (8, 8, 6)
@@ -601,7 +875,14 @@ def territorydecomp_3d_fitorder0(debug=False):
 
 
 def territorydecomp_4d(debug=False):
-    """Test territorydecomp with 4D input."""
+    """
+    Test territorydecomp with 4D input.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("territorydecomp_4d")
     shape3d = (8, 8, 6)
@@ -629,7 +910,14 @@ def territorydecomp_4d(debug=False):
 
 
 def territorydecomp_with_mask(debug=False):
-    """Test territorydecomp with a mask."""
+    """
+    Test territorydecomp with a mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("territorydecomp_with_mask")
     shape = (10, 12, 8)
@@ -656,7 +944,14 @@ def territorydecomp_with_mask(debug=False):
 
 
 def territorydecomp_higher_order(debug=False):
-    """Test territorydecomp with fitorder=2."""
+    """
+    Test territorydecomp with fitorder=2.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("territorydecomp_higher_order")
     shape = (10, 12, 8)
@@ -680,7 +975,14 @@ def territorydecomp_higher_order(debug=False):
 
 
 def territorystats_3d_basic(debug=False):
-    """Test territorystats with 3D input returns correct structure."""
+    """
+    Test territorystats with 3D input returns correct structure.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("territorystats_3d_basic")
     shape = (10, 12, 8)
@@ -704,7 +1006,14 @@ def territorystats_3d_basic(debug=False):
 
 
 def territorystats_known_values(debug=False):
-    """Test territorystats returns correct mean/std for known data."""
+    """
+    Test territorystats returns correct mean/std for known data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("territorystats_known_values")
     shape = (4, 4, 4)
@@ -720,7 +1029,14 @@ def territorystats_known_values(debug=False):
 
 
 def territorystats_4d(debug=False):
-    """Test territorystats with 4D input."""
+    """
+    Test territorystats with 4D input.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("territorystats_4d")
     shape3d = (6, 6, 4)
@@ -737,7 +1053,14 @@ def territorystats_4d(debug=False):
 
 
 def territorystats_with_mask(debug=False):
-    """Test territorystats with a mask."""
+    """
+    Test territorystats with a mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("territorystats_with_mask")
     shape = (6, 6, 4)
@@ -753,7 +1076,14 @@ def territorystats_with_mask(debug=False):
 
 
 def territorystats_entropy_range(debug=False):
-    """Test territorystats with custom entropy range."""
+    """
+    Test territorystats with custom entropy range.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("territorystats_entropy_range")
     shape = (6, 6, 4)
@@ -775,7 +1105,14 @@ def territorystats_entropy_range(debug=False):
 
 
 def territorystats_entropy_bins(debug=False):
-    """Test territorystats with different entropy bin count."""
+    """
+    Test territorystats with different entropy bin count.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("territorystats_entropy_bins")
     shape = (6, 6, 4)
@@ -795,7 +1132,14 @@ def territorystats_entropy_bins(debug=False):
 
 
 def fingerprint_with_constant_template(debug=False):
-    """Test fingerprint workflow with constant template and synthetic data."""
+    """
+    Test fingerprint workflow with constant template and synthetic data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_with_constant_template")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -873,7 +1217,14 @@ def fingerprint_with_constant_template(debug=False):
 
 
 def fingerprint_with_real_atlas(debug=False):
-    """Test fingerprint workflow with a built-in atlas (JHU1) and constant template."""
+    """
+    Test fingerprint workflow with a built-in atlas (JHU1) and constant template.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_with_real_atlas")
 
@@ -930,7 +1281,14 @@ def fingerprint_with_real_atlas(debug=False):
 
 
 def fingerprint_output_r2_values(debug=False):
-    """Test that fingerprint R2 values are reasonable for constant template."""
+    """
+    Test that fingerprint R2 values are reasonable for constant template.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_output_r2_values")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -974,7 +1332,14 @@ def fingerprint_output_r2_values(debug=False):
 
 
 def fingerprint_stats_output(debug=False):
-    """Test that fingerprint stats output files have correct structure."""
+    """
+    Test that fingerprint stats output files have correct structure.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_stats_output")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1022,7 +1387,14 @@ def fingerprint_stats_output(debug=False):
 
 
 def fingerprint_no_intercept(debug=False):
-    """Test fingerprint with nointercept option."""
+    """
+    Test fingerprint with nointercept option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_no_intercept")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1062,12 +1434,18 @@ def fingerprint_no_intercept(debug=False):
 
 
 def fingerprint_no_intercept_workflow(debug=False):
-    """Test the full workflow with intercept disabled.
+    """
+    Test the full workflow with intercept disabled.
 
     ``territorydecomp`` always returns ``fitorder + 1`` coefficients with the intercept
     prepended, so the output tables must drop that leading (identically zero) column rather
     than mislabelling it.  This regression test covers a length mismatch that made
     ``--nointercept`` unusable.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("fingerprint_no_intercept_workflow")
@@ -1099,10 +1477,16 @@ def fingerprint_no_intercept_workflow(debug=False):
 
 
 def fingerprint_high_fitorder_column_names(debug=False):
-    """Test double digit fit orders produce one correctly named column per order.
+    """
+    Test double digit fit orders produce one correctly named column per order.
 
     Building the name list by string concatenation split ``"10"`` into two entries, which
     silently produced garbage column names for fit orders of ten or more.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("fingerprint_high_fitorder_column_names")
@@ -1135,7 +1519,14 @@ def fingerprint_high_fitorder_column_names(debug=False):
 
 
 def fingerprint_4d_input(debug=False):
-    """Test the workflow handles a 4D input map, producing one row per map."""
+    """
+    Test the workflow handles a 4D input map, producing one row per map.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_4d_input")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1177,7 +1568,14 @@ def fingerprint_4d_input(debug=False):
 
 
 def fingerprint_limittomask_3d(debug=False):
-    """Test --limittomask zeroes the 3D fit and difference maps outside the mask."""
+    """
+    Test --limittomask zeroes the 3D fit and difference maps outside the mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_limittomask_3d")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1213,7 +1611,14 @@ def fingerprint_limittomask_3d(debug=False):
 
 
 def fingerprint_limittomask_4d(debug=False):
-    """Test --limittomask broadcasts the 3D mask across a 4D map."""
+    """
+    Test --limittomask broadcasts the 3D mask across a 4D map.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_limittomask_4d")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1246,7 +1651,14 @@ def fingerprint_limittomask_4d(debug=False):
 
 
 def fingerprint_include_and_exclude_masks(debug=False):
-    """Test include and exclude mask specifications both restrict the fitted voxels."""
+    """
+    Test include and exclude mask specifications both restrict the fitted voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_include_and_exclude_masks")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1287,7 +1699,14 @@ def fingerprint_include_and_exclude_masks(debug=False):
 
 
 def fingerprint_mask_spec_with_values(debug=False):
-    """Test a MASK:VALSPEC include specification selects only the listed label values."""
+    """
+    Test a MASK:VALSPEC include specification selects only the listed label values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_mask_spec_with_values")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1318,7 +1737,14 @@ def fingerprint_mask_spec_with_values(debug=False):
 
 
 def fingerprint_entropy_options(debug=False):
-    """Test custom entropy bin counts and ranges flow through to the stats tables."""
+    """
+    Test custom entropy bin counts and ranges flow through to the stats tables.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("fingerprint_entropy_options")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1355,7 +1781,14 @@ def fingerprint_entropy_options(debug=False):
 
 
 def entrypoint_missing_args(debug=False):
-    """Test entrypoint raises SystemExit with no arguments."""
+    """
+    Test entrypoint raises SystemExit with no arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("entrypoint_missing_args")
     old_argv = sys.argv
@@ -1370,16 +1803,13 @@ def entrypoint_missing_args(debug=False):
 
 
 def _run_entrypoint(arglist):
-    """Run the fingerprint entrypoint with a synthetic command line.
+    """
+    Run the fingerprint entrypoint with a synthetic command line.
 
     Parameters
     ----------
     arglist : list of str
         Arguments to place on sys.argv after the program name.
-
-    Returns
-    -------
-    None
     """
     old_argv = sys.argv
     sys.argv = ["fingerprint"] + arglist
@@ -1390,7 +1820,14 @@ def _run_entrypoint(arglist):
 
 
 def entrypoint_with_custom_atlas(debug=False):
-    """Test the entrypoint runs end to end with a custom atlas."""
+    """
+    Test the entrypoint runs end to end with a custom atlas.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("entrypoint_with_custom_atlas")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1409,10 +1846,16 @@ def entrypoint_with_custom_atlas(debug=False):
 
 
 def entrypoint_constant_template_forces_fitorder_zero(debug=False):
-    """Test the constant template overrides an explicitly requested fit order.
+    """
+    Test the constant template overrides an explicitly requested fit order.
 
     A constant template has no higher order terms to fit, so the entrypoint resets the fit
     order to 0 and re-enables the intercept regardless of what was asked for.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("entrypoint_constant_template_forces_fitorder_zero")
@@ -1444,7 +1887,14 @@ def entrypoint_constant_template_forces_fitorder_zero(debug=False):
 
 
 def entrypoint_debug_mode(debug=False):
-    """Test the entrypoint debug path prints its pre and post processing state."""
+    """
+    Test the entrypoint debug path prints its pre and post processing state.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("entrypoint_debug_mode")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1469,7 +1919,14 @@ def entrypoint_debug_mode(debug=False):
 
 
 def entrypoint_uses_named_atlas_when_no_custom(debug=False):
-    """Test the entrypoint falls back to the --atlas selection with no custom atlas given."""
+    """
+    Test the entrypoint falls back to the --atlas selection with no custom atlas given.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("entrypoint_uses_named_atlas_when_no_custom")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1485,6 +1942,21 @@ def entrypoint_uses_named_atlas_when_no_custom(debug=False):
         recorded = []
 
         def _stubreader(thename, **readkwargs):
+            """
+            Set up ``_stubreader`` for the test.
+
+            Parameters
+            ----------
+            thename : object
+                Value supplied as ``thename`` by the test case.
+            **readkwargs : object
+                Additional keyword arguments passed by the caller.
+
+            Returns
+            -------
+            object
+                Value returned to the caller in this test case.
+            """
             recorded.append(thename)
             return copy.deepcopy([atlastuple, maptuple][len(recorded) - 1])
 
@@ -1501,6 +1973,14 @@ def entrypoint_uses_named_atlas_when_no_custom(debug=False):
 
 def test_fingerprint(debug=False):
     # _get_parser tests
+    """
+    Verify fingerprint.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("Running _get_parser tests")
     get_parser_returns_parser(debug=debug)

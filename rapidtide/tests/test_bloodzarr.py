@@ -13,6 +13,19 @@ zarr = pytest.importorskip("zarr")
 
 @pytest.fixture
 def blood_store(tmp_path):
+    """
+    Set up ``blood_store`` for the test.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     path = tmp_path / "blood.zarr"
     times = 7.0 + np.arange(480) * 0.5
     data = np.empty((3, 5, len(times)), dtype=np.float32)
@@ -42,6 +55,14 @@ def blood_store(tmp_path):
 
 
 def test_voxel_geometry_and_timing(blood_store):
+    """
+    Verify voxel geometry and timing.
+
+    Parameters
+    ----------
+    blood_store : object
+        Value supplied as ``blood_store`` by the test case.
+    """
     path, native, times, mask = blood_store
     data = VoxelData(str(path), validstart=5, validend=24)
     assert data.filetype == "zarr"
@@ -62,6 +83,16 @@ def test_voxel_geometry_and_timing(blood_store):
 
 
 def test_result_geometry(blood_store, tmp_path):
+    """
+    Verify result geometry.
+
+    Parameters
+    ----------
+    blood_store : object
+        Value supplied as ``blood_store`` by the test case.
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    """
     path, native, times, mask = blood_store
     data = VoxelData(str(path), validstart=5, validend=24)
     native_map = np.arange(15, dtype=np.float32).reshape(3, 5)
@@ -96,6 +127,16 @@ def test_result_geometry(blood_store, tmp_path):
     "problem", ["schema", "axes", "shape", "mask", "times", "irregular", "step"]
 )
 def test_malformed_store(blood_store, problem):
+    """
+    Verify malformed store.
+
+    Parameters
+    ----------
+    blood_store : object
+        Value supplied as ``blood_store`` by the test case.
+    problem : object
+        Value supplied as ``problem`` by the test case.
+    """
     path, _, times, mask = blood_store
     group = zarr.open_group(str(path), mode="a")
     if problem == "schema":
@@ -118,6 +159,14 @@ def test_malformed_store(blood_store, problem):
 
 
 def test_sampling_override_and_nonfinite(blood_store):
+    """
+    Verify sampling override and nonfinite.
+
+    Parameters
+    ----------
+    blood_store : object
+        Value supplied as ``blood_store`` by the test case.
+    """
     path, _, _, mask = blood_store
     with pytest.raises(ValueError, match="override disagrees"):
         VoxelData(str(path), timestep=1)
@@ -129,6 +178,16 @@ def test_sampling_override_and_nonfinite(blood_store):
 
 
 def test_parser_sampling(blood_store, tmp_path):
+    """
+    Verify parser sampling.
+
+    Parameters
+    ----------
+    blood_store : object
+        Value supplied as ``blood_store`` by the test case.
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    """
     from rapidtide.workflows.rapidtide_parser import process_args
 
     path, _, _, _ = blood_store
@@ -141,7 +200,20 @@ def test_parser_sampling(blood_store, tmp_path):
 
 @pytest.mark.parametrize("refinement", [False, True])
 def test_full_blood_workflow(blood_store, tmp_path, monkeypatch, refinement):
-    """Run correlation, map reconstruction, and time-series output on an asymmetric grid."""
+    """
+    Run correlation, map reconstruction, and time-series output on an asymmetric grid.
+
+    Parameters
+    ----------
+    blood_store : object
+        Value supplied as ``blood_store`` by the test case.
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    refinement : object
+        Value supplied as ``refinement`` by the test case.
+    """
     from rapidtide.workflows.rapidtide import rapidtide_main
     from rapidtide.workflows.rapidtide_parser import process_args
     import rapidtide.util as tide_util
@@ -149,6 +221,21 @@ def test_full_blood_workflow(blood_store, tmp_path, monkeypatch, refinement):
     configure = tide_util.configurepyfftw
 
     def configure_local_wisdom(*args, **kwargs):
+        """
+        Provide the ``configure_local_wisdom`` test substitute.
+
+        Parameters
+        ----------
+        *args : object
+            Arguments passed to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        str
+            Value returned to the caller in this test case.
+        """
         configure(*args, **kwargs)
         return str(tmp_path / "fftw_wisdom.txt")
 

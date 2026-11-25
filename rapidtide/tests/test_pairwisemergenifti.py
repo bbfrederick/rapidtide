@@ -34,6 +34,27 @@ def _make_args(
     maskmerge=False,
     debug=False,
 ):
+    """
+    Create args.
+
+    Parameters
+    ----------
+    inputfile : path-like, optional
+        Path of the input file.
+    inputmask : str, optional
+        Value supplied as ``inputmask`` by the test case.
+    outputfile : path-like, optional
+        Path of the output file.
+    maskmerge : bool, optional
+        Setting for ``maskmerge`` in the test case.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     return argparse.Namespace(
         inputfile=inputfile,
         inputmask=inputmask,
@@ -45,10 +66,42 @@ def _make_args(
 
 def _make_hdr(tr=1.5):
     # dict is enough: code uses copy() and output_hdr["pixdim"][4] assignment
+    """
+    Create hdr.
+
+    Parameters
+    ----------
+    tr : float, optional
+        Repetition time in seconds.
+
+    Returns
+    -------
+    dict
+        Values supplied together for the test case.
+    """
     return {"pixdim": [1.0, 2.0, 2.0, 2.0, float(tr), 1.0, 1.0, 1.0]}
 
 
 def _make_dims(x, y, z, t):
+    """
+    Create dims.
+
+    Parameters
+    ----------
+    x : object
+        Value supplied as ``x`` by the test case.
+    y : object
+        Value supplied as ``y`` by the test case.
+    z : object
+        Value supplied as ``z`` by the test case.
+    t : object
+        Value supplied as ``t`` by the test case.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array supplied to the test or its caller.
+    """
     return np.array([4, x, y, z, t, 1, 1, 1], dtype=int)
 
 
@@ -56,6 +109,14 @@ def _make_dims(x, y, z, t):
 
 
 def parser_basic(debug=False):
+    """
+    Check that the command-line parser initializes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -64,6 +125,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
+    """
+    Check that the parser requires the mandatory arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -72,6 +141,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults_and_flags(debug=False):
+    """
+    Check parser handling of defaults and flags.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults_and_flags")
     parser = _get_parser()
@@ -88,6 +165,14 @@ def parser_defaults_and_flags(debug=False):
 
 
 def exits_on_space_dim_mismatch(debug=False):
+    """
+    Set up ``exits_on_space_dim_mismatch`` for the test.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("exits_on_space_dim_mismatch")
 
@@ -98,6 +183,19 @@ def exits_on_space_dim_mismatch(debug=False):
     hdr = _make_hdr()
 
     def mock_readfromnifti(fname):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         if "mask" in fname:
             return (MagicMock(), mask, hdr, dims, None)
         return (MagicMock(), data, hdr, dims, None)
@@ -123,6 +221,14 @@ def exits_on_space_dim_mismatch(debug=False):
 
 
 def exits_on_time_dim_mismatch(debug=False):
+    """
+    Set up ``exits_on_time_dim_mismatch`` for the test.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("exits_on_time_dim_mismatch")
 
@@ -133,6 +239,19 @@ def exits_on_time_dim_mismatch(debug=False):
     hdr = _make_hdr()
 
     def mock_readfromnifti(fname):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         if "mask" in fname:
             return (MagicMock(), mask, hdr, dims, None)
         return (MagicMock(), data, hdr, dims, None)
@@ -159,6 +278,14 @@ def exits_on_time_dim_mismatch(debug=False):
 
 
 def exits_on_odd_timepoints(debug=False):
+    """
+    Set up ``exits_on_odd_timepoints`` for the test.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("exits_on_odd_timepoints")
 
@@ -169,6 +296,19 @@ def exits_on_odd_timepoints(debug=False):
     hdr = _make_hdr()
 
     def mock_readfromnifti(fname):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         if "mask" in fname:
             return (MagicMock(), mask, hdr, dims, None)
         return (MagicMock(), data, hdr, dims, None)
@@ -195,6 +335,14 @@ def exits_on_odd_timepoints(debug=False):
 
 
 def merges_mask_when_maskmerge_true(debug=False):
+    """
+    Check merges mask when maskmerge true in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("merges_mask_when_maskmerge_true")
 
@@ -214,11 +362,36 @@ def merges_mask_when_maskmerge_true(debug=False):
     saved = {}
 
     def mock_readfromnifti(fname):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         if "mask" in fname:
             return (MagicMock(), mask, hdr, dims, None)
         return (MagicMock(), data, hdr, dims, None)
 
     def mock_savetonifti(arr, hdr_arg, outroot):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        arr : array-like
+            Array passed to the test helper.
+        hdr_arg : object
+            Image header passed to the stub.
+        outroot : object
+            Value supplied as ``outroot`` by the test case.
+        """
         saved["arr"] = np.array(arr, copy=True)
         saved["hdr"] = hdr_arg
         saved["outroot"] = outroot
@@ -263,6 +436,14 @@ def merges_mask_when_maskmerge_true(debug=False):
 
 
 def merges_weighted_average_when_maskmerge_false(debug=False):
+    """
+    Check merges weighted average when maskmerge false in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("merges_weighted_average_when_maskmerge_false")
 
@@ -291,11 +472,36 @@ def merges_weighted_average_when_maskmerge_false(debug=False):
     saved = {}
 
     def mock_readfromnifti(fname):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         if "mask" in fname:
             return (MagicMock(), mask, hdr, dims, None)
         return (MagicMock(), data, hdr, dims, None)
 
     def mock_savetonifti(arr, hdr_arg, outroot):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        arr : array-like
+            Array passed to the test helper.
+        hdr_arg : object
+            Image header passed to the stub.
+        outroot : object
+            Value supplied as ``outroot`` by the test case.
+        """
         saved["arr"] = np.array(arr, copy=True)
         saved["hdr"] = hdr_arg
         saved["outroot"] = outroot
@@ -348,6 +554,14 @@ def merges_weighted_average_when_maskmerge_false(debug=False):
 
 def test_pairwisemergenifti(debug=False):
     # parser tests
+    """
+    Verify pairwisemergenifti.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_defaults_and_flags(debug=debug)

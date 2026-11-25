@@ -6,6 +6,7 @@ from pathlib import Path
 
 def _configure_matplotlib_cache():
     # Keep matplotlib cache/config in a writable, persistent location.
+    """Set up ``_configure_matplotlib_cache`` for the test."""
     tests_dir = Path(__file__).resolve().parent
     tmp_dir = tests_dir / "tmp"
     mpl_config_dir = tmp_dir / "mplconfig"
@@ -22,6 +23,7 @@ def _configure_matplotlib_cache():
 
 
 def _configure_coverage():
+    """Set up ``_configure_coverage`` for the test."""
     try:
         import coverage
     except ImportError:

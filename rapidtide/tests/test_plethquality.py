@@ -29,6 +29,25 @@ import rapidtide.workflows.plethquality as pq
 
 
 def _make_args(infilename="in.txt", outfilename="out.txt", samplerate=None, display=False):
+    """
+    Create args.
+
+    Parameters
+    ----------
+    infilename : str, optional
+        Value supplied as ``infilename`` by the test case.
+    outfilename : str, optional
+        Value supplied as ``outfilename`` by the test case.
+    samplerate : float, optional
+        Sampling rate in Hz.
+    display : bool, optional
+        Setting for ``display`` in the test case.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     return argparse.Namespace(
         infilename=infilename,
         outfilename=outfilename,
@@ -41,6 +60,14 @@ def _make_args(infilename="in.txt", outfilename="out.txt", samplerate=None, disp
 
 
 def parser_basic(debug=False):
+    """
+    Check that the command-line parser initializes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = pq._get_parser()
@@ -49,6 +76,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
+    """
+    Check that the parser requires the mandatory arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = pq._get_parser()
@@ -57,6 +92,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
+    """
+    Check the parser defaults.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     parser = pq._get_parser()
@@ -71,6 +114,14 @@ def parser_defaults(debug=False):
 
 
 def parser_nodisplay_flag(debug=False):
+    """
+    Check that the parser accepts ``--nodisplay``.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_nodisplay_flag")
     parser = pq._get_parser()
@@ -85,6 +136,14 @@ def parser_nodisplay_flag(debug=False):
 
 
 def waveform_quality_constant_is_zero(debug=False):
+    """
+    Check waveform quality constant is zero in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("waveform_quality_constant_is_zero")
     x = np.ones(101, dtype=float)
@@ -96,6 +155,14 @@ def waveform_quality_constant_is_zero(debug=False):
 
 
 def waveform_quality_windowpts_is_odd(debug=False):
+    """
+    Check waveform quality windowpts is odd in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("waveform_quality_windowpts_is_odd")
 
@@ -103,6 +170,21 @@ def waveform_quality_windowpts_is_odd(debug=False):
     lengths = []
 
     def fake_skew(arr, nan_policy="omit"):
+        """
+        Simulate ``skew`` for the test.
+
+        Parameters
+        ----------
+        arr : array-like
+            Array passed to the test helper.
+        nan_policy : str, optional
+            Value supplied as ``nan_policy`` by the test case.
+
+        Returns
+        -------
+        float
+            Value returned to the caller in this test case.
+        """
         lengths.append(len(arr))
         return 0.0
 
@@ -134,6 +216,14 @@ def waveform_quality_windowpts_is_odd(debug=False):
 
 
 def waveform_quality_nan_handling(debug=False):
+    """
+    Check waveform quality NaN handling in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("waveform_quality_nan_handling")
     x = np.random.RandomState(0).randn(200).astype(float)
@@ -148,6 +238,14 @@ def waveform_quality_nan_handling(debug=False):
 
 
 def args_uses_samplerate_override(debug=False):
+    """
+    Check args uses samplerate override in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("args_uses_samplerate_override")
 
@@ -159,15 +257,55 @@ def args_uses_samplerate_override(debug=False):
     captured = {}
 
     def mock_readvectorsfromtextfile(_fname, onecol=False):
+        """
+        Simulate ``readvectorsfromtextfile`` for the test.
+
+        Parameters
+        ----------
+        _fname : object
+            Value supplied as ``_fname`` by the test case.
+        onecol : bool, optional
+            Use a single column of test data.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (file_Fs, 0.0, None, plethdata, False, "text")
 
     def mock_core_plethquality(waveform, Fs):
+        """
+        Simulate ``core_plethquality`` for the test.
+
+        Parameters
+        ----------
+        waveform : object
+            Value supplied as ``waveform`` by the test case.
+        Fs : object
+            Value supplied as ``Fs`` by the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         captured["Fs_used"] = Fs
         # return plausible outputs
         q = np.zeros_like(waveform)
         return 0.0, 0.0, q
 
     def mock_writevec(vec, outname):
+        """
+        Simulate ``writevec`` for the test.
+
+        Parameters
+        ----------
+        vec : object
+            Value supplied as ``vec`` by the test case.
+        outname : path-like
+            Name of the output file.
+        """
         captured["written_vec"] = np.array(vec, copy=True)
         captured["outname"] = outname
 
@@ -194,12 +332,35 @@ def args_uses_samplerate_override(debug=False):
 
 
 def args_missing_samplerate_exits(debug=False):
+    """
+    Set up ``args_missing_samplerate_exits`` for the test.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("args_missing_samplerate_exits")
 
     plethdata = np.random.RandomState(2).randn(25).astype(float)
 
     def mock_readvectorsfromtextfile(_fname, onecol=False):
+        """
+        Simulate ``readvectorsfromtextfile`` for the test.
+
+        Parameters
+        ----------
+        _fname : object
+            Value supplied as ``_fname`` by the test case.
+        onecol : bool, optional
+            Use a single column of test data.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (None, 0.0, None, plethdata, False, "text")
 
     args = _make_args(infilename="in.txt", outfilename="out.txt", samplerate=None, display=False)
@@ -213,15 +374,48 @@ def args_missing_samplerate_exits(debug=False):
 
 
 def args_prints_summary_line(debug=False):
+    """
+    Check args prints summary line in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("args_prints_summary_line")
 
     plethdata = np.random.RandomState(3).randn(40).astype(float)
 
     def mock_readvectorsfromtextfile(_fname, onecol=False):
+        """
+        Simulate ``readvectorsfromtextfile`` for the test.
+
+        Parameters
+        ----------
+        _fname : object
+            Value supplied as ``_fname`` by the test case.
+        onecol : bool, optional
+            Use a single column of test data.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (50.0, 0.0, None, plethdata, False, "text")
 
     def mock_writevec(vec, outname):
+        """
+        Simulate ``writevec`` for the test.
+
+        Parameters
+        ----------
+        vec : object
+            Value supplied as ``vec`` by the test case.
+        outname : path-like
+            Name of the output file.
+        """
         pass
 
     # Use real core function, but capture stdout
@@ -248,6 +442,14 @@ def args_prints_summary_line(debug=False):
 
 def test_plethquality(debug=False):
     # _get_parser tests
+    """
+    Verify plethquality.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_defaults(debug=debug)

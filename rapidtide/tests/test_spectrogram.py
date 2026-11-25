@@ -42,9 +42,24 @@ from rapidtide.workflows.spectrogram import (
 
 
 def _make_test_signal(samplerate=100.0, duration=5.0, freq=10.0):
-    """Create a simple sinusoidal test signal.
+    """
+    Create a simple sinusoidal test signal.
 
     Returns (signal, time_vector).
+
+    Parameters
+    ----------
+    samplerate : float, optional
+        Sampling rate in Hz.
+    duration : float, optional
+        Value supplied as ``duration`` by the test case.
+    freq : float, optional
+        Value supplied as ``freq`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     npts = int(samplerate * duration)
     t = np.arange(npts) / samplerate
@@ -53,9 +68,26 @@ def _make_test_signal(samplerate=100.0, duration=5.0, freq=10.0):
 
 
 def _make_chirp_signal(samplerate=200.0, duration=5.0, f0=5.0, f1=50.0):
-    """Create a chirp signal sweeping from f0 to f1.
+    """
+    Create a chirp signal sweeping from f0 to f1.
 
     Returns (signal, time_vector).
+
+    Parameters
+    ----------
+    samplerate : float, optional
+        Sampling rate in Hz.
+    duration : float, optional
+        Value supplied as ``duration`` by the test case.
+    f0 : float, optional
+        Value supplied as ``f0`` by the test case.
+    f1 : float, optional
+        Value supplied as ``f1`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     npts = int(samplerate * duration)
     t = np.arange(npts) / samplerate
@@ -64,7 +96,19 @@ def _make_chirp_signal(samplerate=200.0, duration=5.0, f0=5.0, f1=50.0):
 
 
 def _make_default_args(**overrides):
-    """Create default args Namespace for spectrogram workflow."""
+    """
+    Create default args Namespace for spectrogram workflow.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         inputfile="input.txt",
         nperseg=128,
@@ -79,7 +123,14 @@ def _make_default_args(**overrides):
 
 
 def parser_basic(debug=False):
-    """Test that _get_parser returns a valid parser."""
+    """
+    Test that _get_parser returns a valid parser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
     assert parser.prog == "spectrogram"
@@ -89,7 +140,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
-    """Test that parser requires inputfile."""
+    """
+    Test that parser requires inputfile.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args([])
@@ -99,7 +157,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
-    """Test default values from the parser."""
+    """
+    Test default values from the parser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         args = parser.parse_args([f.name])
@@ -113,7 +178,14 @@ def parser_defaults(debug=False):
 
 
 def parser_nperseg(debug=False):
-    """Test --nperseg option."""
+    """
+    Test --nperseg option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         args = parser.parse_args([f.name, "--nperseg", "256"])
@@ -124,7 +196,14 @@ def parser_nperseg(debug=False):
 
 
 def parser_samplerate(debug=False):
-    """Test --samplerate option."""
+    """
+    Test --samplerate option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         args = parser.parse_args([f.name, "--samplerate", "44100.0"])
@@ -135,7 +214,14 @@ def parser_samplerate(debug=False):
 
 
 def parser_debug(debug=False):
-    """Test --debug flag."""
+    """
+    Test --debug flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         args = parser.parse_args([f.name, "--debug"])
@@ -146,7 +232,14 @@ def parser_debug(debug=False):
 
 
 def parser_inputfile_validation(debug=False):
-    """Test that inputfile must exist (is_valid_file check)."""
+    """
+    Test that inputfile must exist (is_valid_file check).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args(["/nonexistent/file.txt"])
@@ -159,7 +252,14 @@ def parser_inputfile_validation(debug=False):
 
 
 def calcspecgram_basic(debug=False):
-    """Test calcspecgram returns correct output types and shapes."""
+    """
+    Test calcspecgram returns correct output types and shapes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=5.0, freq=10.0)
 
     freq, segtimes, thestft, isinvertable = calcspecgram(x, t, nperseg=32)
@@ -189,7 +289,14 @@ def calcspecgram_basic(debug=False):
 
 
 def calcspecgram_frequency_range(debug=False):
-    """Test that frequency range is correct for given sample rate."""
+    """
+    Test that frequency range is correct for given sample rate.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     samplerate = 200.0
     x, t = _make_test_signal(samplerate=samplerate, duration=5.0, freq=10.0)
 
@@ -205,7 +312,14 @@ def calcspecgram_frequency_range(debug=False):
 
 
 def calcspecgram_invertible(debug=False):
-    """Test that the NOLA condition is satisfied with default settings."""
+    """
+    Test that the NOLA condition is satisfied with default settings.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=5.0, freq=10.0)
 
     freq, segtimes, thestft, isinvertable = calcspecgram(x, t, nperseg=32)
@@ -217,7 +331,14 @@ def calcspecgram_invertible(debug=False):
 
 
 def calcspecgram_nperseg_affects_resolution(debug=False):
-    """Test that different nperseg values produce different frequency resolutions."""
+    """
+    Test that different nperseg values produce different frequency resolutions.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=5.0, freq=10.0)
 
     freq_small, _, stft_small, _ = calcspecgram(x, t, nperseg=16)
@@ -234,7 +355,14 @@ def calcspecgram_nperseg_affects_resolution(debug=False):
 
 
 def calcspecgram_stft_is_complex(debug=False):
-    """Test that the STFT output is complex."""
+    """
+    Test that the STFT output is complex.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=5.0, freq=10.0)
 
     freq, segtimes, thestft, isinvertable = calcspecgram(x, t, nperseg=32)
@@ -246,7 +374,14 @@ def calcspecgram_stft_is_complex(debug=False):
 
 
 def calcspecgram_peak_at_signal_freq(debug=False):
-    """Test that the STFT has a peak near the signal frequency."""
+    """
+    Test that the STFT has a peak near the signal frequency.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     signal_freq = 10.0
     x, t = _make_test_signal(samplerate=100.0, duration=5.0, freq=signal_freq)
 
@@ -268,7 +403,14 @@ def calcspecgram_peak_at_signal_freq(debug=False):
 
 
 def calcspecgram_different_window(debug=False):
-    """Test calcspecgram with a different window type."""
+    """
+    Test calcspecgram with a different window type.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=5.0, freq=10.0)
 
     freq, segtimes, thestft, isinvertable = calcspecgram(x, t, nperseg=32, windowtype="hamming")
@@ -282,7 +424,14 @@ def calcspecgram_different_window(debug=False):
 
 
 def calcspecgram_short_signal(debug=False):
-    """Test calcspecgram with a signal only slightly longer than nperseg."""
+    """
+    Test calcspecgram with a signal only slightly longer than nperseg.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     samplerate = 100.0
     npts = 40  # just above nperseg=32
     t = np.arange(npts) / samplerate
@@ -302,7 +451,14 @@ def calcspecgram_short_signal(debug=False):
 
 
 def make_legend_axes_basic(debug=False):
-    """Test that make_legend_axes returns an axes object."""
+    """
+    Test that make_legend_axes returns an axes object.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     fig, ax = plt.subplots()
     legend_ax = make_legend_axes(ax)
 
@@ -317,7 +473,14 @@ def make_legend_axes_basic(debug=False):
 
 
 def make_legend_axes_separate(debug=False):
-    """Test that make_legend_axes creates a distinct axes from the original."""
+    """
+    Test that make_legend_axes creates a distinct axes from the original.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     fig, ax = plt.subplots()
     legend_ax = make_legend_axes(ax)
 
@@ -333,7 +496,14 @@ def make_legend_axes_separate(debug=False):
 
 
 def showspecgram_mag(debug=False):
-    """Test showspecgram in magnitude mode."""
+    """
+    Test showspecgram in magnitude mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=2.0, freq=10.0)
     freq, segtimes, thestft, _ = calcspecgram(x, t, nperseg=32)
 
@@ -350,7 +520,14 @@ def showspecgram_mag(debug=False):
 
 
 def showspecgram_phase(debug=False):
-    """Test showspecgram in phase mode."""
+    """
+    Test showspecgram in phase mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=2.0, freq=10.0)
     freq, segtimes, thestft, _ = calcspecgram(x, t, nperseg=32)
 
@@ -367,7 +544,14 @@ def showspecgram_phase(debug=False):
 
 
 def showspecgram_real(debug=False):
-    """Test showspecgram in real mode."""
+    """
+    Test showspecgram in real mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=2.0, freq=10.0)
     freq, segtimes, thestft, _ = calcspecgram(x, t, nperseg=32)
 
@@ -384,7 +568,14 @@ def showspecgram_real(debug=False):
 
 
 def showspecgram_imag(debug=False):
-    """Test showspecgram in imaginary mode."""
+    """
+    Test showspecgram in imaginary mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=2.0, freq=10.0)
     freq, segtimes, thestft, _ = calcspecgram(x, t, nperseg=32)
 
@@ -401,7 +592,14 @@ def showspecgram_imag(debug=False):
 
 
 def showspecgram_invalid_mode(debug=False):
-    """Test showspecgram exits with invalid mode."""
+    """
+    Test showspecgram exits with invalid mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=2.0, freq=10.0)
     freq, segtimes, thestft, _ = calcspecgram(x, t, nperseg=32)
 
@@ -416,7 +614,14 @@ def showspecgram_invalid_mode(debug=False):
 
 
 def showspecgram_ylim(debug=False):
-    """Test that showspecgram sets ylim from freq[1] to freq.max()."""
+    """
+    Test that showspecgram sets ylim from freq[1] to freq.max().
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=2.0, freq=10.0)
     freq, segtimes, thestft, _ = calcspecgram(x, t, nperseg=32)
 
@@ -434,7 +639,14 @@ def showspecgram_ylim(debug=False):
 
 
 def showspecgram_prints_dimensions(debug=False):
-    """Test that showspecgram prints time dimension info."""
+    """
+    Test that showspecgram prints time dimension info.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=2.0, freq=10.0)
     freq, segtimes, thestft, _ = calcspecgram(x, t, nperseg=32)
 
@@ -457,7 +669,14 @@ def showspecgram_prints_dimensions(debug=False):
 
 
 def ndplot_basic(debug=False):
-    """Test that ndplot runs without error."""
+    """
+    Test that ndplot runs without error.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=2.0, freq=10.0)
 
     captured = io.StringIO()
@@ -475,7 +694,14 @@ def ndplot_basic(debug=False):
 
 
 def ndplot_creates_subplots(debug=False):
-    """Test that ndplot creates the expected number of subplots."""
+    """
+    Test that ndplot creates the expected number of subplots.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=2.0, freq=10.0)
 
     ndplot(x, t, "Test Signal", nperseg=32)
@@ -492,7 +718,14 @@ def ndplot_creates_subplots(debug=False):
 
 
 def ndplot_different_nperseg(debug=False):
-    """Test ndplot with different nperseg values."""
+    """
+    Test ndplot with different nperseg values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=3.0, freq=10.0)
 
     # should run without error for various nperseg
@@ -508,11 +741,33 @@ def ndplot_different_nperseg(debug=False):
 
 
 def spectrogram_basic(debug=False):
-    """Test spectrogram workflow with mocked I/O and parser."""
+    """
+    Test spectrogram workflow with mocked I/O and parser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=3.0, freq=10.0)
     args = _make_default_args(samplerate=100.0, nperseg=32)
 
     def mock_readvectorsfromtextfile(fname, onecol=True):
+        """
+        Simulate ``readvectorsfromtextfile`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        onecol : bool, optional
+            Use a single column of test data.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (100.0, 0.0, None, x, False, "text")
 
     with (
@@ -538,7 +793,14 @@ def spectrogram_basic(debug=False):
 
 
 def spectrogram_samplerate_from_args(debug=False):
-    """Test that --samplerate overrides file sample rate."""
+    """
+    Test that --samplerate overrides file sample rate.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, t = _make_test_signal(samplerate=100.0, duration=3.0, freq=10.0)
     args = _make_default_args(samplerate=200.0, nperseg=32)
 
@@ -547,11 +809,40 @@ def spectrogram_samplerate_from_args(debug=False):
     original_ndplot = ndplot
 
     def mock_ndplot(yvec, xvec, label, nperseg=32):
+        """
+        Simulate ``ndplot`` for the test.
+
+        Parameters
+        ----------
+        yvec : object
+            Value supplied as ``yvec`` by the test case.
+        xvec : object
+            Value supplied as ``xvec`` by the test case.
+        label : object
+            Value supplied as ``label`` by the test case.
+        nperseg : int, optional
+            Value supplied as ``nperseg`` by the test case.
+        """
         captured_xvec["xvec"] = xvec.copy()
         captured_xvec["yvec"] = yvec.copy()
 
     def mock_readvectorsfromtextfile(fname, onecol=True):
         # file says 100Hz but args say 200Hz
+        """
+        Simulate ``readvectorsfromtextfile`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        onecol : bool, optional
+            Use a single column of test data.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (100.0, 0.0, None, x, False, "text")
 
     with (
@@ -581,16 +872,52 @@ def spectrogram_samplerate_from_args(debug=False):
 
 
 def spectrogram_samplerate_from_file(debug=False):
-    """Test that file sample rate is used when --samplerate is not set."""
+    """
+    Test that file sample rate is used when --samplerate is not set.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, _ = _make_test_signal(samplerate=50.0, duration=3.0, freq=10.0)
     args = _make_default_args(samplerate=None, nperseg=32)
 
     captured_xvec = {}
 
     def mock_ndplot(yvec, xvec, label, nperseg=32):
+        """
+        Simulate ``ndplot`` for the test.
+
+        Parameters
+        ----------
+        yvec : object
+            Value supplied as ``yvec`` by the test case.
+        xvec : object
+            Value supplied as ``xvec`` by the test case.
+        label : object
+            Value supplied as ``label`` by the test case.
+        nperseg : int, optional
+            Value supplied as ``nperseg`` by the test case.
+        """
         captured_xvec["xvec"] = xvec.copy()
 
     def mock_readvectorsfromtextfile(fname, onecol=True):
+        """
+        Simulate ``readvectorsfromtextfile`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        onecol : bool, optional
+            Use a single column of test data.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (50.0, 0.0, None, x, False, "text")
 
     with (
@@ -619,11 +946,33 @@ def spectrogram_samplerate_from_file(debug=False):
 
 
 def spectrogram_no_samplerate_exits(debug=False):
-    """Test that spectrogram exits when no sample rate is available."""
+    """
+    Test that spectrogram exits when no sample rate is available.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, _ = _make_test_signal(samplerate=100.0, duration=3.0, freq=10.0)
     args = _make_default_args(samplerate=None, nperseg=32)
 
     def mock_readvectorsfromtextfile(fname, onecol=True):
+        """
+        Simulate ``readvectorsfromtextfile`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        onecol : bool, optional
+            Use a single column of test data.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (None, 0.0, None, x, False, "text")
 
     with pytest.raises(SystemExit):
@@ -648,16 +997,52 @@ def spectrogram_no_samplerate_exits(debug=False):
 
 
 def spectrogram_starttime(debug=False):
-    """Test that starttime from file offsets the time vector."""
+    """
+    Test that starttime from file offsets the time vector.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, _ = _make_test_signal(samplerate=100.0, duration=2.0, freq=10.0)
     args = _make_default_args(samplerate=100.0, nperseg=32)
 
     captured_xvec = {}
 
     def mock_ndplot(yvec, xvec, label, nperseg=32):
+        """
+        Simulate ``ndplot`` for the test.
+
+        Parameters
+        ----------
+        yvec : object
+            Value supplied as ``yvec`` by the test case.
+        xvec : object
+            Value supplied as ``xvec`` by the test case.
+        label : object
+            Value supplied as ``label`` by the test case.
+        nperseg : int, optional
+            Value supplied as ``nperseg`` by the test case.
+        """
         captured_xvec["xvec"] = xvec.copy()
 
     def mock_readvectorsfromtextfile(fname, onecol=True):
+        """
+        Simulate ``readvectorsfromtextfile`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        onecol : bool, optional
+            Use a single column of test data.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (100.0, 5.0, None, x, False, "text")
 
     with (
@@ -685,11 +1070,33 @@ def spectrogram_starttime(debug=False):
 
 
 def spectrogram_debug_output(debug=False):
-    """Test that debug mode prints args."""
+    """
+    Test that debug mode prints args.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, _ = _make_test_signal(samplerate=100.0, duration=2.0, freq=10.0)
     args = _make_default_args(samplerate=100.0, nperseg=32, debug=True)
 
     def mock_readvectorsfromtextfile(fname, onecol=True):
+        """
+        Simulate ``readvectorsfromtextfile`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        onecol : bool, optional
+            Use a single column of test data.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (100.0, 0.0, None, x, False, "text")
 
     captured = io.StringIO()
@@ -721,7 +1128,14 @@ def spectrogram_debug_output(debug=False):
 
 
 def spectrogram_uses_inputfile_as_label(debug=False):
-    """Test that spectrogram uses inputfile name as the plot label."""
+    """
+    Test that spectrogram uses inputfile name as the plot label.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     x, _ = _make_test_signal(samplerate=100.0, duration=2.0, freq=10.0)
     args = _make_default_args(
         inputfile="my_data.txt",
@@ -732,9 +1146,38 @@ def spectrogram_uses_inputfile_as_label(debug=False):
     captured_label = {}
 
     def mock_ndplot(yvec, xvec, label, nperseg=32):
+        """
+        Simulate ``ndplot`` for the test.
+
+        Parameters
+        ----------
+        yvec : object
+            Value supplied as ``yvec`` by the test case.
+        xvec : object
+            Value supplied as ``xvec`` by the test case.
+        label : object
+            Value supplied as ``label`` by the test case.
+        nperseg : int, optional
+            Value supplied as ``nperseg`` by the test case.
+        """
         captured_label["label"] = label
 
     def mock_readvectorsfromtextfile(fname, onecol=True):
+        """
+        Simulate ``readvectorsfromtextfile`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        onecol : bool, optional
+            Use a single column of test data.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (100.0, 0.0, None, x, False, "text")
 
     with (
@@ -765,6 +1208,14 @@ def spectrogram_uses_inputfile_as_label(debug=False):
 
 def test_spectrogram(debug=False):
     # parser tests
+    """
+    Verify spectrogram.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_defaults(debug=debug)

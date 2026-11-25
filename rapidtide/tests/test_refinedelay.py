@@ -23,13 +23,42 @@ import rapidtide.refinedelay as tide_refinedelay
 
 class DummyLagTCGenerator:
     def info(self, prefix=""):
+        """
+        Set up ``info`` for the test.
+
+        Parameters
+        ----------
+        prefix : str, optional
+            Value supplied as ``prefix`` by the test case.
+        """
         return None
 
     def yfromx(self, x):
+        """
+        Set up ``yfromx`` for the test.
+
+        Parameters
+        ----------
+        x : object
+            Value supplied as ``x`` by the test case.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.sin(x)
 
 
 def smooth_tests(debug=False):
+    """
+    Check smooth tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("smooth_tests")
     x = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
@@ -39,6 +68,14 @@ def smooth_tests(debug=False):
 
 
 def trainratiotooffset_and_ratiotodelay_tests(debug=False):
+    """
+    Check trainratiotooffset and ratiotodelay tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("trainratiotooffset_and_ratiotodelay_tests")
 
@@ -71,6 +108,67 @@ def trainratiotooffset_and_ratiotodelay_tests(debug=False):
     ):
         # Monotonic decreasing response in lag index. trainratiotooffset reverses
         # this axis internally, so it becomes monotonic increasing for spline fit.
+        """
+        Simulate ``getderivratios`` for the test.
+
+        Parameters
+        ----------
+        fmri_data_valid : object
+            Value supplied as ``fmri_data_valid`` by the test case.
+        validvoxels : object
+            Value supplied as ``validvoxels`` by the test case.
+        initial_fmri_x : object
+            Value supplied as ``initial_fmri_x`` by the test case.
+        lagtimes : numpy.ndarray
+            Lag values used by the test.
+        fitmask : object
+            Value supplied as ``fitmask`` by the test case.
+        genlagtc : object
+            Value supplied as ``genlagtc`` by the test case.
+        mode : object
+            Value supplied as ``mode`` by the test case.
+        outputname : path-like
+            Name of the output file.
+        oversamptr : object
+            Value supplied as ``oversamptr`` by the test case.
+        sLFOfitmean : object
+            Value supplied as ``sLFOfitmean`` by the test case.
+        rvalue : object
+            Value supplied as ``rvalue`` by the test case.
+        r2value : object
+            Value supplied as ``r2value`` by the test case.
+        fitNorm : object
+            Value supplied as ``fitNorm`` by the test case.
+        fitcoeff : object
+            Value supplied as ``fitcoeff`` by the test case.
+        movingsignal : object
+            Value supplied as ``movingsignal`` by the test case.
+        lagtc : object
+            Value supplied as ``lagtc`` by the test case.
+        filtereddata : object
+            Value supplied as ``filtereddata`` by the test case.
+        LGR : object
+            Value supplied as ``LGR`` by the test case.
+        TimingLGR : object
+            Value supplied as ``TimingLGR`` by the test case.
+        optiondict : object
+            Value supplied as ``optiondict`` by the test case.
+        regressderivs : int, optional
+            Value supplied as ``regressderivs`` by the test case.
+        timemask : object or None, optional
+            Value supplied as ``timemask`` by the test case.
+        starttr : object or None, optional
+            Value supplied as ``starttr`` by the test case.
+        endtr : object or None, optional
+            Value supplied as ``endtr`` by the test case.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         npts = fmri_data_valid.shape[0]
         out = np.linspace(1.0, -1.0, npts, endpoint=True)
         # derive the training offset encoded in initial_fmri_x from DummyLagTCGenerator
@@ -81,6 +179,16 @@ def trainratiotooffset_and_ratiotodelay_tests(debug=False):
         return out + thisoffset, rvalue
 
     def fake_writebidstsv(*args, **kwargs):
+        """
+        Simulate ``writebidstsv`` for the test.
+
+        Parameters
+        ----------
+        *args : object
+            Arguments passed to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         return None
 
     saved_getderivratios = tide_refinedelay.getderivratios
@@ -128,6 +236,14 @@ def trainratiotooffset_and_ratiotodelay_tests(debug=False):
 
 
 def coffstodelay_tests(debug=False):
+    """
+    Check coffstodelay tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("coffstodelay_tests")
 
@@ -136,9 +252,20 @@ def coffstodelay_tests(debug=False):
 
         class DummyPolyNone:
             def __init__(self, coeffs, domain=None):
+                """
+                Initialize the test double for ``DummyPolyNone``.
+
+                Parameters
+                ----------
+                coeffs : object
+                    Value supplied as ``coeffs`` by the test case.
+                domain : object or None, optional
+                    Value supplied as ``domain`` by the test case.
+                """
                 pass
 
             def roots(self):
+                """Set up ``roots`` for the test."""
                 return None
 
         tide_refinedelay.poly.Polynomial = DummyPolyNone
@@ -149,9 +276,27 @@ def coffstodelay_tests(debug=False):
 
         class DummyPolySingle:
             def __init__(self, coeffs, domain=None):
+                """
+                Initialize the test double for ``DummyPolySingle``.
+
+                Parameters
+                ----------
+                coeffs : object
+                    Value supplied as ``coeffs`` by the test case.
+                domain : object or None, optional
+                    Value supplied as ``domain`` by the test case.
+                """
                 pass
 
             def roots(self):
+                """
+                Set up ``roots`` for the test.
+
+                Returns
+                -------
+                numpy.ndarray
+                    Array supplied to the test or its caller.
+                """
                 return np.array([1.25 + 0.0j])
 
         tide_refinedelay.poly.Polynomial = DummyPolySingle
@@ -162,9 +307,27 @@ def coffstodelay_tests(debug=False):
 
         class DummyPolyMany:
             def __init__(self, coeffs, domain=None):
+                """
+                Initialize the test double for ``DummyPolyMany``.
+
+                Parameters
+                ----------
+                coeffs : object
+                    Value supplied as ``coeffs`` by the test case.
+                domain : object or None, optional
+                    Value supplied as ``domain`` by the test case.
+                """
                 pass
 
             def roots(self):
+                """
+                Set up ``roots`` for the test.
+
+                Returns
+                -------
+                numpy.ndarray
+                    Array supplied to the test or its caller.
+                """
                 return np.array([2.5 + 0.0j, -0.5 + 0.0j, 10.0 + 0.0j, 0.0 + 1.0j])
 
         tide_refinedelay.poly.Polynomial = DummyPolyMany
@@ -177,6 +340,14 @@ def coffstodelay_tests(debug=False):
 
 
 def getderivratios_tests(debug=False):
+    """
+    Check getderivratios tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getderivratios_tests")
 
@@ -214,6 +385,77 @@ def getderivratios_tests(debug=False):
         timemask=None,
         debug=False,
     ):
+        """
+        Simulate ``regressfrommaps`` for the test.
+
+        Parameters
+        ----------
+        fmri_data_valid : object
+            Value supplied as ``fmri_data_valid`` by the test case.
+        validvoxels : object
+            Value supplied as ``validvoxels`` by the test case.
+        initial_fmri_x : object
+            Value supplied as ``initial_fmri_x`` by the test case.
+        lagtimes : numpy.ndarray
+            Lag values used by the test.
+        fitmask : object
+            Value supplied as ``fitmask`` by the test case.
+        genlagtc : object
+            Value supplied as ``genlagtc`` by the test case.
+        mode : object
+            Value supplied as ``mode`` by the test case.
+        outputname : path-like
+            Name of the output file.
+        oversamptr : object
+            Value supplied as ``oversamptr`` by the test case.
+        sLFOfitmean : object
+            Value supplied as ``sLFOfitmean`` by the test case.
+        rvalue : object
+            Value supplied as ``rvalue`` by the test case.
+        r2value : object
+            Value supplied as ``r2value`` by the test case.
+        fitNorm : object
+            Value supplied as ``fitNorm`` by the test case.
+        fitcoeff : object
+            Value supplied as ``fitcoeff`` by the test case.
+        movingsignal : object
+            Value supplied as ``movingsignal`` by the test case.
+        lagtc : object
+            Value supplied as ``lagtc`` by the test case.
+        filtereddata : object
+            Value supplied as ``filtereddata`` by the test case.
+        LGR : object
+            Value supplied as ``LGR`` by the test case.
+        TimingLGR : object
+            Value supplied as ``TimingLGR`` by the test case.
+        regressfiltthreshval : object
+            Value supplied as ``regressfiltthreshval`` by the test case.
+        saveminimumsLFOfiltfiles : object
+            Value supplied as ``saveminimumsLFOfiltfiles`` by the test case.
+        nprocs_makelaggedtcs : int, optional
+            Value supplied as ``nprocs_makelaggedtcs`` by the test case.
+        nprocs_regressionfilt : int, optional
+            Value supplied as ``nprocs_regressionfilt`` by the test case.
+        regressderivs : int, optional
+            Value supplied as ``regressderivs`` by the test case.
+        chunksize : int, optional
+            Value supplied as ``chunksize`` by the test case.
+        showprogressbar : bool, optional
+            Setting for ``showprogressbar`` in the test case.
+        alwaysmultiproc : bool, optional
+            Setting for ``alwaysmultiproc`` in the test case.
+        coefficientsonly : bool, optional
+            Setting for ``coefficientsonly`` in the test case.
+        timemask : object or None, optional
+            Value supplied as ``timemask`` by the test case.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         captured["timemask"] = timemask
         captured["xshape"] = initial_fmri_x.shape
         fitcoeff[:, 0] = 2.0
@@ -317,6 +559,14 @@ def getderivratios_tests(debug=False):
 
 
 def filterderivratios_tests(debug=False):
+    """
+    Check filterderivratios tests in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("filterderivratios_tests")
 
@@ -343,6 +593,27 @@ def filterderivratios_tests(debug=False):
     saved_ssmooth = tide_refinedelay.tide_filt.ssmooth
 
     def fake_ssmooth(dx, dy, dz, sigma, arr):
+        """
+        Simulate ``ssmooth`` for the test.
+
+        Parameters
+        ----------
+        dx : object
+            Value supplied as ``dx`` by the test case.
+        dy : object
+            Value supplied as ``dy`` by the test case.
+        dz : object
+            Value supplied as ``dz`` by the test case.
+        sigma : object
+            Value supplied as ``sigma`` by the test case.
+        arr : array-like
+            Array passed to the test helper.
+
+        Returns
+        -------
+        object
+            Output values supplied to the caller.
+        """
         return arr
 
     tide_refinedelay.tide_filt.ssmooth = fake_ssmooth
@@ -369,6 +640,16 @@ def filterderivratios_tests(debug=False):
 
 
 def test_refinedelay(debug=False, local=False):
+    """
+    Verify refinedelay.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     np.random.seed(12345)
     smooth_tests(debug=debug)
     trainratiotooffset_and_ratiotodelay_tests(debug=debug)

@@ -47,7 +47,14 @@ from rapidtide.workflows.fitSimFuncMap import fitSimFunc, masked_median_filter
 
 
 def test_masked_median_filter_none_mask_matches_scipy(debug: bool = False) -> None:
-    """With no mask the filter must be exactly scipy's, not a reimplementation of it."""
+    """
+    With no mask the filter must be exactly scipy's, not a reimplementation of it.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     therng = np.random.default_rng(1234)
     thedata = therng.normal(size=(7, 8, 9))
     for thesize in (3, 5):
@@ -59,13 +66,19 @@ def test_masked_median_filter_none_mask_matches_scipy(debug: bool = False) -> No
 
 
 def test_masked_median_filter_pad_mode_mapping(debug: bool = False) -> None:
-    """The scipy->numpy padding mode table must be right.
+    """
+    The scipy->numpy padding mode table must be right.
 
     scipy and numpy use the same five words for different things: scipy's
     'reflect' is numpy's 'symmetric' and scipy's 'mirror' is numpy's 'reflect'.
     Getting the mapping backwards changes every boundary voxel and raises no
     error, so pin it down by requiring the masked path with an all-in-mask
     mask to reproduce scipy's unmasked answer exactly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     therng = np.random.default_rng(99)
     thedata = therng.normal(size=(6, 7, 8))
@@ -89,7 +102,14 @@ def test_masked_median_filter_pad_mode_mapping(debug: bool = False) -> None:
 
 
 def test_masked_median_filter_ignores_out_of_mask_voxels(debug: bool = False) -> None:
-    """Hand computed case: an out of mask spike must not reach any median."""
+    """
+    Hand computed case: an out of mask spike must not reach any median.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     thedata = np.array([1.0, 2.0, 100.0, 4.0, 5.0])
     themask = np.array([1, 1, 0, 1, 1])
 
@@ -110,9 +130,16 @@ def test_masked_median_filter_ignores_out_of_mask_voxels(debug: bool = False) ->
 
 
 def test_masked_median_filter_chunking_is_transparent(debug: bool = False) -> None:
-    """The memory capped chunked path must give bit identical results to the
+    """
+    The memory capped chunked path must give bit identical results to the
     single shot path.  The chunk loop indexes into a reshaped sliding window
-    view, so an arithmetic slip there would silently permute voxels."""
+    view, so an arithmetic slip there would silently permute voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     therng = np.random.default_rng(31415)
     thedata = therng.normal(size=(9, 10, 11))
     themask = therng.random(thedata.shape) > 0.3
@@ -133,9 +160,16 @@ def test_masked_median_filter_chunking_is_transparent(debug: bool = False) -> No
 
 
 def test_masked_median_filter_empty_window_is_nan(debug: bool = False) -> None:
-    """A voxel with no in mask neighbours has no median to report.  It must come
+    """
+    A voxel with no in mask neighbours has no median to report.  It must come
     back NaN rather than zero, since zero is a legal delay and would be taken as
-    a despeckle target."""
+    a despeckle target.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     thedata = np.ones((5, 5, 5))
     themask = np.zeros((5, 5, 5), dtype=bool)
     themask[0, 0, 0] = True
@@ -153,7 +187,14 @@ def test_masked_median_filter_empty_window_is_nan(debug: bool = False) -> None:
 
 
 def test_masked_median_filter_anisotropic_kernel(debug: bool = False) -> None:
-    """A per axis kernel tuple must be honoured, not collapsed to a scalar."""
+    """
+    A per axis kernel tuple must be honoured, not collapsed to a scalar.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     therng = np.random.default_rng(2718)
     thedata = therng.normal(size=(6, 7, 8))
     thefullmask = np.ones_like(thedata, dtype=bool)
@@ -191,22 +232,20 @@ class _DummyLogger:
     """
 
     def __init__(self, debug: bool = False) -> None:
-        """Initialise an empty message log.
+        """
+        Initialise an empty message log.
 
         Parameters
         ----------
         debug : bool, optional
             Echo each message to stdout.  Default is False.
-
-        Returns
-        -------
-        None
         """
         self.messages: list = []
         self.debug = debug
 
     def info(self, themessage: Any, *theargs: Any, **thekwargs: Any) -> None:
-        """Record a message.
+        """
+        Record a message.
 
         Parameters
         ----------
@@ -216,17 +255,14 @@ class _DummyLogger:
             Extra positional fields, accepted and ignored.
         **thekwargs : Any
             Extra keyword fields, accepted and ignored.
-
-        Returns
-        -------
-        None
         """
         self.messages.append(str(themessage))
         if self.debug:
             print(themessage)
 
     def warning(self, themessage: Any, *theargs: Any, **thekwargs: Any) -> None:
-        """Record a warning, which goes to the same log as everything else.
+        """
+        Record a warning, which goes to the same log as everything else.
 
         Parameters
         ----------
@@ -236,10 +272,6 @@ class _DummyLogger:
             Extra positional fields, accepted and ignored.
         **thekwargs : Any
             Extra keyword fields, accepted and ignored.
-
-        Returns
-        -------
-        None
         """
         self.info(themessage)
 
@@ -258,16 +290,13 @@ class _DummyInputData:
     """
 
     def __init__(self, filetype: str = "nifti") -> None:
-        """Initialise the stand in.
+        """
+        Initialise the stand in.
 
         Parameters
         ----------
         filetype : str, optional
             The file type to report.  Default is 'nifti'.
-
-        Returns
-        -------
-        None
         """
         self.filetype = filetype
         self.cifti_hdr = None
@@ -542,10 +571,16 @@ def _makefitargs(
 
 
 def test_fitsimfunc_simplefit_locates_peak(debug: bool = False) -> None:
-    """The simple fit path must return the upsampled argmax as the lag.
+    """
+    The simple fit path must return the upsampled argmax as the lag.
 
     It bypasses the fitter entirely, so this is the only check that its
     hand rolled basedelay plus index times step arithmetic is right.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     theshape = (4, 4, 4)
     thetruelag = 4.0
@@ -575,8 +610,15 @@ def test_fitsimfunc_simplefit_locates_peak(debug: bool = False) -> None:
 
 
 def test_fitsimfunc_simplefit_bipolar_picks_negative_peak(debug: bool = False) -> None:
-    """Under bipolar the larger magnitude peak wins even when it is negative;
-    without it, the positive peak must win."""
+    """
+    Under bipolar the larger magnitude peak wins even when it is negative;
+    without it, the positive peak must win.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (3, 3, 3)
     thenumvoxels = int(np.prod(theshape))
     thecorrscale = np.linspace(-15.0, 15.0, 121)
@@ -610,9 +652,16 @@ def test_fitsimfunc_simplefit_bipolar_picks_negative_peak(debug: bool = False) -
 
 
 def test_fitsimfunc_without_despeckling_keeps_the_wrong_lobe(debug: bool = False) -> None:
-    """Control arm.  With despeckling off the planted voxels must KEEP their wrong
+    """
+    Control arm.  With despeckling off the planted voxels must KEEP their wrong
     delay, which is what makes the repair test below meaningful rather than a
-    restatement of what the fitter already does."""
+    restatement of what the fitter already does.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 8)
     thecorrout, thecorrscale, thebadvoxels = _makecorrout(theshape=theshape)
     theoptiondict = _makeoptiondict(despeckle_passes=0)
@@ -634,12 +683,18 @@ def test_fitsimfunc_without_despeckling_keeps_the_wrong_lobe(debug: bool = False
 
 
 def test_fitsimfunc_despeckling_repairs_planted_outliers(debug: bool = False) -> None:
-    """The headline behaviour: voxels that picked the wrong similarity lobe must
+    """
+    The headline behaviour: voxels that picked the wrong similarity lobe must
     come back at the right delay after despeckling.
 
     This runs the real fitter and the real fitcorr, so it covers the whole chain:
     median filter target selection, the -1000000.0 sentinel that marks voxels to
     leave alone, the restricted range refit, and the range restoration afterwards.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     theshape = (8, 8, 8)
     thecorrout, thecorrscale, thebadvoxels = _makecorrout(theshape=theshape)
@@ -680,8 +735,15 @@ def test_fitsimfunc_despeckling_repairs_planted_outliers(debug: bool = False) ->
 
 
 def test_fitsimfunc_despeckling_terminates_early_when_converged(debug: bool = False) -> None:
-    """The convergence guard must stop the subpass loop once the flagged count
-    stops falling, rather than burning through every requested subpass."""
+    """
+    The convergence guard must stop the subpass loop once the flagged count
+    stops falling, rather than burning through every requested subpass.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 8)
     thecorrout, thecorrscale, thebadvoxels = _makecorrout(theshape=theshape)
     theoptiondict = _makeoptiondict(despeckle_passes=8)
@@ -702,8 +764,15 @@ def test_fitsimfunc_despeckling_terminates_early_when_converged(debug: bool = Fa
 
 
 def test_fitsimfunc_despeckling_is_a_noop_on_a_clean_map(debug: bool = False) -> None:
-    """With nothing to repair, despeckling must leave every delay untouched and
-    record no refits."""
+    """
+    With nothing to repair, despeckling must leave every delay untouched and
+    record no refits.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 8)
     thecorrout, thecorrscale, dummy = _makecorrout(theshape=theshape, thebadvoxels=[])
     theoptiondict = _makeoptiondict(despeckle_passes=4)
@@ -721,13 +790,19 @@ def test_fitsimfunc_despeckling_is_a_noop_on_a_clean_map(debug: bool = False) ->
 
 
 def test_fitsimfunc_despeckling_refuses_to_move_a_voxel_too_far(debug: bool = False) -> None:
-    """A despeckle refit is bounded: the fitter's range is the target lag plus or
+    """
+    A despeckle refit is bounded: the fitter's range is the target lag plus or
     minus half the despeckle threshold, and a refit that lands outside is thrown
     away rather than clamped in.
 
     The voxel here has no peak within reach of its neighbourhood median, so the
     honest outcome is to leave it alone.  Accepting the fit anyway would park it
     at the edge of the search window, manufacturing a delay that no peak supports.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     theshape = (8, 8, 8)
     thenumvoxels = int(np.prod(theshape))
@@ -770,12 +845,18 @@ def test_fitsimfunc_despeckling_refuses_to_move_a_voxel_too_far(debug: bool = Fa
 
 
 def test_fitsimfunc_despeckling_ignores_out_of_mask_neighbours(debug: bool = False) -> None:
-    """Voxels that failed to fit must not vote in the despeckle median.
+    """
+    Voxels that failed to fit must not vote in the despeckle median.
 
     A good voxel surrounded by failed fits is the case that matters: if the median
     counted them, its target would be their nonsense delay and the refit would drag
     a perfectly good voxel onto a sidelobe.  The fit mask is what prevents that, so
     plant exactly that geometry and require the good voxel to survive untouched.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     theshape, thecorrout, thecorrscale, theoutofmask, thecentreindex = _makewalledinvolume()
 
@@ -820,8 +901,15 @@ def test_fitsimfunc_despeckling_ignores_out_of_mask_neighbours(debug: bool = Fal
 
 
 def test_fitsimfunc_resolvedelays_reassigns_and_records(debug: bool = False) -> None:
-    """Delay resolution must run when asked, repair the planted lobe errors, and
-    leave both a reassignment count and a preresolve audit trail behind."""
+    """
+    Delay resolution must run when asked, repair the planted lobe errors, and
+    leave both a reassignment count and a preresolve audit trail behind.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 8)
     thecorrout, thecorrscale, thebadvoxels = _makecorrout(theshape=theshape)
     theoptiondict = _makeoptiondict(resolvedelays=True, resolvepasses=3, despeckle_passes=0)
@@ -848,7 +936,14 @@ def test_fitsimfunc_resolvedelays_reassigns_and_records(debug: bool = False) -> 
 
 
 def test_fitsimfunc_resolvedelays_off_by_default(debug: bool = False) -> None:
-    """Resolution must not fire unless requested, and must not leave keys behind."""
+    """
+    Resolution must not fire unless requested, and must not leave keys behind.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 8)
     thecorrout, thecorrscale, thebadvoxels = _makecorrout(theshape=theshape)
     theoptiondict = _makeoptiondict(despeckle_passes=0)
@@ -870,9 +965,16 @@ def test_fitsimfunc_resolvedelays_off_by_default(debug: bool = False) -> None:
 def test_fitsimfunc_resolution_that_changes_nothing_records_no_shift(
     debug: bool = False,
 ) -> None:
-    """Resolution on a map with nothing to repair must reassign nobody, and the
+    """
+    Resolution on a map with nothing to repair must reassign nobody, and the
     shift metrics must be absent rather than present and zero, so a tabulation can
-    tell "resolution did nothing" apart from "resolution moved things by zero"."""
+    tell "resolution did nothing" apart from "resolution moved things by zero".
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 8)
     thecorrout, thecorrscale, dummy = _makecorrout(theshape=theshape, thebadvoxels=[])
     theoptiondict = _makeoptiondict(resolvedelays=True, despeckle_passes=0)
@@ -892,8 +994,15 @@ def test_fitsimfunc_resolution_that_changes_nothing_records_no_shift(
 
 
 def test_fitsimfunc_records_delay_metrics(debug: bool = False) -> None:
-    """Every full fit pass must land quality metrics in the optiondict; they are
-    the only record of map quality a completed run leaves behind."""
+    """
+    Every full fit pass must land quality metrics in the optiondict; they are
+    the only record of map quality a completed run leaves behind.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 8)
     thecorrout, thecorrscale, dummy = _makecorrout(theshape=theshape)
     theoptiondict = _makeoptiondict(despeckle_passes=0, thepass=1)
@@ -924,8 +1033,15 @@ def test_fitsimfunc_records_delay_metrics(debug: bool = False) -> None:
 
 
 def test_fitsimfunc_writes_runoptions_before_fitting(debug: bool = False) -> None:
-    """The stage marker is written to disk BEFORE the fit, so that a run killed
-    during fitting can still be diagnosed."""
+    """
+    The stage marker is written to disk BEFORE the fit, so that a run killed
+    during fitting can still be diagnosed.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (4, 4, 4)
     thecorrout, thecorrscale, dummy = _makecorrout(theshape=theshape, thebadvoxels=[])
     theoptiondict = _makeoptiondict(despeckle_passes=0, corrmasksize=64)
@@ -946,9 +1062,16 @@ def test_fitsimfunc_writes_runoptions_before_fitting(debug: bool = False) -> Non
 
 
 def test_fitsimfunc_hybrid_seeds_fitcorr_with_mi_peaks(debug: bool = False) -> None:
-    """Under the hybrid metric the mutual information prefit must supply the
+    """
+    Under the hybrid metric the mutual information prefit must supply the
     initial lags handed to fitcorr.  Nothing downstream reports this, so a
-    regression here would quietly turn hybrid into plain correlation."""
+    regression here would quietly turn hybrid into plain correlation.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (2, 2, 2)
     thenumvoxels = int(np.prod(theshape))
     thecorrout, thecorrscale, dummy = _makecorrout(theshape=theshape, thebadvoxels=[])
@@ -978,8 +1101,15 @@ def test_fitsimfunc_hybrid_seeds_fitcorr_with_mi_peaks(debug: bool = False) -> N
 
 
 def test_fitsimfunc_nonhybrid_passes_no_initial_lags(debug: bool = False) -> None:
-    """The complement of the hybrid test: a plain correlation fit must start
-    unconstrained, not from a stale peak list."""
+    """
+    The complement of the hybrid test: a plain correlation fit must start
+    unconstrained, not from a stale peak list.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (2, 2, 2)
     thenumvoxels = int(np.prod(theshape))
     thecorrout, thecorrscale, dummy = _makecorrout(theshape=theshape, thebadvoxels=[])
@@ -1000,8 +1130,15 @@ def test_fitsimfunc_nonhybrid_passes_no_initial_lags(debug: bool = False) -> Non
 
 
 def test_fitsimfunc_saves_despeckle_masks_on_the_final_pass(debug: bool = False) -> None:
-    """--savedespecklemasks must emit the diagnostic maps, and only on the final
-    pass.  The header is mutated to 3D in place first, so check that too."""
+    """
+    --savedespecklemasks must emit the diagnostic maps, and only on the final
+    pass.  The header is mutated to 3D in place first, so check that too.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 8)
     thecorrout, thecorrscale, thebadvoxels = _makecorrout(theshape=theshape)
     theoptiondict = _makeoptiondict(savedespecklemasks=True, passes=2)
@@ -1044,8 +1181,15 @@ def test_fitsimfunc_saves_despeckle_masks_on_the_final_pass(debug: bool = False)
 
 
 def test_fitsimfunc_saves_resolve_maps_on_the_final_pass(debug: bool = False) -> None:
-    """--saveresolvemaps must emit the before map, the shift, and the changed
-    mask, so that what the smoothness prior did stays inspectable."""
+    """
+    --saveresolvemaps must emit the before map, the shift, and the changed
+    mask, so that what the smoothness prior did stays inspectable.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 8)
     thecorrout, thecorrscale, thebadvoxels = _makecorrout(theshape=theshape)
     theoptiondict = _makeoptiondict(
@@ -1112,13 +1256,19 @@ def _runciftipass(theoptiondict: dict, debug: bool = False) -> Tuple[Any, dict]:
 
 
 def test_fitsimfunc_cifti_output_reshapes_the_header(debug: bool = False) -> None:
-    """CIFTI headers carry space and time in different slots than NIfTI ones, so
+    """
+    CIFTI headers carry space and time in different slots than NIfTI ones, so
     every save path has a separate branch for them.  Cover all three.
 
     Note the two configurations are run separately on purpose: with resolution on,
     it repairs the planted lobe errors before despeckling ever sees them, so the
     per subpass despeckle save never fires.  That is the documented ordering, but
     it means one run cannot exercise both.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     thenumvoxels = 8 * 8 * 8
 
@@ -1152,9 +1302,16 @@ def test_fitsimfunc_cifti_output_reshapes_the_header(debug: bool = False) -> Non
 
 
 def test_fitsimfunc_resolution_runs_before_despeckling(debug: bool = False) -> None:
-    """Order matters and is not symmetric: resolution makes the discrete lobe
+    """
+    Order matters and is not symmetric: resolution makes the discrete lobe
     choice, then despeckling refits the residual outliers.  Doing it the other
-    way round discards despeckle's non peak values."""
+    way round discards despeckle's non peak values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 8)
     thecorrout, thecorrscale, dummy = _makecorrout(theshape=theshape)
     theoptiondict = _makeoptiondict(resolvedelays=True, despeckle_passes=4)
@@ -1173,8 +1330,15 @@ def test_fitsimfunc_resolution_runs_before_despeckling(debug: bool = False) -> N
 
 
 def test_fitsimfunc_tolerates_missing_sidelobe_measurement(debug: bool = False) -> None:
-    """The sidelobe amplitude is frequently absent from the optiondict.  Delay
-    resolution no longer gates on it, and must not assume it is a number."""
+    """
+    The sidelobe amplitude is frequently absent from the optiondict.  Delay
+    resolution no longer gates on it, and must not assume it is a number.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 8)
     thecorrout, thecorrscale, dummy = _makecorrout(theshape=theshape)
 
@@ -1205,7 +1369,14 @@ def test_fitsimfunc_tolerates_missing_sidelobe_measurement(debug: bool = False) 
 
 
 def test_fitsimfunc_text_input_skips_header_munging(debug: bool = False) -> None:
-    """Text input has no NIfTI header to reshape; touching it would raise."""
+    """
+    Text input has no NIfTI header to reshape; touching it would raise.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (8, 8, 8)
     thecorrout, thecorrscale, dummy = _makecorrout(theshape=theshape)
     theoptiondict = _makeoptiondict(savedespecklemasks=True, passes=1)
@@ -1224,9 +1395,16 @@ def test_fitsimfunc_text_input_skips_header_munging(debug: bool = False) -> None
 
 
 def test_recorddelaymetrics_logs_the_reason_it_failed(debug: bool = False) -> None:
-    """Metrics are instrumentation and swallow their own exceptions, so a silent
+    """
+    Metrics are instrumentation and swallow their own exceptions, so a silent
     swallow would hide a real bug forever.  When a logger is supplied the reason
-    must reach it."""
+    must reach it.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     thelogger = _DummyLogger(debug=debug)
     theoptiondict: dict = {}
     tide_fitSimFuncMap.recorddelaymetrics(

@@ -41,6 +41,21 @@ except ImportError:
 
 
 def multisine(timepoints, parameterlist):
+    """
+    Set up ``multisine`` for the test.
+
+    Parameters
+    ----------
+    timepoints : int
+        Number of time samples.
+    parameterlist : object
+        Value supplied as ``parameterlist`` by the test case.
+
+    Returns
+    -------
+    object
+        The ``output`` value supplied to the caller.
+    """
     output = timepoints * 0.0
     for element in parameterlist:
         amp, freq, phase = element
@@ -49,6 +64,23 @@ def multisine(timepoints, parameterlist):
 
 
 def checkfits(foundvalues, testvalues, tolerance=0.001):
+    """
+    Set up ``checkfits`` for the test.
+
+    Parameters
+    ----------
+    foundvalues : object
+        Value supplied as ``foundvalues`` by the test case.
+    testvalues : object
+        Value supplied as ``testvalues`` by the test case.
+    tolerance : float, optional
+        Value supplied as ``tolerance`` by the test case.
+
+    Returns
+    -------
+    bool
+        Value returned to the caller in this test case.
+    """
     for i in range(len(foundvalues)):
         if np.fabs(foundvalues[i] - testvalues[i]) > tolerance:
             print("error error exceeds", tolerance, "at", i)
@@ -59,6 +91,16 @@ def checkfits(foundvalues, testvalues, tolerance=0.001):
 
 def test_delayestimation(displayplots=False, debug=False):
     # set the number of MKL threads to use
+    """
+    Verify delayestimation.
+
+    Parameters
+    ----------
+    displayplots : bool, optional
+        Display plots from the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if mklexists:
         print("disabling MKL")
         mkl.set_num_threads(1)

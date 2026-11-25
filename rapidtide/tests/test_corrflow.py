@@ -28,17 +28,50 @@ import rapidtide.workflows.corrflow as cf
 
 
 def _correlationwaveform(t):
-    """A correlation shaped waveform: a gaussian damped cosine peaking at zero."""
+    """
+    A correlation shaped waveform: a gaussian damped cosine peaking at zero.
+
+    Parameters
+    ----------
+    t : object
+        Value supplied as ``t`` by the test case.
+
+    Returns
+    -------
+    object
+        Value returned to the caller in this test case.
+    """
     return np.exp(-((t / 2.5) ** 2)) * np.cos(2.0 * np.pi * t / 7.0)
 
 
 def _make_radial_movie(
     tmpdir, shape=(28, 28, 24), voxdim=2.0, truespeed=5.0, noise=0.0, numlags=26
 ):
-    """Make a synthetic 4D similarity function with an analytically known flow field.
+    """
+    Make a synthetic 4D similarity function with an analytically known flow field.
 
     The movie is I(x, l) = f(l - tau(x)) with tau = r/c, so the correlation peak
     propagates radially outward at speed c and the true velocity is c * rhat.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    shape : tuple of int, optional
+        Dimensions of the test array.
+    voxdim : float, optional
+        Value supplied as ``voxdim`` by the test case.
+    truespeed : float, optional
+        Value supplied as ``truespeed`` by the test case.
+    noise : float, optional
+        Value supplied as ``noise`` by the test case.
+    numlags : int, optional
+        Value supplied as ``numlags`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     rng = np.random.RandomState(20260728)
     lagstart, lagstep = -2.0, 0.4
@@ -79,6 +112,21 @@ def _make_radial_movie(
 
 
 def _baseargs(corrfile, outputroot):
+    """
+    Set up ``_baseargs`` for the test.
+
+    Parameters
+    ----------
+    corrfile : object
+        Value supplied as ``corrfile`` by the test case.
+    outputroot : object
+        Value supplied as ``outputroot`` by the test case.
+
+    Returns
+    -------
+    object
+        The ``args`` value supplied to the caller.
+    """
     args = cf._get_parser().parse_args([corrfile, outputroot])
     args.showprogressbar = False
     args.debug = False
@@ -89,7 +137,14 @@ def _baseargs(corrfile, outputroot):
 
 
 def test_getlagaxis(debug=False):
-    """The lag axis must come back out of the header exactly as written."""
+    """
+    The lag axis must come back out of the header exactly as written.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theimg = nib.Nifti1Image(np.zeros((2, 2, 2, 10), dtype=np.float32), np.eye(4))
     theimg.header["pixdim"][4] = 0.25
     theimg.header["toffset"] = -1.5
@@ -108,7 +163,14 @@ def test_getlagaxis(debug=False):
 
 
 def test_peaklag(debug=False):
-    """The peak lag map must recover a known peak position to subsample accuracy."""
+    """
+    The peak lag map must recover a known peak position to subsample accuracy.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     theshape = (6, 6, 6)
     thelags = np.linspace(-2.0, 8.0, 26)
     themask = np.ones(theshape, dtype=np.uint16)
@@ -131,7 +193,14 @@ def test_peaklag(debug=False):
 
 
 def test_opticalflow_recovers_known_field(debug=False):
-    """The core estimator must recover a known radial flow field on clean data."""
+    """
+    The core estimator must recover a known radial flow field on clean data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.TemporaryDirectory() as tmpdir:
         thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
         corrdata = nib.load(thenames["corrout"]).get_fdata()
@@ -174,7 +243,14 @@ def test_opticalflow_recovers_known_field(debug=False):
 
 
 def test_lowered_eigenvalue_threshold_is_worse(debug=False):
-    """Guard the counterintuitive result that admitting more eigenvectors hurts."""
+    """
+    Guard the counterintuitive result that admitting more eigenvectors hurts.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.TemporaryDirectory() as tmpdir:
         thenames, themask, truedirection, truespeed, thelags = _make_radial_movie(tmpdir)
         corrdata = nib.load(thenames["corrout"]).get_fdata()
@@ -211,7 +287,14 @@ def test_lowered_eigenvalue_threshold_is_worse(debug=False):
 
 
 def corrflow_integration(debug=False):
-    """Run corrflow end to end and check it recovers the known flow field."""
+    """
+    Run corrflow end to end and check it recovers the known flow field.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_integration")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -274,7 +357,14 @@ def corrflow_integration(debug=False):
 
 
 def corrflow_solvers(debug=False):
-    """Both solvers must work on clean data; tls should not attenuate the speed."""
+    """
+    Both solvers must work on clean data; tls should not attenuate the speed.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_solvers")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -302,7 +392,14 @@ def corrflow_solvers(debug=False):
 
 
 def test_oversamplelagaxis_passthrough(debug=False):
-    """A factor of one or less leaves the movie and its lag axis untouched."""
+    """
+    A factor of one or less leaves the movie and its lag axis untouched.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("oversamplelagaxis_passthrough")
     thelags = np.linspace(-2.0, 8.0, 26)
@@ -314,10 +411,16 @@ def test_oversamplelagaxis_passthrough(debug=False):
 
 
 def test_oversamplelagaxis_interpolates(debug=False):
-    """Oversampling refines the lag axis without moving the correlation peak.
+    """
+    Oversampling refines the lag axis without moving the correlation peak.
 
     The interpolation is meant to recover the underlying continuous function, so a peak
     at a known lag must stay where it was rather than drift.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("oversamplelagaxis_interpolates")
@@ -344,7 +447,14 @@ def test_oversamplelagaxis_interpolates(debug=False):
 
 
 def test_opticalflow_without_correlation_weighting(debug=False):
-    """The unweighted structure tensor path still recovers the known field."""
+    """
+    The unweighted structure tensor path still recovers the known field.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("opticalflow_without_correlation_weighting")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -365,7 +475,14 @@ def test_opticalflow_without_correlation_weighting(debug=False):
 
 
 def test_opticalflow_empty_mask(debug=False):
-    """An empty mask produces empty output rather than failing."""
+    """
+    An empty mask produces empty output rather than failing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("opticalflow_empty_mask")
     theshape = (10, 10, 10)
@@ -384,7 +501,14 @@ def test_opticalflow_empty_mask(debug=False):
 
 
 def test_corrflow_rejects_too_few_lags(debug=False):
-    """A movie with too few lag samples cannot support a flow estimate."""
+    """
+    A movie with too few lag samples cannot support a flow estimate.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_rejects_too_few_lags")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -402,7 +526,14 @@ def test_corrflow_rejects_too_few_lags(debug=False):
 
 
 def test_corrflow_rejects_mismatched_mask(debug=False):
-    """A mask that does not match the movie geometry is rejected."""
+    """
+    A mask that does not match the movie geometry is rejected.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_rejects_mismatched_mask")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -420,7 +551,14 @@ def test_corrflow_rejects_mismatched_mask(debug=False):
 
 
 def test_corrflow_rejects_tiny_mask(debug=False):
-    """A CBV threshold that leaves almost nothing behind is rejected."""
+    """
+    A CBV threshold that leaves almost nothing behind is rejected.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_rejects_tiny_mask")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -436,7 +574,14 @@ def test_corrflow_rejects_tiny_mask(debug=False):
 
 
 def test_corrflow_autodiscovers_mask(debug=False):
-    """A companion corrfit mask next to the movie is picked up automatically."""
+    """
+    A companion corrfit mask next to the movie is picked up automatically.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_autodiscovers_mask")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -451,7 +596,14 @@ def test_corrflow_autodiscovers_mask(debug=False):
 
 
 def test_corrflow_derives_mask_when_none_given(debug=False):
-    """With no mask file to find, the mask comes from the nonzero correlation functions."""
+    """
+    With no mask file to find, the mask comes from the nonzero correlation functions.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_derives_mask_when_none_given")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -469,7 +621,14 @@ def test_corrflow_derives_mask_when_none_given(debug=False):
 
 
 def test_corrflow_maxspeed_clipping(debug=False):
-    """A low speed ceiling clips the velocity field to that magnitude."""
+    """
+    A low speed ceiling clips the velocity field to that magnitude.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_maxspeed_clipping")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -487,7 +646,14 @@ def test_corrflow_maxspeed_clipping(debug=False):
 
 
 def test_corrflow_with_lag_oversampling(debug=False):
-    """Running with lag oversampling produces the same outputs on a finer axis."""
+    """
+    Running with lag oversampling produces the same outputs on a finer axis.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_with_lag_oversampling")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -501,7 +667,14 @@ def test_corrflow_with_lag_oversampling(debug=False):
 
 
 def test_corrflow_explicit_delayfile(debug=False):
-    """An explicit ordering field is read instead of being derived from the movie."""
+    """
+    An explicit ordering field is read instead of being derived from the movie.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_explicit_delayfile")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -528,7 +701,14 @@ def test_corrflow_explicit_delayfile(debug=False):
 
 
 def test_corrflow_rejects_mismatched_delayfile(debug=False):
-    """A delay map that does not match the movie geometry is rejected."""
+    """
+    A delay map that does not match the movie geometry is rejected.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_rejects_mismatched_delayfile")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -547,7 +727,14 @@ def test_corrflow_rejects_mismatched_delayfile(debug=False):
 
 
 def test_corrflow_autodiscovers_delayfile(debug=False):
-    """A companion maxtime map next to the movie is picked up automatically."""
+    """
+    A companion maxtime map next to the movie is picked up automatically.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_autodiscovers_delayfile")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -572,7 +759,14 @@ def test_corrflow_autodiscovers_delayfile(debug=False):
 
 
 def test_corrflow_nonstandard_filename_root(debug=False):
-    """A movie whose name lacks the corrout suffix still resolves a usable root."""
+    """
+    A movie whose name lacks the corrout suffix still resolves a usable root.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_nonstandard_filename_root")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -590,7 +784,14 @@ def test_corrflow_nonstandard_filename_root(debug=False):
 
 
 def test_corrflow_without_depression_filling(debug=False):
-    """With filling disabled the ordering field is used directly for the topology steps."""
+    """
+    With filling disabled the ordering field is used directly for the topology steps.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("corrflow_without_depression_filling")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -605,11 +806,17 @@ def test_corrflow_without_depression_filling(debug=False):
 
 
 def test_opticalflow_planar_wave_is_rank_one(debug=False):
-    """A single planar wavefront leaves the higher rank classes empty.
+    """
+    A single planar wavefront leaves the higher rank classes empty.
 
     The tls solver loops over rank classes 1, 2 and 3 and skips any that no voxel falls
     into; a purely planar wave is rank one everywhere, so the other two are empty.  This
     runs under tls specifically, since the default ols solver takes a different path.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("opticalflow_planar_wave_is_rank_one")
@@ -636,7 +843,14 @@ def test_opticalflow_planar_wave_is_rank_one(debug=False):
 
 
 def test_main_runs_a_full_analysis(debug=False):
-    """The entrypoint parses a real command line and runs the analysis."""
+    """
+    The entrypoint parses a real command line and runs the analysis.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("main_runs_a_full_analysis")
     import sys
@@ -661,7 +875,14 @@ def test_main_runs_a_full_analysis(debug=False):
 
 
 def test_main_missing_args(debug=False):
-    """The entrypoint prints help and re-raises when the command line is unusable."""
+    """
+    The entrypoint prints help and re-raises when the command line is unusable.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("main_missing_args")
     import sys
@@ -678,6 +899,14 @@ def test_main_missing_args(debug=False):
 
 
 def test_corrflow(debug=False):
+    """
+    Verify corrflow.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     test_getlagaxis(debug=debug)
     test_peaklag(debug=debug)
     test_oversamplelagaxis_passthrough(debug=debug)

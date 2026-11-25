@@ -20,14 +20,52 @@ import rapidtide.simFuncClasses as tide_simfunc
 
 
 def _oldstyle_xaxis(npts: int, sampletime: float) -> np.ndarray:
+    """
+    Set up ``_oldstyle_xaxis`` for the test.
+
+    Parameters
+    ----------
+    npts : int
+        Number of samples.
+    sampletime : float
+        Time between samples in seconds.
+
+    Returns
+    -------
+    np.ndarray
+        Value returned to the caller in this test case.
+    """
     return np.r_[0.0:npts] * sampletime - (npts * sampletime) / 2.0 + sampletime / 2.0
 
 
 def _newstyle_xaxis(npts: int, sampletime: float) -> np.ndarray:
+    """
+    Set up ``_newstyle_xaxis`` for the test.
+
+    Parameters
+    ----------
+    npts : int
+        Number of samples.
+    sampletime : float
+        Time between samples in seconds.
+
+    Returns
+    -------
+    np.ndarray
+        Value returned to the caller in this test case.
+    """
     return (np.arange(npts, dtype="float64") - (npts // 2)) * sampletime
 
 
 def _make_parser() -> argparse.ArgumentParser:
+    """
+    Create parser.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        The ``parser`` value supplied to the caller.
+    """
     parser = argparse.ArgumentParser(
         prog="bench_similarityfitter",
         description="Benchmark SimilarityFunctionFitter gaussian fit runtime and robust fallback rate.",
@@ -46,6 +84,7 @@ def _make_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    """Set up ``main`` for the test."""
     args = _make_parser().parse_args()
     rng = np.random.default_rng(args.seed)
 

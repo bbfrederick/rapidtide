@@ -30,6 +30,25 @@ import rapidtide.workflows.rankimage as ri
 def _make_args(
     inputfilename="in.nii.gz", maskfilename="mask.nii.gz", outputroot="out", debug=False
 ):
+    """
+    Create args.
+
+    Parameters
+    ----------
+    inputfilename : str, optional
+        Value supplied as ``inputfilename`` by the test case.
+    maskfilename : str, optional
+        Value supplied as ``maskfilename`` by the test case.
+    outputroot : str, optional
+        Value supplied as ``outputroot`` by the test case.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     return argparse.Namespace(
         inputfilename=inputfilename,
         maskfilename=maskfilename,
@@ -39,6 +58,25 @@ def _make_args(
 
 
 def _make_dims(x, y, z, t=1):
+    """
+    Create dims.
+
+    Parameters
+    ----------
+    x : object
+        Value supplied as ``x`` by the test case.
+    y : object
+        Value supplied as ``y`` by the test case.
+    z : object
+        Value supplied as ``z`` by the test case.
+    t : int, optional
+        Value supplied as ``t`` by the test case.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array supplied to the test or its caller.
+    """
     return np.array([4, x, y, z, t, 1, 1, 1], dtype=int)
 
 
@@ -46,6 +84,14 @@ def _make_dims(x, y, z, t=1):
 
 
 def parser_basic(debug=False):
+    """
+    Check that the command-line parser initializes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = ri._get_parser()
@@ -54,6 +100,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
+    """
+    Check that the parser requires the mandatory arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = ri._get_parser()
@@ -62,6 +116,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
+    """
+    Check the parser defaults.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     parser = ri._get_parser()
@@ -73,6 +135,14 @@ def parser_defaults(debug=False):
 
 
 def imtopercentile_basic(debug=False):
+    """
+    Check imtopercentile basic in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("imtopercentile_basic")
 
@@ -102,6 +172,14 @@ def imtopercentile_basic(debug=False):
 
 
 def imtopercentile_masked_voxels_are_zero(debug=False):
+    """
+    Check imtopercentile masked voxels are zero in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("imtopercentile_masked_voxels_are_zero")
 
@@ -113,6 +191,14 @@ def imtopercentile_masked_voxels_are_zero(debug=False):
 
 
 def imtopercentile_ties_dense_ranking(debug=False):
+    """
+    Set up ``imtopercentile_ties_dense_ranking`` for the test.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("imtopercentile_ties_dense_ranking")
 
@@ -130,6 +216,14 @@ def imtopercentile_ties_dense_ranking(debug=False):
 
 
 def rankimage_exits_on_dim_mismatch(debug=False):
+    """
+    Set up ``rankimage_exits_on_dim_mismatch`` for the test.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("rankimage_exits_on_dim_mismatch")
 
@@ -140,6 +234,19 @@ def rankimage_exits_on_dim_mismatch(debug=False):
     hdr = MagicMock()
 
     def mock_readfromnifti(fname):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         if "mask" in fname:
             return (MagicMock(), mask, hdr, mask_dims, None)
         return (MagicMock(), img, hdr, img_dims, None)
@@ -158,6 +265,14 @@ def rankimage_exits_on_dim_mismatch(debug=False):
 
 
 def rankimage_3d_writes_outputs(debug=False):
+    """
+    Check rankimage 3D writes outputs in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("rankimage_3d_writes_outputs")
 
@@ -169,15 +284,50 @@ def rankimage_3d_writes_outputs(debug=False):
     saved = {}
 
     def mock_readfromnifti(fname):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         if "mask" in fname:
             return (MagicMock(), mask, hdr, img_dims, None)
         return (MagicMock(), img, hdr, img_dims, None)
 
     def mock_savetonifti(arr, hdr_arg, savename):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        arr : array-like
+            Array passed to the test helper.
+        hdr_arg : object
+            Image header passed to the stub.
+        savename : object
+            Value supplied as ``savename`` by the test case.
+        """
         saved["nifti_name"] = savename
         saved["arr"] = np.array(arr, copy=True)
 
     def mock_writedicttojson(d, fname):
+        """
+        Simulate ``writedicttojson`` for the test.
+
+        Parameters
+        ----------
+        d : object
+            Value supplied as ``d`` by the test case.
+        fname : path-like
+            Filename supplied to the test helper.
+        """
         saved["json_name"] = fname
         saved["json"] = d
 
@@ -207,6 +357,14 @@ def rankimage_3d_writes_outputs(debug=False):
 
 
 def rankimage_4d_processes_each_timepoint(debug=False):
+    """
+    Check rankimage 4D processes each timepoint in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("rankimage_4d_processes_each_timepoint")
 
@@ -221,11 +379,36 @@ def rankimage_4d_processes_each_timepoint(debug=False):
     saved = {}
 
     def mock_readfromnifti(fname):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         if "mask" in fname:
             return (MagicMock(), mask, hdr, dims, None)
         return (MagicMock(), img, hdr, dims, None)
 
     def mock_savetonifti(arr, hdr_arg, savename):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        arr : array-like
+            Array passed to the test helper.
+        hdr_arg : object
+            Image header passed to the stub.
+        savename : object
+            Value supplied as ``savename`` by the test case.
+        """
         saved["arr"] = np.array(arr, copy=True)
 
     args = _make_args(outputroot="outroot")
@@ -254,6 +437,14 @@ def rankimage_4d_processes_each_timepoint(debug=False):
 
 def test_rankimage(debug=False):
     # parser tests
+    """
+    Verify rankimage.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_defaults(debug=debug)

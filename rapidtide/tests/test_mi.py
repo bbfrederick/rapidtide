@@ -26,6 +26,14 @@ from rapidtide.tests.utils import get_examples_path
 
 
 def test_calc_MI(displayplots=False):
+    """
+    Verify calc MI.
+
+    Parameters
+    ----------
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     inlen = 1000
     offset = 100
     filename1 = os.path.join(get_examples_path(), "lforegressor.txt")

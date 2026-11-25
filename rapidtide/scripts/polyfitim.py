@@ -21,6 +21,7 @@ import rapidtide.workflows.polyfitim as theworkflow
 
 
 def entrypoint():
+    """Run the `polyfitim` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.main)
 
 

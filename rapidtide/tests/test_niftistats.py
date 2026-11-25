@@ -35,7 +35,18 @@ from rapidtide.workflows.niftistats import (
 
 
 def _create_4d_nifti(filepath, data, voxel_sizes=(2.0, 2.0, 2.0, 1.0)):
-    """Write a 4D numpy array as a NIfTI file."""
+    """
+    Write a 4D numpy array as a NIfTI file.
+
+    Parameters
+    ----------
+    filepath : path-like
+        Path to the test input or output file.
+    data : array-like
+        Data passed to the test helper.
+    voxel_sizes : tuple, optional
+        Value supplied as ``voxel_sizes`` by the test case.
+    """
     affine = np.eye(4)
     affine[0, 0] = voxel_sizes[0]
     affine[1, 1] = voxel_sizes[1]
@@ -50,56 +61,67 @@ def _create_4d_nifti(filepath, data, voxel_sizes=(2.0, 2.0, 2.0, 1.0)):
 
 class TestGetParser:
     def test_icc_parser_returns_parser(self):
+        """Verify ICC parser returns parser."""
         parser = _get_parser("icc")
         assert parser is not None
         assert parser.prog == "calcicc"
 
     def test_ttest_parser_returns_parser(self):
+        """Verify ttest parser returns parser."""
         parser = _get_parser("ttest")
         assert parser is not None
         assert parser.prog == "calcttest"
 
     def test_invalid_calctype_raises(self):
+        """Verify invalid calctype raises."""
         with pytest.raises(Exception):
             _get_parser("invalid")
 
     def test_icc_parser_has_measurementlist(self):
+        """Verify ICC parser has measurementlist."""
         parser = _get_parser("icc")
         # measurementlist is a required positional argument for icc
         action_names = [a.dest for a in parser._actions]
         assert "measurementlist" in action_names
 
     def test_ttest_parser_no_measurementlist(self):
+        """Verify ttest parser no measurementlist."""
         parser = _get_parser("ttest")
         action_names = [a.dest for a in parser._actions]
         assert "measurementlist" not in action_names
 
     def test_ttest_parser_has_paired(self):
+        """Verify ttest parser has paired."""
         parser = _get_parser("ttest")
         action_names = [a.dest for a in parser._actions]
         assert "paired" in action_names
 
     def test_ttest_parser_has_alternative(self):
+        """Verify ttest parser has alternative."""
         parser = _get_parser("ttest")
         action_names = [a.dest for a in parser._actions]
         assert "alternative" in action_names
 
     def test_icc_parser_no_paired(self):
+        """Verify ICC parser no paired."""
         parser = _get_parser("icc")
         action_names = [a.dest for a in parser._actions]
         assert "paired" not in action_names
 
     def test_icc_parser_has_nocache(self):
+        """Verify ICC parser has nocache."""
         parser = _get_parser("icc")
         action_names = [a.dest for a in parser._actions]
         assert "nocache" in action_names
 
     def test_ttest_parser_no_nocache(self):
+        """Verify ttest parser no nocache."""
         parser = _get_parser("ttest")
         action_names = [a.dest for a in parser._actions]
         assert "nocache" not in action_names
 
     def test_common_options_present(self):
+        """Verify common options present."""
         for calctype in ("icc", "ttest"):
             parser = _get_parser(calctype)
             action_names = [a.dest for a in parser._actions]
@@ -112,6 +134,14 @@ class TestGetParser:
             assert "deepdebug" in action_names
 
     def test_icc_parser_defaults(self, tmp_path):
+        """
+        Verify ICC parser defaults.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         parser = _get_parser("icc")
         # measurementlist requires a valid file path
         measfile = str(tmp_path / "meas.txt")
@@ -128,6 +158,7 @@ class TestGetParser:
         assert args.deepdebug is False
 
     def test_ttest_parser_defaults(self):
+        """Verify ttest parser defaults."""
         parser = _get_parser("ttest")
         args = parser.parse_args(["data.nii", "output"])
         assert args.paired is False
@@ -135,12 +166,14 @@ class TestGetParser:
         assert args.sigma == 0.0
 
     def test_ttest_parser_alternative_choices(self):
+        """Verify ttest parser alternative choices."""
         parser = _get_parser("ttest")
         for alt in ("two-sided", "less", "greater"):
             args = parser.parse_args(["data.nii", "output", "--alternative", alt])
             assert args.alternative == alt
 
     def test_ttest_parser_invalid_alternative_exits(self):
+        """Verify ttest parser invalid alternative exits."""
         parser = _get_parser("ttest")
         with pytest.raises(SystemExit):
             parser.parse_args(["data.nii", "output", "--alternative", "bogus"])
@@ -174,7 +207,14 @@ class TestParsemeasurementlist:
         np.testing.assert_array_equal(volumesel, expected_volumesel)
 
     def test_debug_mode(self, capsys):
-        """Debug flag should produce printed output."""
+        """
+        Debug flag should produce printed output.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         measlist = np.array([["1", "2"]])
         parsemeasurementlist(measlist, numfiles=1, debug=True)
         captured = capsys.readouterr()
@@ -212,6 +252,7 @@ class TestParsemeasurementlist:
 
 class TestMakdcommandlinelist:
     def test_basic_output_without_extra(self):
+        """Verify basic output without extra."""
         starttime = time.time() - 5.0
         endtime = time.time()
         arglist = ["python", "script.py", "--input", "data.txt"]
@@ -223,6 +264,7 @@ class TestMakdcommandlinelist:
         assert result[3] == "python script.py --input data.txt"
 
     def test_output_with_extra(self):
+        """Verify output with extra."""
         starttime = time.time() - 2.0
         endtime = time.time()
         arglist = ["calcicc", "data.nii", "output"]
@@ -232,30 +274,36 @@ class TestMakdcommandlinelist:
         assert result[4] == "calcicc data.nii output"
 
     def test_processing_time_format(self):
+        """Verify processing time format."""
         starttime = 1000.0
         endtime = 1010.5
         result = makdcommandlinelist(["cmd"], starttime, endtime)
         assert "10.500" in result[1]
 
     def test_command_line_reconstruction(self):
+        """Verify command line reconstruction."""
         arglist = ["prog", "-a", "val1", "--flag", "val2"]
         result = makdcommandlinelist(arglist, 0.0, 1.0)
         assert result[-1] == "prog -a val1 --flag val2"
 
     def test_version_info_present(self):
+        """Verify version info present."""
         result = makdcommandlinelist(["cmd"], 0.0, 1.0)
         # The node line should contain platform and version info
         assert "Using" in result[2]
 
     def test_empty_arglist(self):
+        """Verify empty arglist."""
         result = makdcommandlinelist([], 0.0, 1.0)
         assert result[-1] == ""
 
     def test_extra_none_gives_four_lines(self):
+        """Verify extra none gives four lines."""
         result = makdcommandlinelist(["cmd"], 0.0, 1.0, extra=None)
         assert len(result) == 4
 
     def test_extra_notnone_gives_five_lines(self):
+        """Verify extra notnone gives five lines."""
         result = makdcommandlinelist(["cmd"], 0.0, 1.0, extra="info")
         assert len(result) == 5
 
@@ -267,7 +315,14 @@ class TestNiftistatsMainTtest:
     """Integration tests for niftistats_main with calctype='ttest'."""
 
     def test_ttest_independent(self, tmp_path):
-        """Run an independent t-test on two synthetic 4D NIfTI files."""
+        """
+        Run an independent t-test on two synthetic 4D NIfTI files.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         xsize, ysize, zsize, nsubj = 4, 4, 3, 10
         np.random.seed(42)
         data1 = np.random.randn(xsize, ysize, zsize, nsubj).astype(np.float64)
@@ -307,7 +362,14 @@ class TestNiftistatsMainTtest:
         assert np.all(p_data <= 1.0)
 
     def test_ttest_paired(self, tmp_path):
-        """Run a paired t-test."""
+        """
+        Run a paired t-test.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         xsize, ysize, zsize, nsubj = 3, 3, 2, 15
         np.random.seed(123)
         data1 = np.random.randn(xsize, ysize, zsize, nsubj).astype(np.float64)
@@ -341,7 +403,14 @@ class TestNiftistatsMainTtest:
         assert np.all(p_data < 0.05)
 
     def test_ttest_alternative_less(self, tmp_path):
-        """Test one-sided alternative='less'."""
+        """
+        Test one-sided alternative='less'.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         xsize, ysize, zsize, nsubj = 3, 3, 2, 12
         np.random.seed(99)
         data1 = np.random.randn(xsize, ysize, zsize, nsubj).astype(np.float64)
@@ -368,7 +437,14 @@ class TestNiftistatsMainTtest:
         assert np.all(p_data < 0.05)
 
     def test_ttest_alternative_greater(self, tmp_path):
-        """Test one-sided alternative='greater'."""
+        """
+        Test one-sided alternative='greater'.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         xsize, ysize, zsize, nsubj = 3, 3, 2, 12
         np.random.seed(77)
         data1 = np.random.randn(xsize, ysize, zsize, nsubj).astype(np.float64)
@@ -395,7 +471,14 @@ class TestNiftistatsMainTtest:
         assert np.all(p_data > 0.5)
 
     def test_ttest_with_demean(self, tmp_path):
-        """Test t-test with --demean flag."""
+        """
+        Test t-test with --demean flag.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         xsize, ysize, zsize, nsubj = 3, 3, 2, 8
         np.random.seed(55)
         data1 = np.random.randn(xsize, ysize, zsize, nsubj).astype(np.float64) + 100.0
@@ -420,7 +503,14 @@ class TestNiftistatsMainTtest:
         assert os.path.isfile(outputroot + "_p.nii.gz")
 
     def test_ttest_with_demedian(self, tmp_path):
-        """Test t-test with --demedian flag."""
+        """
+        Test t-test with --demedian flag.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         xsize, ysize, zsize, nsubj = 3, 3, 2, 8
         np.random.seed(44)
         data1 = np.random.randn(xsize, ysize, zsize, nsubj).astype(np.float64) + 50.0
@@ -444,7 +534,14 @@ class TestNiftistatsMainTtest:
         assert os.path.isfile(outputroot + "_t.nii.gz")
 
     def test_ttest_with_mask(self, tmp_path):
-        """Test t-test with a mask that zeros out some voxels."""
+        """
+        Test t-test with a mask that zeros out some voxels.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         xsize, ysize, zsize, nsubj = 4, 4, 2, 8
         np.random.seed(33)
         data1 = np.random.randn(xsize, ysize, zsize, nsubj).astype(np.float64)
@@ -478,7 +575,14 @@ class TestNiftistatsMainTtest:
         assert t_data[1, 1, 0] != 0.0
 
     def test_ttest_with_smoothing(self, tmp_path):
-        """Test that smoothing runs without error."""
+        """
+        Test that smoothing runs without error.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         xsize, ysize, zsize, nsubj = 5, 5, 3, 6
         np.random.seed(22)
         data1 = np.random.randn(xsize, ysize, zsize, nsubj).astype(np.float64)
@@ -503,7 +607,14 @@ class TestNiftistatsMainTtest:
         assert os.path.isfile(outputroot + "_t.nii.gz")
 
     def test_ttest_wrong_number_of_files_exits(self, tmp_path):
-        """t-test requires exactly 2 files; 1 or 3 should fail."""
+        """
+        T-test requires exactly 2 files; 1 or 3 should fail.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         xsize, ysize, zsize, nsubj = 3, 3, 2, 5
         data = np.random.randn(xsize, ysize, zsize, nsubj).astype(np.float64)
         file1 = str(tmp_path / "f1.nii.gz")
@@ -524,7 +635,14 @@ class TestNiftistatsMainICC:
     """Integration tests for niftistats_main with calctype='icc'."""
 
     def test_icc_basic(self, tmp_path):
-        """Run ICC on synthetic data with 2 measurements x 4 subjects."""
+        """
+        Run ICC on synthetic data with 2 measurements x 4 subjects.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         xsize, ysize, zsize = 3, 3, 2
         nsubj = 4
         nmeas = 2
@@ -572,7 +690,14 @@ class TestNiftistatsMainICC:
         assert np.mean(icc_data) > 0
 
     def test_icc_with_two_files(self, tmp_path):
-        """Run ICC using two separate data files referenced in the measurement list."""
+        """
+        Run ICC using two separate data files referenced in the measurement list.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         xsize, ysize, zsize = 3, 3, 2
         nsubj = 3
         np.random.seed(11)
@@ -613,7 +738,14 @@ class TestNiftistatsMainICC:
         assert icc_data.shape == (xsize, ysize, zsize)
 
     def test_icc_with_demean(self, tmp_path):
-        """Run ICC with --demean."""
+        """
+        Run ICC with --demean.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         xsize, ysize, zsize = 3, 3, 2
         nsubj, nmeas = 4, 2
         np.random.seed(13)
@@ -644,7 +776,14 @@ class TestNiftistatsMainICC:
         assert os.path.isfile(outputroot + "_ICC.nii.gz")
 
     def test_icc_with_demedian(self, tmp_path):
-        """Run ICC with --demedian."""
+        """
+        Run ICC with --demedian.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         xsize, ysize, zsize = 3, 3, 2
         nsubj, nmeas = 4, 2
         np.random.seed(17)

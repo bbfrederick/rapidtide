@@ -21,6 +21,7 @@ import rapidtide.workflows.rankimage as theworkflow
 
 
 def entrypoint():
+    """Run the `rankimage` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.rankimage)
 
 

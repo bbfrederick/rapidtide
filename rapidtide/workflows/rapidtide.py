@@ -250,12 +250,19 @@ def rapidtide_main(argparsingfunc: Any) -> None:
 
     Parameters
     ----------
-    None
+    argparsingfunc : argparse.Namespace
+        Parsed HAPPY configuration and input paths.
 
     Returns
     -------
     None
         The function performs in-place processing and saves results to files.
+
+    See Also
+    --------
+    tide_regressfrommaps : Performs regression analysis on fMRI data
+    tide_io : Handles input/output operations for fMRI data
+    tide_util : Utility functions for processing fMRI data
 
     Notes
     -----
@@ -272,13 +279,6 @@ def rapidtide_main(argparsingfunc: Any) -> None:
     --------
     >>> process_fmri_data()
     # Processes fMRI data and saves results to output files
-
-    See Also
-    --------
-    tide_regressfrommaps : Performs regression analysis on fMRI data
-    tide_io : Handles input/output operations for fMRI data
-    tide_util : Utility functions for processing fMRI data
-
     """
     optiondict, theprefilter = argparsingfunc
     optiondict["threaddebug"] = False

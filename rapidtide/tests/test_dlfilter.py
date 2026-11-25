@@ -33,7 +33,19 @@ except ImportError:
 
 
 def create_dummy_data(window_size=64):
-    """Create dummy training data for testing."""
+    """
+    Create dummy training data for testing.
+
+    Parameters
+    ----------
+    window_size : int, optional
+        Value supplied as ``window_size`` by the test case.
+
+    Returns
+    -------
+    dict
+        Values supplied together for the test case.
+    """
     num_samples = 100
     train_x = np.random.randn(num_samples, window_size, 1).astype(np.float32)
     train_y = np.random.randn(num_samples, window_size, 1).astype(np.float32)
@@ -52,7 +64,14 @@ def create_dummy_data(window_size=64):
 # CNN DLFilter tests
 # ============================================================
 def cnn_dlfilter_initialization(testtemproot):
-    """Test CNNDLFilter initialization and attribute setting."""
+    """
+    Test CNNDLFilter initialization and attribute setting.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     filter_obj = dlfilter.CNNDLFilter(
@@ -72,7 +91,14 @@ def cnn_dlfilter_initialization(testtemproot):
 
 
 def cnn_dlfilter_getname_makenet(testtemproot):
-    """Test CNNDLFilter getname and makenet methods."""
+    """
+    Test CNNDLFilter getname and makenet methods.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     filter_obj = dlfilter.CNNDLFilter(
@@ -95,7 +121,16 @@ def cnn_dlfilter_getname_makenet(testtemproot):
 
 
 def cnn_predict_model(testtemproot, dummy_data):
-    """Test CNNDLFilter predict_model method."""
+    """
+    Test CNNDLFilter predict_model method.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    dummy_data : object
+        Value supplied as ``dummy_data`` by the test case.
+    """
     import rapidtide.dlfilter as dlfilter
 
     filter_obj = dlfilter.CNNDLFilter(
@@ -117,7 +152,14 @@ def cnn_predict_model(testtemproot, dummy_data):
 
 
 def cnn_apply_method(testtemproot):
-    """Test CNNDLFilter apply method for filtering a signal."""
+    """
+    Test CNNDLFilter apply method for filtering a signal.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     window_size = 64
@@ -143,7 +185,14 @@ def cnn_apply_method(testtemproot):
 
 
 def cnn_apply_with_badpts(testtemproot):
-    """Test CNNDLFilter apply method with bad points."""
+    """
+    Test CNNDLFilter apply method with bad points.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     window_size = 64
@@ -173,7 +222,14 @@ def cnn_apply_with_badpts(testtemproot):
 
 
 def cnn_save_and_load(testtemproot):
-    """Test CNNDLFilter save and load model."""
+    """
+    Test CNNDLFilter save and load model.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     filter_obj = dlfilter.CNNDLFilter(
@@ -220,7 +276,14 @@ def cnn_save_and_load(testtemproot):
 
 
 def cnn_different_activations(testtemproot):
-    """Test CNNDLFilter with different activation functions."""
+    """
+    Test CNNDLFilter with different activation functions.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     for activation in ["relu", "tanh"]:
@@ -242,7 +305,14 @@ def cnn_different_activations(testtemproot):
 # DenseAutoencoder DLFilter tests
 # ============================================================
 def dense_autoencoder_dlfilter(testtemproot):
-    """Test DenseAutoencoderDLFilter initialization, getname, makenet."""
+    """
+    Test DenseAutoencoderDLFilter initialization, getname, makenet.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     filter_obj = dlfilter.DenseAutoencoderDLFilter(
@@ -267,7 +337,14 @@ def dense_autoencoder_dlfilter(testtemproot):
 
 
 def dense_autoencoder_predict(testtemproot):
-    """Test DenseAutoencoderDLFilter predict method."""
+    """
+    Test DenseAutoencoderDLFilter predict method.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     filter_obj = dlfilter.DenseAutoencoderDLFilter(
@@ -290,7 +367,14 @@ def dense_autoencoder_predict(testtemproot):
 # ConvAutoencoder DLFilter tests
 # ============================================================
 def conv_autoencoder_dlfilter(testtemproot):
-    """Test ConvAutoencoderDLFilter initialization, getname, makenet."""
+    """
+    Test ConvAutoencoderDLFilter initialization, getname, makenet.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     filter_obj = dlfilter.ConvAutoencoderDLFilter(
@@ -316,7 +400,14 @@ def conv_autoencoder_dlfilter(testtemproot):
 
 
 def conv_autoencoder_predict(testtemproot):
-    """Test ConvAutoencoderDLFilter predict method."""
+    """
+    Test ConvAutoencoderDLFilter predict method.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     filter_obj = dlfilter.ConvAutoencoderDLFilter(
@@ -341,7 +432,14 @@ def conv_autoencoder_predict(testtemproot):
 # DeepLearningFilter base class tests
 # ============================================================
 def base_filter_inputsize_usebadpts(testtemproot):
-    """Test that inputsize is set correctly based on usebadpts flag."""
+    """
+    Test that inputsize is set correctly based on usebadpts flag.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     # Without badpts
@@ -368,7 +466,14 @@ def base_filter_inputsize_usebadpts(testtemproot):
 
 
 def base_filter_infodict(testtemproot):
-    """Test that infodict is properly populated."""
+    """
+    Test that infodict is properly populated.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     filter_obj = dlfilter.CNNDLFilter(
@@ -393,7 +498,14 @@ def base_filter_infodict(testtemproot):
 
 
 def base_loaddata_requires_initialize(testtemproot):
-    """Test loaddata() raises if called before initialize()."""
+    """
+    Test loaddata() raises if called before initialize().
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     filter_obj = dlfilter.CNNDLFilter(
@@ -410,7 +522,14 @@ def base_loaddata_requires_initialize(testtemproot):
 
 
 def base_loaddata_calls_prep_when_initialized(testtemproot):
-    """Test loaddata() calls prep() and populates data attributes."""
+    """
+    Test loaddata() calls prep() and populates data attributes.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     filter_obj = dlfilter.CNNDLFilter(
@@ -444,7 +563,14 @@ def base_loaddata_calls_prep_when_initialized(testtemproot):
 
 
 def cnn_minimal_cpu_training_loop(testtemproot):
-    """Run a minimal CNN training loop on CPU and verify artifacts."""
+    """
+    Run a minimal CNN training loop on CPU and verify artifacts.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    """
     import rapidtide.dlfilter as dlfilter
 
     rng = np.random.RandomState(1234)
@@ -525,11 +651,39 @@ def readindata_filters_and_returns_expected_shapes():
     )
 
     def _mock_readdictfromjson(path):
+        """
+        Simulate ``readdictfromjson`` for the test.
+
+        Parameters
+        ----------
+        path : object
+            Value supplied as ``path`` by the test case.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if "sub-01" in path:
             return info_good
         return info_bad
 
     def _mock_readbidstsv(path, colspec=None):
+        """
+        Simulate ``readbidstsv`` for the test.
+
+        Parameters
+        ----------
+        path : object
+            Value supplied as ``path`` by the test case.
+        colspec : object or None, optional
+            Value supplied as ``colspec`` by the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         arr = input_good if "sub-01" in path else input_bad
         return (25.0, 0.0, ["x", "y", "badpts"], arr, False, "bids", {})
 
@@ -694,6 +848,16 @@ def targettoinput_test():
 @pytest.mark.skipif(not tensorflowexists, reason="TensorFlow not installed")
 def test_dlfilterops(debug=False, local=False):
     # set input and output directories
+    """
+    Verify dlfilterops.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     testtemproot = get_test_temp_path(local)
 
     thedummydata = create_dummy_data()

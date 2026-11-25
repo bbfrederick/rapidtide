@@ -11,18 +11,60 @@ class _DummyFitter:
     lagmod = 1000.0
 
     def __init__(self):
+        """Initialize the test double for ``_DummyFitter``."""
         self.last_range = None
 
     def setguess(self, *_args, **_kwargs):
+        """
+        Set up ``setguess`` for the test.
+
+        Parameters
+        ----------
+        *_args : object
+            Additional positional arguments passed by the caller.
+        **_kwargs : object
+            Additional keyword arguments passed by the caller.
+        """
         return None
 
     def setrange(self, lagmin, lagmax):
+        """
+        Set up ``setrange`` for the test.
+
+        Parameters
+        ----------
+        lagmin : object
+            Value supplied as ``lagmin`` by the test case.
+        lagmax : object
+            Value supplied as ``lagmax`` by the test case.
+        """
         self.last_range = (lagmin, lagmax)
 
     def setlthresh(self, _val):
+        """
+        Set up ``setlthresh`` for the test.
+
+        Parameters
+        ----------
+        _val : object
+            Value supplied as ``_val`` by the test case.
+        """
         return None
 
     def fit(self, correlationfunc):
+        """
+        Set up ``fit`` for the test.
+
+        Parameters
+        ----------
+        correlationfunc : object
+            Value supplied as ``correlationfunc`` by the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         maxindex = int(np.argmax(correlationfunc))
         maxlag = float(self.corrtimeaxis[maxindex])
         maxval = float(correlationfunc[maxindex])
@@ -30,6 +72,7 @@ class _DummyFitter:
 
 
 def test_onesimfuncfit_sets_range_around_initiallag_with_despeckle_thresh():
+    """Verify onesimfuncfit sets range around initiallag with despeckle thresh."""
     fitter = _DummyFitter()
     corr = np.zeros(101, dtype=float)
     corr[50] = 1.0

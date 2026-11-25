@@ -21,6 +21,7 @@ import rapidtide.workflows.synthASL as theworkflow
 
 
 def entrypoint():
+    """Run the `synthASL` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.synthASL)
 
 

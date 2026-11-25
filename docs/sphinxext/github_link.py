@@ -14,6 +14,14 @@ REVISION_CMD = "git rev-parse --short HEAD"
 
 
 def _get_git_revision():
+    """
+    Resolve the current Git commit hash.
+
+    Returns
+    -------
+    str or None
+        Commit hash, if Git supplied one.
+    """
     try:
         revision = subprocess.check_output(REVISION_CMD.split()).strip()
     except (subprocess.CalledProcessError, OSError):
@@ -23,7 +31,8 @@ def _get_git_revision():
 
 
 def _linkcode_resolve(domain, info, package, url_fmt, revision):
-    """Determine a link to online source for a class/method/function
+    """
+    Determine a link to online source for a class/method/function.
 
     This is called by sphinx.ext.linkcode
 
@@ -35,6 +44,24 @@ def _linkcode_resolve(domain, info, package, url_fmt, revision):
     ...                           '{revision}/Lib/{package}/{path}#L{lineno}',
     ...                   revision='xxxx')
     'http://hg.python.org/cpython/file/xxxx/Lib/tty/tty.py#L18'
+
+    Parameters
+    ----------
+    domain : str
+        Sphinx domain of the documented object.
+    info : dict
+        Sphinx object information with module and qualified name.
+    package : str
+        Top-level Python package name.
+    url_fmt : str
+        Template for URLs linking to source code.
+    revision : str
+        Git commit identifier used to build the source URL.
+
+    Returns
+    -------
+    str or None
+        URL of the source and line number, if the object can be resolved.
     """
 
     if revision is None:
@@ -72,7 +99,8 @@ def _linkcode_resolve(domain, info, package, url_fmt, revision):
 
 
 def make_linkcode_resolve(package, url_fmt):
-    """Returns a linkcode_resolve function for the given URL format
+    """
+    Returns a linkcode_resolve function for the given URL format.
 
     revision is a git commit reference (hash or name)
 
@@ -81,6 +109,18 @@ def make_linkcode_resolve(package, url_fmt):
     url_fmt is along the lines of ('https://github.com/USER/PROJECT/'
                                    'blob/{revision}/{package}/'
                                    '{path}#L{lineno}')
+
+    Parameters
+    ----------
+    package : str
+        Top-level Python package name.
+    url_fmt : str
+        Template for URLs linking to source code.
+
+    Returns
+    -------
+    callable
+        Sphinx source-link resolver bound to the package and URL template.
     """
     revision = _get_git_revision()
     return partial(_linkcode_resolve, revision=revision, package=package, url_fmt=url_fmt)

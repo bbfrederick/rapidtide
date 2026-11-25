@@ -21,6 +21,7 @@ import rapidtide.workflows.proj2flow as theworkflow
 
 
 def entrypoint():
+    """Run the `proj2flow` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.proj2flow)
 
 

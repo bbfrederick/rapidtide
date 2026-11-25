@@ -129,13 +129,6 @@ class dataVolume:
         Reshapes the internal data array to facilitate 2D processing operations
         by combining the x and y dimensions while preserving slice information.
 
-        Parameters
-        ----------
-        self : object
-            The instance containing the data to be reshaped. Expected to have
-            attributes: dimensions (int), data (array-like), xsize (int),
-            ysize (int), and numslices (int).
-
         Returns
         -------
         NDArray
@@ -259,6 +252,21 @@ class VoxelData:
 
     def __new__(cls, *args, **kwargs):
         # Correctly create and return the instance
+        """
+        Create a voxel data instance with the supplied constructor arguments.
+
+        Parameters
+        ----------
+        *args : object
+            Additional positional arguments.
+        **kwargs : object
+            Additional keyword options for the operation.
+
+        Returns
+        -------
+        voxelData
+            New voxel dataset instance.
+        """
         instance = super().__new__(cls)
         return instance
 
@@ -283,6 +291,8 @@ class VoxelData:
             Starting index for valid data range, default is None (all data).
         validend : int, optional
             Ending index for valid data range, default is None (all data).
+        fixNaN : bool, optional
+            Replace NaN values in the input data.
 
         Returns
         -------
@@ -592,13 +602,6 @@ class VoxelData:
         This method loads data from the specified filename, automatically detecting
         whether the file is text, CIFTI, or NIFTI format. The loaded data is stored
         in instance variables for subsequent processing.
-
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing this method. Expected to have
-            attributes: filename (str), filetype (str or None), and various data
-            storage attributes (nim_data, nim, cifti_hdr, nim_hdr, thedims, thesizes).
 
         Returns
         -------

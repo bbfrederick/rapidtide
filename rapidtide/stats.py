@@ -653,7 +653,7 @@ def fast_ICC_rep_anova(
     Y: NDArray, nocache: bool = False, debug: bool = False
 ) -> Tuple[float, float, float, float, int, int]:
     """
-    the data Y are entered as a 'table' ie subjects are in rows and repeated
+    The data Y are entered as a 'table' ie subjects are in rows and repeated
     measures in columns
     One Sample Repeated measure ANOVA
     Y = XB + E with X = [FaTor / Subjects]
@@ -666,6 +666,20 @@ def fast_ICC_rep_anova(
     of Y, it will reinitialize automatically.  Set nocache to True to get
     the original, much slower behavior.  No, actually, don't do that. That would
     be silly.
+
+    Parameters
+    ----------
+    Y : NDArray
+        Observations arranged by target and measurement.
+    nocache : bool, optional
+        Recompute the ANOVA quantities instead of using cached values.
+    debug : bool, optional
+        Enable diagnostic output.
+
+    Returns
+    -------
+    tuple
+        Intraclass correlation, variance terms, session F statistic, and degrees of freedom.
     """
     global icc_inited
     global current_Y_shape
@@ -1326,25 +1340,25 @@ def makemask(
     noneg: bool = False,
 ) -> NDArray:
     """
+    Create a binary mask using an intensity percentile threshold.
 
     Parameters
     ----------
-    image: array-like
+    image : array-like
         The image data to generate the mask for.
-    threshpct: float
+    threshpct : float
         Voxels with values greater then threshpct of the 98th percentile of voxel values are preserved.
-    verbose: bool
+    verbose : bool
         If true, print additional debugging information.
-    nozero: bool
+    nozero : bool
         If true, exclude zero values when calculating percentiles
-    noneg: bool
+    noneg : bool
         If true, exclude negative values when calculating percentiles
 
     Returns
     -------
     themask: array-like
         An int16 mask with dimensions matching the input. 1 for voxels to preserve, 0 elsewhere
-
     """
     if noneg:
         pct2, pct98, pctthresh = getfracvals(
@@ -1366,17 +1380,17 @@ def makemask(
 
 def getmasksize(themask: NDArray) -> int:
     """
+    Count the included elements in a mask.
 
     Parameters
     ----------
-    image: array-like
+    themask : array-like
         The mask data to check.
 
     Returns
     -------
     numvoxels: int
         The number of nonzero voxels in themask
-
     """
     return len(np.where(themask > 0)[0])
 

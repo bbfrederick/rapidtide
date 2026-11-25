@@ -29,7 +29,19 @@ from rapidtide.workflows.ccorrica import _get_parser, ccorrica
 
 
 def _make_args(**overrides):
-    """Build a minimal args Namespace for ccorrica with sensible defaults."""
+    """
+    Build a minimal args Namespace for ccorrica with sensible defaults.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         timecoursefile="input.txt",
         outputroot="/tmp/test_ccorrica_out",
@@ -49,40 +61,102 @@ def _make_args(**overrides):
 
 
 def _make_mock_prefilter():
-    """Create a mock prefilter whose apply() returns input unchanged."""
+    """
+    Create a mock prefilter whose apply() returns input unchanged.
+
+    Returns
+    -------
+    MagicMock
+        Mock object configured for the test case.
+    """
     prefilter = MagicMock()
     prefilter.apply.side_effect = lambda fs, data: data
     return prefilter
 
 
 def _make_tc_data(numcomponents=3, tclen=100):
-    """Create synthetic timecourse data (numcomponents x tclen)."""
+    """
+    Create synthetic timecourse data (numcomponents x tclen).
+
+    Parameters
+    ----------
+    numcomponents : int, optional
+        Value supplied as ``numcomponents`` by the test case.
+    tclen : int, optional
+        Value supplied as ``tclen`` by the test case.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array supplied to the test or its caller.
+    """
     rng = np.random.RandomState(42)
     return rng.randn(numcomponents, tclen).astype(float)
 
 
 def _capture_writenpvecs():
-    """Capture writenpvecs calls, copying data at call time."""
+    """
+    Capture writenpvecs calls, copying data at call time.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     captured = []
 
     def _side_effect(data, filename, **kwargs):
+        """
+        Record the call for assertions in the surrounding test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        filename : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured.append((np.array(data, copy=True), filename))
 
     return _side_effect, captured
 
 
 def _capture_savetonifti():
-    """Capture savetonifti calls, copying data at call time."""
+    """
+    Capture savetonifti calls, copying data at call time.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     captured = []
 
     def _side_effect(data, hdr, filename, **kwargs):
+        """
+        Record the call for assertions in the surrounding test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        hdr : object
+            Image header used by the helper.
+        filename : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured.append((np.array(data, copy=True), filename))
 
     return _side_effect, captured
 
 
 def _run_ccorrica(args, tcdata=None, file_samplerate=None, numcomponents=3, tclen=100):
-    """Run ccorrica with full mocking of external dependencies.
+    """
+    Run ccorrica with full mocking of external dependencies.
 
     Parameters
     ----------
@@ -101,6 +175,7 @@ def _run_ccorrica(args, tcdata=None, file_samplerate=None, numcomponents=3, tcle
     Returns
     -------
     dict with keys: 'writenpvecs', 'savetonifti', 'args_out'
+        Value supplied to the caller.
     """
     if tcdata is None:
         tcdata = _make_tc_data(numcomponents, tclen)
@@ -114,11 +189,43 @@ def _run_ccorrica(args, tcdata=None, file_samplerate=None, numcomponents=3, tcle
 
     # similarityfunctionfitter_fit returns 8-tuple
     def mock_similarity_fit(corrfunc, **kwargs):
+        """
+        Simulate ``similarity_fit`` for the test.
+
+        Parameters
+        ----------
+        corrfunc : array-like
+            Correlation values used by the test.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         midx = len(corrfunc) // 2
         return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
     # symmetrize: return input unchanged
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
+        """
+        Simulate ``symmetrize`` for the test.
+
+        Parameters
+        ----------
+        matrix : array-like
+            Matrix passed to the test helper.
+        zerodiagonal : bool, optional
+            Setting for ``zerodiagonal`` in the test case.
+        antisymmetric : bool, optional
+            Setting for ``antisymmetric`` in the test case.
+
+        Returns
+        -------
+        numpy.ndarray
+            Output values supplied to the caller.
+        """
         result = np.array(matrix, copy=True)
         if zerodiagonal:
             np.fill_diagonal(result, 0.0)
@@ -128,6 +235,29 @@ def _run_ccorrica(args, tcdata=None, file_samplerate=None, numcomponents=3, tcle
     xcorrlen = 2 * tclen - 1
 
     def mock_fastcorrelate(a, b, usefft=True, weighting=None, zeropadding=0, displayplots=False):
+        """
+        Simulate ``fastcorrelate`` for the test.
+
+        Parameters
+        ----------
+        a : object
+            Value supplied as ``a`` by the test case.
+        b : object
+            Value supplied as ``b`` by the test case.
+        usefft : bool, optional
+            Setting for ``usefft`` in the test case.
+        weighting : object or None, optional
+            Value supplied as ``weighting`` by the test case.
+        zeropadding : int, optional
+            Value supplied as ``zeropadding`` by the test case.
+        displayplots : bool, optional
+            Display plots from the test.
+
+        Returns
+        -------
+        object
+            Output values supplied to the caller.
+        """
         rng = np.random.RandomState(hash((a.tobytes()[:16], b.tobytes()[:16])) % (2**31))
         result = rng.randn(xcorrlen) * 0.1
         result[xcorrlen // 2] = 0.5  # peak at zero lag
@@ -139,6 +269,21 @@ def _run_ccorrica(args, tcdata=None, file_samplerate=None, numcomponents=3, tcle
 
     # nib.Nifti1Image mock — returns an object whose .header supports item access
     def mock_nifti1image(data, affine):
+        """
+        Simulate ``nifti1image`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        affine : numpy.ndarray
+            Affine mapping voxel to world coordinates.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         mock_img = MagicMock()
         mock_hdr = {}
         mock_hdr["pixdim"] = np.zeros(8)
@@ -210,7 +355,14 @@ def _run_ccorrica(args, tcdata=None, file_samplerate=None, numcomponents=3, tcle
 
 
 def test_parser_required_args(debug=False):
-    """Parser should accept the two required positional args."""
+    """
+    Parser should accept the two required positional args.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         parser = _get_parser()
         args = parser.parse_args([f.name, "outroot"])
@@ -221,7 +373,14 @@ def test_parser_required_args(debug=False):
 
 
 def test_parser_defaults(debug=False):
-    """Parser defaults should match expected values."""
+    """
+    Parser defaults should match expected values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         parser = _get_parser()
         args = parser.parse_args([f.name, "outroot"])
@@ -235,7 +394,14 @@ def test_parser_defaults(debug=False):
 
 
 def test_parser_samplerate(debug=False):
-    """Parser should accept --samplerate."""
+    """
+    Parser should accept --samplerate.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         parser = _get_parser()
         args = parser.parse_args([f.name, "outroot", "--samplerate", "4.0"])
@@ -245,7 +411,14 @@ def test_parser_samplerate(debug=False):
 
 
 def test_parser_sampletstep(debug=False):
-    """Parser should accept --sampletstep and invert it to samplerate."""
+    """
+    Parser should accept --sampletstep and invert it to samplerate.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         parser = _get_parser()
         args = parser.parse_args([f.name, "outroot", "--sampletstep", "0.5"])
@@ -255,7 +428,14 @@ def test_parser_sampletstep(debug=False):
 
 
 def test_parser_mutually_exclusive_rate(debug=False):
-    """Parser should reject both --samplerate and --sampletstep together."""
+    """
+    Parser should reject both --samplerate and --sampletstep together.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         parser = _get_parser()
         with pytest.raises(SystemExit):
@@ -265,7 +445,14 @@ def test_parser_mutually_exclusive_rate(debug=False):
 
 
 def test_parser_corrweighting_choices(debug=False):
-    """Parser should accept valid corrweighting choices and reject invalid ones."""
+    """
+    Parser should accept valid corrweighting choices and reject invalid ones.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         parser = _get_parser()
         for choice in ["None", "phat", "liang", "eckart"]:
@@ -278,7 +465,14 @@ def test_parser_corrweighting_choices(debug=False):
 
 
 def test_parser_detrendorder(debug=False):
-    """Parser should accept --detrendorder."""
+    """
+    Parser should accept --detrendorder.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         parser = _get_parser()
         args = parser.parse_args([f.name, "outroot", "--detrendorder", "5"])
@@ -288,7 +482,14 @@ def test_parser_detrendorder(debug=False):
 
 
 def test_parser_oversampfactor(debug=False):
-    """Parser should accept --oversampfactor including negative values."""
+    """
+    Parser should accept --oversampfactor including negative values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         parser = _get_parser()
         args = parser.parse_args([f.name, "outroot", "--oversampfactor", "-1"])
@@ -298,7 +499,14 @@ def test_parser_oversampfactor(debug=False):
 
 
 def test_parser_debug_flag(debug=False):
-    """Parser should accept --debug flag."""
+    """
+    Parser should accept --debug flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         parser = _get_parser()
         args = parser.parse_args([f.name, "outroot", "--debug"])
@@ -311,7 +519,14 @@ def test_parser_debug_flag(debug=False):
 
 
 def test_ccorrica_basic_run(debug=False):
-    """ccorrica should run without errors with basic inputs."""
+    """
+    Ccorrica should run without errors with basic inputs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     result = _run_ccorrica(args, numcomponents=3, tclen=100)
     assert len(result["writenpvecs"]) > 0
@@ -321,7 +536,14 @@ def test_ccorrica_basic_run(debug=False):
 
 
 def test_ccorrica_output_files(debug=False):
-    """ccorrica should write all expected output files."""
+    """
+    Ccorrica should write all expected output files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(outputroot="/tmp/cctest")
     result = _run_ccorrica(args, numcomponents=2, tclen=50)
 
@@ -356,7 +578,14 @@ def test_ccorrica_output_files(debug=False):
 
 
 def test_ccorrica_output_shapes(debug=False):
-    """Output data should have correct shapes for given numcomponents."""
+    """
+    Output data should have correct shapes for given numcomponents.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numcomponents = 3
     tclen = 60
     args = _make_args()
@@ -382,7 +611,14 @@ def test_ccorrica_output_shapes(debug=False):
 
 
 def test_ccorrica_filtereddata_shape(debug=False):
-    """Filtered data output should have shape (numcomponents, tclen)."""
+    """
+    Filtered data output should have shape (numcomponents, tclen).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numcomponents = 4
     tclen = 80
     args = _make_args()
@@ -400,7 +636,14 @@ def test_ccorrica_filtereddata_shape(debug=False):
 
 
 def test_ccorrica_reformdata_shape(debug=False):
-    """Reform data output should have shape (numcomponents, tclen)."""
+    """
+    Reform data output should have shape (numcomponents, tclen).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numcomponents = 3
     tclen = 50
     args = _make_args()
@@ -418,7 +661,14 @@ def test_ccorrica_reformdata_shape(debug=False):
 
 
 def test_ccorrica_single_component(debug=False):
-    """ccorrica should handle single component data."""
+    """
+    Ccorrica should handle single component data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     result = _run_ccorrica(args, numcomponents=1, tclen=50)
 
@@ -436,7 +686,14 @@ def test_ccorrica_single_component(debug=False):
 
 
 def test_ccorrica_two_components(debug=False):
-    """ccorrica should correctly handle 2 components."""
+    """
+    Ccorrica should correctly handle 2 components.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     result = _run_ccorrica(args, numcomponents=2, tclen=40)
 
@@ -449,7 +706,14 @@ def test_ccorrica_two_components(debug=False):
 
 
 def test_ccorrica_xcorr_nifti_shape(debug=False):
-    """Cross-correlation nifti should have correct windowed length."""
+    """
+    Cross-correlation nifti should have correct windowed length.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numcomponents = 2
     tclen = 50
     args = _make_args(samplerate=2.0)
@@ -481,7 +745,14 @@ def test_ccorrica_xcorr_nifti_shape(debug=False):
 
 
 def test_ccorrica_samplerate_from_file(debug=False):
-    """ccorrica should use sample rate from file when available."""
+    """
+    Ccorrica should use sample rate from file when available.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(samplerate="auto")
     # file_samplerate=4.0 should be used
     result = _run_ccorrica(args, file_samplerate=4.0, numcomponents=2, tclen=50)
@@ -491,7 +762,14 @@ def test_ccorrica_samplerate_from_file(debug=False):
 
 
 def test_ccorrica_samplerate_from_args(debug=False):
-    """ccorrica should use args.samplerate when file doesn't provide one."""
+    """
+    Ccorrica should use args.samplerate when file doesn't provide one.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(samplerate=3.0)
     # file_samplerate=None means no rate in file
     result = _run_ccorrica(args, file_samplerate=None, numcomponents=2, tclen=50)
@@ -501,7 +779,14 @@ def test_ccorrica_samplerate_from_args(debug=False):
 
 
 def test_ccorrica_missing_samplerate_exits(debug=False):
-    """ccorrica should exit when samplerate is 'auto' and file has none."""
+    """
+    Ccorrica should exit when samplerate is 'auto' and file has none.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(samplerate="auto")
 
     prefilter = _make_mock_prefilter()
@@ -533,7 +818,14 @@ def test_ccorrica_missing_samplerate_exits(debug=False):
 
 
 def test_ccorrica_oversample(debug=False):
-    """ccorrica should upsample data when oversampfactor > 1."""
+    """
+    Ccorrica should upsample data when oversampfactor > 1.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(oversampfactor=2, samplerate=2.0)
     numcomponents = 2
     tclen = 50
@@ -547,20 +839,86 @@ def test_ccorrica_oversample(debug=False):
     upsample_calls = []
 
     def mock_upsample(data, fs_in, fs_out, intfac=False):
+        """
+        Simulate ``upsample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fs_in : object
+            Value supplied as ``fs_in`` by the test case.
+        fs_out : object
+            Value supplied as ``fs_out`` by the test case.
+        intfac : bool, optional
+            Setting for ``intfac`` in the test case.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         upsample_calls.append((fs_in, fs_out))
         return np.repeat(data, int(fs_out / fs_in))
 
     def mock_similarity_fit(corrfunc, **kwargs):
+        """
+        Simulate ``similarity_fit`` for the test.
+
+        Parameters
+        ----------
+        corrfunc : array-like
+            Correlation values used by the test.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         midx = len(corrfunc) // 2
         return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
+        """
+        Simulate ``symmetrize`` for the test.
+
+        Parameters
+        ----------
+        matrix : array-like
+            Matrix passed to the test helper.
+        zerodiagonal : bool, optional
+            Setting for ``zerodiagonal`` in the test case.
+        antisymmetric : bool, optional
+            Setting for ``antisymmetric`` in the test case.
+
+        Returns
+        -------
+        numpy.ndarray
+            Output values supplied to the caller.
+        """
         result = np.array(matrix, copy=True)
         if zerodiagonal:
             np.fill_diagonal(result, 0.0)
         return result
 
     def mock_nifti1image(data, affine):
+        """
+        Simulate ``nifti1image`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        affine : numpy.ndarray
+            Affine mapping voxel to world coordinates.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         mock_img = MagicMock()
         mock_hdr = {}
         mock_hdr["pixdim"] = np.zeros(8)
@@ -574,6 +932,29 @@ def test_ccorrica_oversample(debug=False):
     xcorrlen = 2 * new_tclen - 1
 
     def mock_fastcorrelate(a, b, usefft=True, weighting=None, zeropadding=0, displayplots=False):
+        """
+        Simulate ``fastcorrelate`` for the test.
+
+        Parameters
+        ----------
+        a : object
+            Value supplied as ``a`` by the test case.
+        b : object
+            Value supplied as ``b`` by the test case.
+        usefft : bool, optional
+            Setting for ``usefft`` in the test case.
+        weighting : object or None, optional
+            Value supplied as ``weighting`` by the test case.
+        zeropadding : int, optional
+            Value supplied as ``zeropadding`` by the test case.
+        displayplots : bool, optional
+            Display plots from the test.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.zeros(xcorrlen)
 
     with (
@@ -615,7 +996,14 @@ def test_ccorrica_oversample(debug=False):
 
 
 def test_ccorrica_auto_oversampfactor(debug=False):
-    """ccorrica should auto-compute oversampfactor when negative."""
+    """
+    Ccorrica should auto-compute oversampfactor when negative.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # With samplerate=1.0, sampletime=1.0, oversampfactor should be max(ceil(1.0/0.5), 1) = 2
     args = _make_args(oversampfactor=-1, samplerate=1.0)
     numcomponents = 2
@@ -629,20 +1017,86 @@ def test_ccorrica_auto_oversampfactor(debug=False):
     upsample_calls = []
 
     def mock_upsample(data, fs_in, fs_out, intfac=False):
+        """
+        Simulate ``upsample`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        fs_in : object
+            Value supplied as ``fs_in`` by the test case.
+        fs_out : object
+            Value supplied as ``fs_out`` by the test case.
+        intfac : bool, optional
+            Setting for ``intfac`` in the test case.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         upsample_calls.append((fs_in, fs_out))
         return np.repeat(data, int(fs_out / fs_in))
 
     def mock_similarity_fit(corrfunc, **kwargs):
+        """
+        Simulate ``similarity_fit`` for the test.
+
+        Parameters
+        ----------
+        corrfunc : array-like
+            Correlation values used by the test.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         midx = len(corrfunc) // 2
         return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
+        """
+        Simulate ``symmetrize`` for the test.
+
+        Parameters
+        ----------
+        matrix : array-like
+            Matrix passed to the test helper.
+        zerodiagonal : bool, optional
+            Setting for ``zerodiagonal`` in the test case.
+        antisymmetric : bool, optional
+            Setting for ``antisymmetric`` in the test case.
+
+        Returns
+        -------
+        numpy.ndarray
+            Output values supplied to the caller.
+        """
         result = np.array(matrix, copy=True)
         if zerodiagonal:
             np.fill_diagonal(result, 0.0)
         return result
 
     def mock_nifti1image(data, affine):
+        """
+        Simulate ``nifti1image`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        affine : numpy.ndarray
+            Affine mapping voxel to world coordinates.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         mock_img = MagicMock()
         mock_hdr = {}
         mock_hdr["pixdim"] = np.zeros(8)
@@ -657,6 +1111,29 @@ def test_ccorrica_auto_oversampfactor(debug=False):
     xcorrlen = 2 * new_tclen - 1
 
     def mock_fastcorrelate(a, b, usefft=True, weighting=None, zeropadding=0, displayplots=False):
+        """
+        Simulate ``fastcorrelate`` for the test.
+
+        Parameters
+        ----------
+        a : object
+            Value supplied as ``a`` by the test case.
+        b : object
+            Value supplied as ``b`` by the test case.
+        usefft : bool, optional
+            Setting for ``usefft`` in the test case.
+        weighting : object or None, optional
+            Value supplied as ``weighting`` by the test case.
+        zeropadding : int, optional
+            Value supplied as ``zeropadding`` by the test case.
+        displayplots : bool, optional
+            Display plots from the test.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.zeros(xcorrlen)
 
     with (
@@ -699,7 +1176,14 @@ def test_ccorrica_auto_oversampfactor(debug=False):
 
 
 def test_ccorrica_corrweighting_none(debug=False):
-    """ccorrica should work with corrweighting='None'."""
+    """
+    Ccorrica should work with corrweighting='None'.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(corrweighting="None")
     result = _run_ccorrica(args, numcomponents=2, tclen=40)
     assert len(result["savetonifti"]) > 0
@@ -708,7 +1192,14 @@ def test_ccorrica_corrweighting_none(debug=False):
 
 
 def test_ccorrica_detrendorder_zero(debug=False):
-    """ccorrica should work with detrendorder=0 (no detrending)."""
+    """
+    Ccorrica should work with detrendorder=0 (no detrending).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(detrendorder=0)
     result = _run_ccorrica(args, numcomponents=2, tclen=40)
     assert len(result["savetonifti"]) > 0
@@ -717,7 +1208,14 @@ def test_ccorrica_detrendorder_zero(debug=False):
 
 
 def test_ccorrica_debug_mode(debug=False):
-    """ccorrica should run with debug=True."""
+    """
+    Ccorrica should run with debug=True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(debug=True)
     result = _run_ccorrica(args, numcomponents=2, tclen=40)
     assert len(result["savetonifti"]) > 0
@@ -726,7 +1224,14 @@ def test_ccorrica_debug_mode(debug=False):
 
 
 def test_ccorrica_window_func_hann(debug=False):
-    """ccorrica should work with windowfunc='hann'."""
+    """
+    Ccorrica should work with windowfunc='hann'.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(windowfunc="hann")
     result = _run_ccorrica(args, numcomponents=2, tclen=40)
     assert len(result["savetonifti"]) > 0
@@ -738,7 +1243,14 @@ def test_ccorrica_window_func_hann(debug=False):
 
 
 def test_ccorrica_symmetrize_called(debug=False):
-    """ccorrica should call symmetrize for corrmax, corrlag, corrwidth, corrmask."""
+    """
+    Ccorrica should call symmetrize for corrmax, corrlag, corrwidth, corrmask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args()
     numcomponents = 3
     tclen = 50
@@ -748,6 +1260,23 @@ def test_ccorrica_symmetrize_called(debug=False):
     symmetrize_calls = []
 
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
+        """
+        Simulate ``symmetrize`` for the test.
+
+        Parameters
+        ----------
+        matrix : array-like
+            Matrix passed to the test helper.
+        zerodiagonal : bool, optional
+            Setting for ``zerodiagonal`` in the test case.
+        antisymmetric : bool, optional
+            Setting for ``antisymmetric`` in the test case.
+
+        Returns
+        -------
+        numpy.ndarray
+            Output values supplied to the caller.
+        """
         symmetrize_calls.append(
             {
                 "zerodiagonal": zerodiagonal,
@@ -765,9 +1294,47 @@ def test_ccorrica_symmetrize_called(debug=False):
     xcorrlen = 2 * tclen - 1
 
     def mock_fastcorrelate(a, b, usefft=True, weighting=None, zeropadding=0, displayplots=False):
+        """
+        Simulate ``fastcorrelate`` for the test.
+
+        Parameters
+        ----------
+        a : object
+            Value supplied as ``a`` by the test case.
+        b : object
+            Value supplied as ``b`` by the test case.
+        usefft : bool, optional
+            Setting for ``usefft`` in the test case.
+        weighting : object or None, optional
+            Value supplied as ``weighting`` by the test case.
+        zeropadding : int, optional
+            Value supplied as ``zeropadding`` by the test case.
+        displayplots : bool, optional
+            Display plots from the test.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.zeros(xcorrlen)
 
     def mock_similarity_fit(corrfunc, **kwargs):
+        """
+        Simulate ``similarity_fit`` for the test.
+
+        Parameters
+        ----------
+        corrfunc : array-like
+            Correlation values used by the test.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         midx = len(corrfunc) // 2
         return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
@@ -775,6 +1342,21 @@ def test_ccorrica_symmetrize_called(debug=False):
     mock_pearsonr_result.statistic = 0.3
 
     def mock_nifti1image(data, affine):
+        """
+        Simulate ``nifti1image`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        affine : numpy.ndarray
+            Affine mapping voxel to world coordinates.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         mock_img = MagicMock()
         mock_hdr = {}
         mock_hdr["pixdim"] = np.zeros(8)
@@ -830,7 +1412,14 @@ def test_ccorrica_symmetrize_called(debug=False):
 
 
 def test_ccorrica_fastcorrelate_call_count(debug=False):
-    """fastcorrelate should be called numcomponents^2 times (all pairs)."""
+    """
+    Fastcorrelate should be called numcomponents^2 times (all pairs).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numcomponents = 3
     tclen = 40
     args = _make_args()
@@ -841,14 +1430,69 @@ def test_ccorrica_fastcorrelate_call_count(debug=False):
     xcorrlen = 2 * tclen - 1
 
     def mock_fastcorrelate(a, b, usefft=True, weighting=None, zeropadding=0, displayplots=False):
+        """
+        Simulate ``fastcorrelate`` for the test.
+
+        Parameters
+        ----------
+        a : object
+            Value supplied as ``a`` by the test case.
+        b : object
+            Value supplied as ``b`` by the test case.
+        usefft : bool, optional
+            Setting for ``usefft`` in the test case.
+        weighting : object or None, optional
+            Value supplied as ``weighting`` by the test case.
+        zeropadding : int, optional
+            Value supplied as ``zeropadding`` by the test case.
+        displayplots : bool, optional
+            Display plots from the test.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         correlate_count[0] += 1
         return np.zeros(xcorrlen)
 
     def mock_similarity_fit(corrfunc, **kwargs):
+        """
+        Simulate ``similarity_fit`` for the test.
+
+        Parameters
+        ----------
+        corrfunc : array-like
+            Correlation values used by the test.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         midx = len(corrfunc) // 2
         return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
+        """
+        Simulate ``symmetrize`` for the test.
+
+        Parameters
+        ----------
+        matrix : array-like
+            Matrix passed to the test helper.
+        zerodiagonal : bool, optional
+            Setting for ``zerodiagonal`` in the test case.
+        antisymmetric : bool, optional
+            Setting for ``antisymmetric`` in the test case.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.array(matrix, copy=True)
 
     mock_pearsonr_result = MagicMock()
@@ -858,6 +1502,21 @@ def test_ccorrica_fastcorrelate_call_count(debug=False):
     stn_effect, _ = _capture_savetonifti()
 
     def mock_nifti1image(data, affine):
+        """
+        Simulate ``nifti1image`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        affine : numpy.ndarray
+            Affine mapping voxel to world coordinates.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         mock_img = MagicMock()
         mock_hdr = {}
         mock_hdr["pixdim"] = np.zeros(8)
@@ -902,7 +1561,14 @@ def test_ccorrica_fastcorrelate_call_count(debug=False):
 
 
 def test_ccorrica_pearsonr_call_count(debug=False):
-    """pearsonr should be called numcomponents^2 times."""
+    """
+    Pearsonr should be called numcomponents^2 times.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numcomponents = 2
     tclen = 40
     args = _make_args()
@@ -918,7 +1584,14 @@ def test_ccorrica_pearsonr_call_count(debug=False):
 
 
 def test_ccorrica_similarityfunctionfitter_fit_called(debug=False):
-    """similarityfunctionfitter_fit should be called for each component pair."""
+    """
+    Similarityfunctionfitter_fit should be called for each component pair.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     numcomponents = 2
     tclen = 40
     args = _make_args()
@@ -929,14 +1602,69 @@ def test_ccorrica_similarityfunctionfitter_fit_called(debug=False):
     xcorrlen = 2 * tclen - 1
 
     def mock_fastcorrelate(a, b, usefft=True, weighting=None, zeropadding=0, displayplots=False):
+        """
+        Simulate ``fastcorrelate`` for the test.
+
+        Parameters
+        ----------
+        a : object
+            Value supplied as ``a`` by the test case.
+        b : object
+            Value supplied as ``b`` by the test case.
+        usefft : bool, optional
+            Setting for ``usefft`` in the test case.
+        weighting : object or None, optional
+            Value supplied as ``weighting`` by the test case.
+        zeropadding : int, optional
+            Value supplied as ``zeropadding`` by the test case.
+        displayplots : bool, optional
+            Display plots from the test.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.zeros(xcorrlen)
 
     def mock_similarity_fit(corrfunc, **kwargs):
+        """
+        Simulate ``similarity_fit`` for the test.
+
+        Parameters
+        ----------
+        corrfunc : array-like
+            Correlation values used by the test.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         fit_calls[0] += 1
         midx = len(corrfunc) // 2
         return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
+        """
+        Simulate ``symmetrize`` for the test.
+
+        Parameters
+        ----------
+        matrix : array-like
+            Matrix passed to the test helper.
+        zerodiagonal : bool, optional
+            Setting for ``zerodiagonal`` in the test case.
+        antisymmetric : bool, optional
+            Setting for ``antisymmetric`` in the test case.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.array(matrix, copy=True)
 
     mock_pearsonr_result = MagicMock()
@@ -946,6 +1674,21 @@ def test_ccorrica_similarityfunctionfitter_fit_called(debug=False):
     stn_effect, _ = _capture_savetonifti()
 
     def mock_nifti1image(data, affine):
+        """
+        Simulate ``nifti1image`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        affine : numpy.ndarray
+            Affine mapping voxel to world coordinates.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         mock_img = MagicMock()
         mock_hdr = {}
         mock_hdr["pixdim"] = np.zeros(8)
@@ -993,7 +1736,14 @@ def test_ccorrica_similarityfunctionfitter_fit_called(debug=False):
 
 
 def test_ccorrica_nifti_pixdim_set(debug=False):
-    """Nifti headers should have pixdim[4] set to sampletime."""
+    """
+    Nifti headers should have pixdim[4] set to sampletime.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(samplerate=4.0)
     numcomponents = 2
     tclen = 40
@@ -1004,6 +1754,21 @@ def test_ccorrica_nifti_pixdim_set(debug=False):
     nifti_headers = []
 
     def mock_nifti1image(data, affine):
+        """
+        Simulate ``nifti1image`` for the test.
+
+        Parameters
+        ----------
+        data : array-like
+            Data passed to the test helper.
+        affine : numpy.ndarray
+            Affine mapping voxel to world coordinates.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         mock_img = MagicMock()
         mock_hdr = {}
         mock_hdr["pixdim"] = np.zeros(8)
@@ -1014,13 +1779,68 @@ def test_ccorrica_nifti_pixdim_set(debug=False):
     xcorrlen = 2 * tclen - 1
 
     def mock_fastcorrelate(a, b, usefft=True, weighting=None, zeropadding=0, displayplots=False):
+        """
+        Simulate ``fastcorrelate`` for the test.
+
+        Parameters
+        ----------
+        a : object
+            Value supplied as ``a`` by the test case.
+        b : object
+            Value supplied as ``b`` by the test case.
+        usefft : bool, optional
+            Setting for ``usefft`` in the test case.
+        weighting : object or None, optional
+            Value supplied as ``weighting`` by the test case.
+        zeropadding : int, optional
+            Value supplied as ``zeropadding`` by the test case.
+        displayplots : bool, optional
+            Display plots from the test.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.zeros(xcorrlen)
 
     def mock_similarity_fit(corrfunc, **kwargs):
+        """
+        Simulate ``similarity_fit`` for the test.
+
+        Parameters
+        ----------
+        corrfunc : array-like
+            Correlation values used by the test.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         midx = len(corrfunc) // 2
         return (midx, 0.0, 0.5, 1.0, 1.0, 0, 0, len(corrfunc))
 
     def mock_symmetrize(matrix, zerodiagonal=False, antisymmetric=False):
+        """
+        Simulate ``symmetrize`` for the test.
+
+        Parameters
+        ----------
+        matrix : array-like
+            Matrix passed to the test helper.
+        zerodiagonal : bool, optional
+            Setting for ``zerodiagonal`` in the test case.
+        antisymmetric : bool, optional
+            Setting for ``antisymmetric`` in the test case.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.array(matrix, copy=True)
 
     mock_pearsonr_result = MagicMock()
@@ -1075,7 +1895,14 @@ def test_ccorrica_nifti_pixdim_set(debug=False):
 
 
 def test_ccorrica_integration(debug=False):
-    """Full integration test with multiple components and options."""
+    """
+    Full integration test with multiple components and options.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     args = _make_args(
         samplerate=2.0,
         oversampfactor=1,
@@ -1117,7 +1944,14 @@ def test_ccorrica_integration(debug=False):
 
 
 def test_ccorrica(debug=False):
-    """Run all ccorrica tests."""
+    """
+    Run all ccorrica tests.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     # parser tests
     test_parser_required_args(debug=debug)
     test_parser_defaults(debug=debug)

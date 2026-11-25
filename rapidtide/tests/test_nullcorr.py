@@ -36,6 +36,16 @@ def test_nullsimfunc(debug=False, displayplots=False):
     # lfofilter = tide_filt.NoncausalFilter(filtertype="lfo")
 
     # make the starting regressor
+    """
+    Verify nullsimfunc.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     timestep = 1.5
     Fs = 1.0 / timestep
     sourcedata = tide_io.readvecs(os.path.join(get_test_data_path(), "fmri_globalmean.txt"))[0]

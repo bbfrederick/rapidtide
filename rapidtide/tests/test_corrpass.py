@@ -36,6 +36,16 @@ from rapidtide.tests.utils import mse
 
 def test_calcsimfunc(debug=False, displayplots=False):
     # make the lfo filter
+    """
+    Verify calcsimfunc.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     lfofilter = tide_filt.NoncausalFilter(filtertype="lfo")
 
     # make some data
@@ -238,6 +248,14 @@ def test_calcsimfunc(debug=False, displayplots=False):
 
 def test_correlationpass_gpu_matches_cpu(debug=False):
     # Small deterministic synthetic dataset for CPU/GPU parity checks.
+    """
+    Verify correlationpass GPU matches CPU.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     oversampfactor = 1
     numvoxels = 12
     numtimepoints = 160
@@ -365,13 +383,19 @@ def test_correlationpass_gpu_matches_cpu(debug=False):
 
 
 def test_correlationpass_gpu_phat_on_real_hardware(debug=False):
-    """Repeat the CPU/GPU phat comparison on whatever GPU this machine has.
+    """
+    Repeat the CPU/GPU phat comparison on whatever GPU this machine has.
 
     The other phat parity test pins device resolution to torch's CPU device so it
     runs everywhere, which means it never touches a real backend.  phat is the
     default weighting for rapidtide, and it is the weighting whose arithmetic - a
     per-bin division and two rescalings - is most exposed to a backend's fp32
     quirks, so it is worth checking against actual hardware where there is some.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     torch = pytest.importorskip("torch")
     if not (
@@ -426,12 +450,38 @@ class _FakeBackends:
 
     class _Mps:
         def __init__(self, available):
+            """
+            Initialize the test double for ``_Mps``.
+
+            Parameters
+            ----------
+            available : object
+                Value supplied as ``available`` by the test case.
+            """
             self._available = available
 
         def is_available(self):
+            """
+            Set up ``is_available`` for the test.
+
+            Returns
+            -------
+            object
+                Value returned to the caller in this test case.
+            """
             return self._available
 
     def __init__(self, hasmps=True, mpsavailable=False):
+        """
+        Initialize the test double for ``_FakeBackends``.
+
+        Parameters
+        ----------
+        hasmps : bool, optional
+            Setting for ``hasmps`` in the test case.
+        mpsavailable : bool, optional
+            Setting for ``mpsavailable`` in the test case.
+        """
         if hasmps:
             self.mps = self._Mps(mpsavailable)
 
@@ -456,9 +506,32 @@ class _FakeTorch:
     """
 
     def __init__(self, cudaavailable=False, hasmps=True, mpsavailable=False, hip=None):
+        """
+        Initialize the test double for ``_FakeTorch``.
+
+        Parameters
+        ----------
+        cudaavailable : bool, optional
+            Setting for ``cudaavailable`` in the test case.
+        hasmps : bool, optional
+            Setting for ``hasmps`` in the test case.
+        mpsavailable : bool, optional
+            Setting for ``mpsavailable`` in the test case.
+        hip : object or None, optional
+            Value supplied as ``hip`` by the test case.
+        """
+
         class _Cuda:
             @staticmethod
             def is_available():
+                """
+                Set up ``is_available`` for the test.
+
+                Returns
+                -------
+                object
+                    The ``cudaavailable`` value supplied to the caller.
+                """
                 return cudaavailable
 
         class _Version:
@@ -471,11 +544,31 @@ class _FakeTorch:
 
     @staticmethod
     def device(thename):
+        """
+        Set up ``device`` for the test.
+
+        Parameters
+        ----------
+        thename : object
+            Value supplied as ``thename`` by the test case.
+
+        Returns
+        -------
+        str
+            Value returned to the caller in this test case.
+        """
         return f"device:{thename}"
 
 
 def resolve_torch_device_auto_prefers_cuda(debug=False):
-    """auto takes CUDA when it is there, MPS otherwise, and refuses when neither is."""
+    """
+    Auto takes CUDA when it is there, MPS otherwise, and refuses when neither is.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resolve_torch_device_auto_prefers_cuda")
 
@@ -499,8 +592,15 @@ def resolve_torch_device_auto_prefers_cuda(debug=False):
 
 
 def resolve_torch_device_explicit_backends(debug=False):
-    """Naming a backend explicitly must fail loudly when it is not available, rather
-    than silently substituting a different one."""
+    """
+    Naming a backend explicitly must fail loudly when it is not available, rather
+    than silently substituting a different one.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resolve_torch_device_explicit_backends")
 
@@ -540,8 +640,15 @@ def resolve_torch_device_explicit_backends(debug=False):
 
 
 def resolve_torch_device_rejects_an_unknown_name(debug=False):
-    """An unrecognised device name is a caller error, and the message has to say what
-    the legal choices are."""
+    """
+    An unrecognised device name is a caller error, and the message has to say what
+    the legal choices are.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resolve_torch_device_rejects_an_unknown_name")
 
@@ -553,7 +660,17 @@ def resolve_torch_device_rejects_an_unknown_name(debug=False):
 
 
 def _makegpuinputs(numvoxels=8, numtimepoints=128, tr=0.8):
-    """Build a small deterministic dataset for the GPU entry point.
+    """
+    Build a small deterministic dataset for the GPU entry point.
+
+    Parameters
+    ----------
+    numvoxels : int, optional
+        Value supplied as ``numvoxels`` by the test case.
+    numtimepoints : int, optional
+        Number of time samples.
+    tr : float, optional
+        Repetition time in seconds.
 
     Returns
     -------
@@ -584,7 +701,21 @@ def _makegpuinputs(numvoxels=8, numtimepoints=128, tr=0.8):
 
 
 def _makecorrelator(Fs, corrweighting="None"):
-    """Build a Correlator configured the way the GPU path expects."""
+    """
+    Build a Correlator configured the way the GPU path expects.
+
+    Parameters
+    ----------
+    Fs : object
+        Value supplied as ``Fs`` by the test case.
+    corrweighting : str, optional
+        Value supplied as ``corrweighting`` by the test case.
+
+    Returns
+    -------
+    object
+        Value returned to the caller in this test case.
+    """
     return tide_simFuncClasses.Correlator(
         Fs=Fs,
         ncprefilter=tide_filt.NoncausalFilter("lfo"),
@@ -595,7 +726,14 @@ def _makecorrelator(Fs, corrweighting="None"):
 
 
 def correlationpass_gpu_rejects_a_bad_batchsize(debug=False):
-    """A batch has to contain at least one voxel."""
+    """
+    A batch has to contain at least one voxel.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("correlationpass_gpu_rejects_a_bad_batchsize")
 
@@ -616,7 +754,17 @@ def correlationpass_gpu_rejects_a_bad_batchsize(debug=False):
 
 
 def _rungpupass(theinputs, thecorrelator, **thekwargs):
-    """Call correlationpass_gpu with fresh output arrays.
+    """
+    Call correlationpass_gpu with fresh output arrays.
+
+    Parameters
+    ----------
+    theinputs : object
+        Value supplied as ``theinputs`` by the test case.
+    thecorrelator : object
+        Value supplied as ``thecorrelator`` by the test case.
+    **thekwargs : dict
+        Keyword options passed to the case under test.
 
     Returns
     -------
@@ -642,8 +790,15 @@ def _rungpupass(theinputs, thecorrelator, **thekwargs):
 
 
 def correlationpass_gpu_falls_back_for_unsupported_weighting(debug=False):
-    """Only 'None' and 'phat' weighting are implemented on the GPU.  Anything else
-    has to hand off to the CPU rather than silently computing the wrong thing."""
+    """
+    Only 'None' and 'phat' weighting are implemented on the GPU.  Anything else
+    has to hand off to the CPU rather than silently computing the wrong thing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("correlationpass_gpu_falls_back_for_unsupported_weighting")
 
@@ -665,9 +820,16 @@ def correlationpass_gpu_falls_back_for_unsupported_weighting(debug=False):
 
 
 def correlationpass_gpu_falls_back_without_a_gpu(debug=False):
-    """On a machine with no GPU the entry point still has to produce results.  This
+    """
+    On a machine with no GPU the entry point still has to produce results.  This
     is the path every CPU only runner takes, so it is forced here rather than left to
-    depend on the hardware the tests happen to run on."""
+    depend on the hardware the tests happen to run on.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("correlationpass_gpu_falls_back_without_a_gpu")
 
@@ -720,8 +882,15 @@ def correlationpass_gpu_falls_back_without_a_gpu(debug=False):
 
 
 def correlationpass_gpu_falls_back_without_torch(debug=False):
-    """torch is an optional dependency, so its absence has to be handled the same
-    way as a missing GPU."""
+    """
+    Torch is an optional dependency, so its absence has to be handled the same
+    way as a missing GPU.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("correlationpass_gpu_falls_back_without_torch")
 
@@ -730,6 +899,23 @@ def correlationpass_gpu_falls_back_without_torch(debug=False):
     thereal_import = builtins.__import__
 
     def theblockedimport(thename, *theargs, **thekwargs):
+        """
+        Provide the ``theblockedimport`` test substitute.
+
+        Parameters
+        ----------
+        thename : object
+            Value supplied as ``thename`` by the test case.
+        *theargs : object
+            Additional positional arguments passed by the caller.
+        **thekwargs : dict
+            Keyword options passed to the case under test.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if thename == "torch":
             raise ImportError("No module named 'torch'")
         return thereal_import(thename, *theargs, **thekwargs)
@@ -747,13 +933,19 @@ def correlationpass_gpu_falls_back_without_torch(debug=False):
 
 
 def correlationpass_gpu_checks_the_reference_length(debug=False):
-    """The reference timecourse has to match the oversampled time axis, or the
+    """
+    The reference timecourse has to match the oversampled time axis, or the
     correlation would be computed against a misaligned regressor.
 
     The check sits downstream of device resolution, so on a machine with no GPU the
     fallback to the CPU implementation intercepts the bad input before the check is
     ever reached.  Resolution is therefore pinned to the CPU torch device, which runs
     the GPU code path everywhere without needing GPU hardware.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("correlationpass_gpu_checks_the_reference_length")
@@ -768,7 +960,8 @@ def correlationpass_gpu_checks_the_reference_length(debug=False):
 
 
 def correlationpass_gpu_reference_mismatch_reaches_the_cpu_path(debug=False):
-    """Without a GPU the same bad input takes the fallback instead, and the CPU
+    """
+    Without a GPU the same bad input takes the fallback instead, and the CPU
     implementation responds by calling sys.exit rather than raising.
 
     Pinned, not fixed: the exit lives in Correlator.run in simFuncClasses and is
@@ -776,6 +969,11 @@ def correlationpass_gpu_reference_mismatch_reaches_the_cpu_path(debug=False):
     decision.  The consequence worth recording is that the two implementations of the
     same entry point reject the same input in incompatible ways - one catchable, one
     not.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("correlationpass_gpu_reference_mismatch_reaches_the_cpu_path")
@@ -792,13 +990,19 @@ def correlationpass_gpu_reference_mismatch_reaches_the_cpu_path(debug=False):
 
 
 def test_gpu_entrypoint_on_a_machine_with_no_gpu(nogpu):
-    """The CPU-only case, driven through the real device resolution code.
+    """
+    The CPU-only case, driven through the real device resolution code.
 
     The sub-tests above reach this path by mocking _resolve_torch_device, which means
     they would keep passing if that routine stopped raising RuntimeError and the
     fallback in correlationpass_gpu stopped catching it.  Here nothing in rapidtide is
     mocked - the nogpu fixture patches torch itself, so resolution genuinely fails and
     the fallback has to handle it.
+
+    Parameters
+    ----------
+    nogpu : object
+        Value supplied as ``nogpu`` by the test case.
     """
     torch = pytest.importorskip("torch")
 
@@ -839,7 +1043,14 @@ def test_gpu_entrypoint_on_a_machine_with_no_gpu(nogpu):
 
 
 def test_calcsimfuncdevices(debug=False):
-    """Entry point for the device resolution and GPU fallback tests."""
+    """
+    Entry point for the device resolution and GPU fallback tests.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     resolve_torch_device_auto_prefers_cuda(debug=debug)
     resolve_torch_device_explicit_backends(debug=debug)
     resolve_torch_device_rejects_an_unknown_name(debug=debug)
@@ -876,11 +1087,19 @@ def _preparedcorrelator(theinputs, corrweighting="None"):
 
 
 def procOneVoxelCorrelation_can_skip_the_resampling(capsys, debug=False):
-    """An oversampling factor below one means the timecourse is used as it stands.
+    """
+    An oversampling factor below one means the timecourse is used as it stands.
 
     Every other caller resamples onto the oversampled time axis first, so this branch
     is the one taken when the data is already at the correlation sample rate and a
     resample would only add interpolation error.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("procOneVoxelCorrelation_can_skip_the_resampling")
@@ -919,8 +1138,17 @@ def procOneVoxelCorrelation_can_skip_the_resampling(capsys, debug=False):
 
 
 def correlationpass_cpu_can_be_verbose(capsys, debug=False):
-    """The debug report names the reference length, which is the value that has to
-    agree with the data for the correlation to mean anything."""
+    """
+    The debug report names the reference length, which is the value that has to
+    agree with the data for the correlation to mean anything.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("correlationpass_cpu_can_be_verbose")
 
@@ -943,10 +1171,16 @@ def correlationpass_cpu_can_be_verbose(capsys, debug=False):
 
 
 def correlationpass_cpu_reports_uncollectable_garbage(debug=False):
-    """A voxelwise pass allocates heavily, so the collector result is logged.
+    """
+    A voxelwise pass allocates heavily, so the collector result is logged.
 
     The interesting message is the one that only appears when something could not be
     freed, which a healthy run never produces.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("correlationpass_cpu_reports_uncollectable_garbage")
@@ -975,10 +1209,16 @@ def correlationpass_cpu_reports_uncollectable_garbage(debug=False):
 
 
 def correlationpass_cpu_can_run_multiprocessed(debug=False):
-    """More than one process must give the same answer as one.
+    """
+    More than one process must give the same answer as one.
 
     nprocs greater than one is what a production run uses, and it takes an entirely
     separate path through genericmultiproc, so agreement is not automatic.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("correlationpass_cpu_can_run_multiprocessed")
@@ -1027,11 +1267,17 @@ def correlationpass_cpu_can_run_multiprocessed(debug=False):
 
 
 def correlationpass_dispatches_on_usegpu(debug=False):
-    """The dispatcher is the only place batchsize picks up its default.
+    """
+    The dispatcher is the only place batchsize picks up its default.
 
     Left unset it inherits chunksize, so a caller that tunes chunksize for the CPU
     silently changes the GPU batching too - worth pinning, since the two numbers mean
     different things.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("correlationpass_dispatches_on_usegpu")
@@ -1099,7 +1345,16 @@ def _oncpudevice():
 
 
 def correlationpass_gpu_can_be_verbose(capsys, debug=False):
-    """Debug names both the reference length and the device actually chosen."""
+    """
+    Debug names both the reference length and the device actually chosen.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("correlationpass_gpu_can_be_verbose")
 
@@ -1114,11 +1369,17 @@ def correlationpass_gpu_can_be_verbose(capsys, debug=False):
 
 
 def correlationpass_gpu_checks_the_fft_really_ran_on_the_device(debug=False):
-    """A backend can advertise itself and then quietly execute FFTs somewhere else.
+    """
+    A backend can advertise itself and then quietly execute FFTs somewhere else.
 
     That would produce correct numbers at CPU speed while the run reports a GPU, so
     the probe checks where the result actually landed rather than trusting the
     availability flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("correlationpass_gpu_checks_the_fft_really_ran_on_the_device")
@@ -1127,7 +1388,23 @@ def correlationpass_gpu_checks_the_fft_really_ran_on_the_device(debug=False):
     theinputs = _makegpuinputs()
 
     def thedisplacedrfft(theinput, *theargs, **thekwargs):
-        """Answer a probe with a result on a different device than it was asked for."""
+        """
+        Answer a probe with a result on a different device than it was asked for.
+
+        Parameters
+        ----------
+        theinput : object
+            Value supplied as ``theinput`` by the test case.
+        *theargs : object
+            Additional positional arguments passed by the caller.
+        **thekwargs : dict
+            Keyword options passed to the case under test.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return torch.zeros(theinput.shape[-1] // 2 + 1, dtype=torch.complex64, device="meta")
 
     # what the CPU implementation produces, for comparison
@@ -1160,8 +1437,15 @@ def correlationpass_gpu_checks_the_fft_really_ran_on_the_device(debug=False):
 
 
 def correlationpass_gpu_checks_the_output_width(debug=False):
-    """corrout is written a whole batch at a time, so a width that disagrees with the
-    lag limits has to be caught before anything is written into it."""
+    """
+    Corrout is written a whole batch at a time, so a width that disagrees with the
+    lag limits has to be caught before anything is written into it.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("correlationpass_gpu_checks_the_output_width")
 
@@ -1186,11 +1470,17 @@ def correlationpass_gpu_checks_the_output_width(debug=False):
 
 
 def correlationpass_gpu_resamples_onto_the_oversampled_axis(debug=False):
-    """When the two time axes differ the data has to be interpolated first.
+    """
+    When the two time axes differ the data has to be interpolated first.
 
     The equal-axis shortcut is what the other GPU tests take, so oversampling is the
     only way to reach the resampling branch - and it is the configuration a real
     rapidtide run uses, since oversampling is on by default.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("correlationpass_gpu_resamples_onto_the_oversampled_axis")
@@ -1293,7 +1583,8 @@ def _cpucorrelationpass(theinputs, corrweighting="None"):
 
 
 def correlationpass_gpu_matches_the_cpu_for_every_weighting(debug=False):
-    """The two implementations have to agree to single precision, phat included.
+    """
+    The two implementations have to agree to single precision, phat included.
 
     phat needs three things to line up with the CPU, and each of them was wrong at
     some point: the transform runs at the next power of two above the correlation
@@ -1312,6 +1603,11 @@ def correlationpass_gpu_matches_the_cpu_for_every_weighting(debug=False):
     Several sizes are used because the transform length is rounded up to a power of
     two: a correlation length that is already a power of two exercises different
     padding from one that is not.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("correlationpass_gpu_matches_the_cpu_for_every_weighting")
@@ -1360,12 +1656,18 @@ def correlationpass_gpu_matches_the_cpu_for_every_weighting(debug=False):
 
 
 def correlationpass_gpu_phat_is_not_the_same_as_unweighted(debug=False):
-    """phat has to actually do something.
+    """
+    Phat has to actually do something.
 
     Since the weighted result is rescaled back to the unweighted peak height, a phat
     correlation now peaks near the same value an unweighted one does - which would
     also be true if the weighting were quietly being skipped.  This separates those
     two cases by checking the shape away from the peak.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("correlationpass_gpu_phat_is_not_the_same_as_unweighted")
@@ -1393,7 +1695,14 @@ def correlationpass_gpu_phat_is_not_the_same_as_unweighted(debug=False):
 
 
 def test_calcsimfuncinternals(debug=False):
-    """Entry point for the sub-tests that need no fixtures."""
+    """
+    Entry point for the sub-tests that need no fixtures.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     correlationpass_cpu_reports_uncollectable_garbage(debug=debug)
     correlationpass_cpu_can_run_multiprocessed(debug=debug)
     correlationpass_dispatches_on_usegpu(debug=debug)
@@ -1405,7 +1714,14 @@ def test_calcsimfuncinternals(debug=False):
 
 
 def test_calcsimfuncmessages(capsys):
-    """Entry point for the sub-tests that capture printed output."""
+    """
+    Entry point for the sub-tests that capture printed output.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    """
     procOneVoxelCorrelation_can_skip_the_resampling(capsys)
     correlationpass_cpu_can_be_verbose(capsys)
     correlationpass_gpu_can_be_verbose(capsys)

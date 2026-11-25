@@ -21,6 +21,7 @@ import rapidtide.workflows.roisummarize as theworkflow
 
 
 def entrypoint():
+    """Run the `roisummarize` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.roisummarize)
 
 

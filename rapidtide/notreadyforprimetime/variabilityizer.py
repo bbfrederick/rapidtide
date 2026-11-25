@@ -21,6 +21,7 @@ import rapidtide.workflows.variabilityizer as theworkflow
 
 
 def entrypoint():
+    """Run the `variabilityizer` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.variabilityizer)
 
 

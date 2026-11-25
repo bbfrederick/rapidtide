@@ -446,6 +446,19 @@ def normalize(vector: NDArray, method: str = "stddev") -> NDArray:
 
 
 def znormalize(vector: NDArray) -> NDArray:
+    """
+    Center a vector and scale it by its standard deviation.
+
+    Parameters
+    ----------
+    vector : NDArray
+        One-dimensional input array.
+
+    Returns
+    -------
+    numpy.ndarray
+        The standardized vector.
+    """
     return stdnormalize(vector)
 
 
@@ -462,6 +475,10 @@ def removeoutliers(
     ----------
     vector : array-like
         Input vector to be normalized. Should be a 1D array-like object.
+    zerobad : bool, optional
+        Replace outlying samples with zero.
+    outlierfac : float, optional
+        Scale factor for the outlier threshold.
 
     Returns
     -------

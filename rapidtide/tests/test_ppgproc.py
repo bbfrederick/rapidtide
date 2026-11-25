@@ -38,7 +38,23 @@ from rapidtide.ppgproc import (
 
 
 def _make_clean_ppg(duration=10.0, fs=100.0, hr=75.0):
-    """Generate a clean synthetic PPG signal (no noise, no artifacts)."""
+    """
+    Generate a clean synthetic PPG signal (no noise, no artifacts).
+
+    Parameters
+    ----------
+    duration : float, optional
+        Value supplied as ``duration`` by the test case.
+    fs : float, optional
+        Value supplied as ``fs`` by the test case.
+    hr : float, optional
+        Value supplied as ``hr`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     t = np.arange(0, duration, 1.0 / fs)
     freq = hr / 60.0
     ppg = 1.0 + 0.8 * np.sin(2 * np.pi * freq * t)
@@ -47,7 +63,25 @@ def _make_clean_ppg(duration=10.0, fs=100.0, hr=75.0):
 
 
 def _make_noisy_ppg(duration=10.0, fs=100.0, hr=75.0, noise=0.05):
-    """Generate a noisy PPG signal."""
+    """
+    Generate a noisy PPG signal.
+
+    Parameters
+    ----------
+    duration : float, optional
+        Value supplied as ``duration`` by the test case.
+    fs : float, optional
+        Value supplied as ``fs`` by the test case.
+    hr : float, optional
+        Value supplied as ``hr`` by the test case.
+    noise : float, optional
+        Value supplied as ``noise`` by the test case.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     t, ppg = _make_clean_ppg(duration, fs, hr)
     rng = np.random.RandomState(42)
     return t, ppg + rng.randn(len(ppg)) * noise
@@ -57,7 +91,14 @@ def _make_noisy_ppg(duration=10.0, fs=100.0, hr=75.0, noise=0.05):
 
 
 def ppgkalman_init_default(debug=False):
-    """Test PPGKalmanFilter default initialization."""
+    """
+    Test PPGKalmanFilter default initialization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ppgkalman_init_default")
     kf = PPGKalmanFilter()
@@ -71,7 +112,14 @@ def ppgkalman_init_default(debug=False):
 
 
 def ppgkalman_init_custom(debug=False):
-    """Test PPGKalmanFilter with custom parameters."""
+    """
+    Test PPGKalmanFilter with custom parameters.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ppgkalman_init_custom")
     kf = PPGKalmanFilter(dt=0.02, process_noise=0.01, measurement_noise=0.1)
@@ -80,7 +128,14 @@ def ppgkalman_init_custom(debug=False):
 
 
 def ppgkalman_predict(debug=False):
-    """Test predict step updates state."""
+    """
+    Test predict step updates state.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ppgkalman_predict")
     kf = PPGKalmanFilter()
@@ -93,7 +148,14 @@ def ppgkalman_predict(debug=False):
 
 
 def ppgkalman_update(debug=False):
-    """Test update step incorporates measurement."""
+    """
+    Test update step incorporates measurement.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ppgkalman_update")
     kf = PPGKalmanFilter()
@@ -104,7 +166,14 @@ def ppgkalman_update(debug=False):
 
 
 def ppgkalman_filter_signal(debug=False):
-    """Test filter_signal on a simple signal."""
+    """
+    Test filter_signal on a simple signal.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ppgkalman_filter_signal")
     kf = PPGKalmanFilter(dt=0.01)
@@ -115,7 +184,14 @@ def ppgkalman_filter_signal(debug=False):
 
 
 def ppgkalman_filter_with_nan(debug=False):
-    """Test filter_signal handles NaN values via prediction only."""
+    """
+    Test filter_signal handles NaN values via prediction only.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ppgkalman_filter_with_nan")
     kf = PPGKalmanFilter(dt=0.01)
@@ -126,7 +202,14 @@ def ppgkalman_filter_with_nan(debug=False):
 
 
 def ppgkalman_filter_with_missing_indices(debug=False):
-    """Test filter_signal with explicit missing_indices."""
+    """
+    Test filter_signal with explicit missing_indices.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ppgkalman_filter_with_missing_indices")
     kf = PPGKalmanFilter(dt=0.01)
@@ -140,7 +223,14 @@ def ppgkalman_filter_with_missing_indices(debug=False):
 
 
 def adaptivekalman_init(debug=False):
-    """Test AdaptivePPGKalmanFilter initialization."""
+    """
+    Test AdaptivePPGKalmanFilter initialization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("adaptivekalman_init")
     kf = AdaptivePPGKalmanFilter()
@@ -153,7 +243,14 @@ def adaptivekalman_init(debug=False):
 
 
 def adaptivekalman_detect_motion_short_history(debug=False):
-    """Test motion detection with insufficient history returns False."""
+    """
+    Test motion detection with insufficient history returns False.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("adaptivekalman_detect_motion_short_history")
     kf = AdaptivePPGKalmanFilter()
@@ -163,7 +260,14 @@ def adaptivekalman_detect_motion_short_history(debug=False):
 
 
 def adaptivekalman_detect_motion_normal(debug=False):
-    """Test motion detection with normal innovation returns False."""
+    """
+    Test motion detection with normal innovation returns False.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("adaptivekalman_detect_motion_normal")
     kf = AdaptivePPGKalmanFilter()
@@ -173,7 +277,14 @@ def adaptivekalman_detect_motion_normal(debug=False):
 
 
 def adaptivekalman_detect_motion_artifact(debug=False):
-    """Test motion detection with large innovation returns True."""
+    """
+    Test motion detection with large innovation returns True.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("adaptivekalman_detect_motion_artifact")
     kf = AdaptivePPGKalmanFilter()
@@ -185,7 +296,14 @@ def adaptivekalman_detect_motion_artifact(debug=False):
 
 
 def adaptivekalman_detect_motion_zero_std(debug=False):
-    """Test motion detection with zero std returns False."""
+    """
+    Test motion detection with zero std returns False.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("adaptivekalman_detect_motion_zero_std")
     kf = AdaptivePPGKalmanFilter()
@@ -195,7 +313,14 @@ def adaptivekalman_detect_motion_zero_std(debug=False):
 
 
 def adaptivekalman_adapt_noise_motion(debug=False):
-    """Test adapt_noise increases R during motion artifact."""
+    """
+    Test adapt_noise increases R during motion artifact.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("adaptivekalman_adapt_noise_motion")
     kf = AdaptivePPGKalmanFilter()
@@ -204,7 +329,14 @@ def adaptivekalman_adapt_noise_motion(debug=False):
 
 
 def adaptivekalman_adapt_noise_normal(debug=False):
-    """Test adapt_noise keeps R at base level without motion artifact."""
+    """
+    Test adapt_noise keeps R at base level without motion artifact.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("adaptivekalman_adapt_noise_normal")
     kf = AdaptivePPGKalmanFilter()
@@ -213,7 +345,14 @@ def adaptivekalman_adapt_noise_normal(debug=False):
 
 
 def adaptivekalman_adapt_noise_qscale(debug=False):
-    """Test adapt_noise adjusts Q_scale with full history."""
+    """
+    Test adapt_noise adjusts Q_scale with full history.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("adaptivekalman_adapt_noise_qscale")
     kf = AdaptivePPGKalmanFilter()
@@ -225,7 +364,14 @@ def adaptivekalman_adapt_noise_qscale(debug=False):
 
 
 def adaptivekalman_update_returns_bool(debug=False):
-    """Test update returns motion detection flag."""
+    """
+    Test update returns motion detection flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("adaptivekalman_update_returns_bool")
     kf = AdaptivePPGKalmanFilter()
@@ -235,7 +381,14 @@ def adaptivekalman_update_returns_bool(debug=False):
 
 
 def adaptivekalman_filter_signal(debug=False):
-    """Test adaptive filter_signal returns filtered and motion_flags."""
+    """
+    Test adaptive filter_signal returns filtered and motion_flags.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("adaptivekalman_filter_signal")
     kf = AdaptivePPGKalmanFilter(dt=0.01)
@@ -247,7 +400,14 @@ def adaptivekalman_filter_signal(debug=False):
 
 
 def adaptivekalman_filter_with_nan(debug=False):
-    """Test adaptive filter handles NaN values."""
+    """
+    Test adaptive filter handles NaN values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("adaptivekalman_filter_with_nan")
     kf = AdaptivePPGKalmanFilter(dt=0.01)
@@ -262,7 +422,14 @@ def adaptivekalman_filter_with_nan(debug=False):
 
 
 def ekf_init_default(debug=False):
-    """Test ExtendedPPGKalmanFilter default initialization."""
+    """
+    Test ExtendedPPGKalmanFilter default initialization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ekf_init_default")
     ekf = ExtendedPPGKalmanFilter()
@@ -275,7 +442,14 @@ def ekf_init_default(debug=False):
 
 
 def ekf_init_custom_hr(debug=False):
-    """Test ExtendedPPGKalmanFilter with custom HR estimate."""
+    """
+    Test ExtendedPPGKalmanFilter with custom HR estimate.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ekf_init_custom_hr")
     ekf = ExtendedPPGKalmanFilter(hr_estimate=60)
@@ -284,7 +458,14 @@ def ekf_init_custom_hr(debug=False):
 
 
 def ekf_get_heart_rate(debug=False):
-    """Test get_heart_rate converts frequency to BPM."""
+    """
+    Test get_heart_rate converts frequency to BPM.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ekf_get_heart_rate")
     ekf = ExtendedPPGKalmanFilter(hr_estimate=75)
@@ -293,7 +474,14 @@ def ekf_get_heart_rate(debug=False):
 
 
 def ekf_state_transition(debug=False):
-    """Test state_transition updates phase correctly."""
+    """
+    Test state_transition updates phase correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ekf_state_transition")
     ekf = ExtendedPPGKalmanFilter(dt=0.01)
@@ -307,7 +495,14 @@ def ekf_state_transition(debug=False):
 
 
 def ekf_measurement_function(debug=False):
-    """Test measurement_function computes DC + amp*sin(phase)."""
+    """
+    Test measurement_function computes DC + amp*sin(phase).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ekf_measurement_function")
     ekf = ExtendedPPGKalmanFilter()
@@ -318,7 +513,14 @@ def ekf_measurement_function(debug=False):
 
 
 def ekf_measurement_function_zero_phase(debug=False):
-    """Test measurement_function at phase=0."""
+    """
+    Test measurement_function at phase=0.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ekf_measurement_function_zero_phase")
     ekf = ExtendedPPGKalmanFilter()
@@ -329,7 +531,14 @@ def ekf_measurement_function_zero_phase(debug=False):
 
 
 def ekf_predict_update(debug=False):
-    """Test predict and update cycle."""
+    """
+    Test predict and update cycle.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ekf_predict_update")
     ekf = ExtendedPPGKalmanFilter(dt=0.01, hr_estimate=75)
@@ -340,7 +549,14 @@ def ekf_predict_update(debug=False):
 
 
 def ekf_filter_signal(debug=False):
-    """Test EKF filter_signal returns filtered and heart_rates."""
+    """
+    Test EKF filter_signal returns filtered and heart_rates.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ekf_filter_signal")
     ekf = ExtendedPPGKalmanFilter(dt=0.01, hr_estimate=75)
@@ -354,7 +570,14 @@ def ekf_filter_signal(debug=False):
 
 
 def ekf_filter_signal_with_nan(debug=False):
-    """Test EKF filter_signal handles NaN."""
+    """
+    Test EKF filter_signal handles NaN.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("ekf_filter_signal_with_nan")
     ekf = ExtendedPPGKalmanFilter(dt=0.01, hr_estimate=75)
@@ -368,7 +591,14 @@ def ekf_filter_signal_with_nan(debug=False):
 
 
 def harmonic_init_default(debug=False):
-    """Test HarmonicPPGKalmanFilter default initialization."""
+    """
+    Test HarmonicPPGKalmanFilter default initialization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("harmonic_init_default")
     hkf = HarmonicPPGKalmanFilter()
@@ -383,7 +613,14 @@ def harmonic_init_default(debug=False):
 
 
 def harmonic_get_heart_rate(debug=False):
-    """Test heart rate extraction from harmonic filter."""
+    """
+    Test heart rate extraction from harmonic filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("harmonic_get_heart_rate")
     hkf = HarmonicPPGKalmanFilter(hr_estimate=80)
@@ -392,7 +629,14 @@ def harmonic_get_heart_rate(debug=False):
 
 
 def harmonic_state_transition(debug=False):
-    """Test state transition preserves amplitudes and updates phase."""
+    """
+    Test state transition preserves amplitudes and updates phase.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("harmonic_state_transition")
     hkf = HarmonicPPGKalmanFilter(dt=0.01)
@@ -411,7 +655,14 @@ def harmonic_state_transition(debug=False):
 
 
 def harmonic_measurement_function(debug=False):
-    """Test harmonic measurement function."""
+    """
+    Test harmonic measurement function.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("harmonic_measurement_function")
     hkf = HarmonicPPGKalmanFilter()
@@ -423,7 +674,14 @@ def harmonic_measurement_function(debug=False):
 
 
 def harmonic_predict_update(debug=False):
-    """Test predict/update cycle keeps phase in [0, 2pi]."""
+    """
+    Test predict/update cycle keeps phase in [0, 2pi].
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("harmonic_predict_update")
     hkf = HarmonicPPGKalmanFilter(dt=0.01, hr_estimate=75)
@@ -433,7 +691,14 @@ def harmonic_predict_update(debug=False):
 
 
 def harmonic_filter_signal(debug=False):
-    """Test harmonic filter returns filtered, heart_rates, harmonic_amplitudes."""
+    """
+    Test harmonic filter returns filtered, heart_rates, harmonic_amplitudes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("harmonic_filter_signal")
     hkf = HarmonicPPGKalmanFilter(dt=0.01, hr_estimate=75)
@@ -445,7 +710,14 @@ def harmonic_filter_signal(debug=False):
 
 
 def harmonic_filter_with_missing(debug=False):
-    """Test harmonic filter with missing indices."""
+    """
+    Test harmonic filter with missing indices.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("harmonic_filter_with_missing")
     hkf = HarmonicPPGKalmanFilter(dt=0.01, hr_estimate=75)
@@ -459,7 +731,14 @@ def harmonic_filter_with_missing(debug=False):
 
 
 def quality_init(debug=False):
-    """Test SignalQualityAssessor initialization."""
+    """
+    Test SignalQualityAssessor initialization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("quality_init")
     qa = SignalQualityAssessor(fs=200.0, window_size=2.5)
@@ -468,7 +747,14 @@ def quality_init(debug=False):
 
 
 def quality_assess_clean_signal(debug=False):
-    """Test quality assessment on clean PPG signal."""
+    """
+    Test quality assessment on clean PPG signal.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("quality_assess_clean_signal")
     qa = SignalQualityAssessor(fs=100.0, window_size=5.0)
@@ -483,7 +769,14 @@ def quality_assess_clean_signal(debug=False):
 
 
 def quality_assess_with_filtered(debug=False):
-    """Test quality assessment with filtered segment computes SNR."""
+    """
+    Test quality assessment with filtered segment computes SNR.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("quality_assess_with_filtered")
     qa = SignalQualityAssessor(fs=100.0, window_size=5.0)
@@ -497,7 +790,14 @@ def quality_assess_with_filtered(debug=False):
 
 
 def quality_assess_noisy_signal(debug=False):
-    """Test that noisy signals get lower quality scores."""
+    """
+    Test that noisy signals get lower quality scores.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("quality_assess_noisy_signal")
     qa = SignalQualityAssessor(fs=100.0, window_size=5.0)
@@ -511,7 +811,14 @@ def quality_assess_noisy_signal(debug=False):
 
 
 def quality_assess_continuous(debug=False):
-    """Test continuous quality assessment."""
+    """
+    Test continuous quality assessment.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("quality_assess_continuous")
     qa = SignalQualityAssessor(fs=100.0, window_size=2.0)
@@ -523,7 +830,14 @@ def quality_assess_continuous(debug=False):
 
 
 def quality_assess_continuous_with_filtered(debug=False):
-    """Test continuous quality assessment with filtered signal."""
+    """
+    Test continuous quality assessment with filtered signal.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("quality_assess_continuous_with_filtered")
     qa = SignalQualityAssessor(fs=100.0, window_size=2.0)
@@ -539,7 +853,14 @@ def quality_assess_continuous_with_filtered(debug=False):
 
 
 def hr_extractor_init(debug=False):
-    """Test HeartRateExtractor initialization."""
+    """
+    Test HeartRateExtractor initialization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("hr_extractor_init")
     hre = HeartRateExtractor(fs=200.0)
@@ -547,7 +868,14 @@ def hr_extractor_init(debug=False):
 
 
 def hr_extract_from_fft(debug=False):
-    """Test FFT-based heart rate extraction."""
+    """
+    Test FFT-based heart rate extraction.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("hr_extract_from_fft")
     hre = HeartRateExtractor(fs=100.0)
@@ -562,7 +890,14 @@ def hr_extract_from_fft(debug=False):
 
 
 def hr_extract_from_fft_custom_range(debug=False):
-    """Test FFT HR extraction with custom range."""
+    """
+    Test FFT HR extraction with custom range.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("hr_extract_from_fft_custom_range")
     hre = HeartRateExtractor(fs=100.0)
@@ -574,7 +909,14 @@ def hr_extract_from_fft_custom_range(debug=False):
 
 
 def hr_extract_from_fft_short_signal(debug=False):
-    """Test FFT HR extraction with very short signal."""
+    """
+    Test FFT HR extraction with very short signal.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("hr_extract_from_fft_short_signal")
     hre = HeartRateExtractor(fs=100.0)
@@ -585,7 +927,14 @@ def hr_extract_from_fft_short_signal(debug=False):
 
 
 def hr_extract_from_peaks(debug=False):
-    """Test peak-based heart rate extraction."""
+    """
+    Test peak-based heart rate extraction.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("hr_extract_from_peaks")
     hre = HeartRateExtractor(fs=100.0)
@@ -597,7 +946,14 @@ def hr_extract_from_peaks(debug=False):
 
 
 def hr_extract_from_peaks_few_peaks(debug=False):
-    """Test peak extraction with signal that has < 2 peaks."""
+    """
+    Test peak extraction with signal that has < 2 peaks.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("hr_extract_from_peaks_few_peaks")
     hre = HeartRateExtractor(fs=100.0)
@@ -611,7 +967,14 @@ def hr_extract_from_peaks_few_peaks(debug=False):
 
 
 def hr_extract_continuous_fft(debug=False):
-    """Test continuous HR extraction with FFT method."""
+    """
+    Test continuous HR extraction with FFT method.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("hr_extract_continuous_fft")
     hre = HeartRateExtractor(fs=100.0)
@@ -625,7 +988,14 @@ def hr_extract_continuous_fft(debug=False):
 
 
 def hr_extract_continuous_peaks(debug=False):
-    """Test that extract_continuous with method='peaks' works correctly."""
+    """
+    Test that extract_continuous with method='peaks' works correctly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("hr_extract_continuous_peaks")
     hre = HeartRateExtractor(fs=100.0)
@@ -641,7 +1011,14 @@ def hr_extract_continuous_peaks(debug=False):
 
 
 def processor_init_standard(debug=False):
-    """Test RobustPPGProcessor with standard method."""
+    """
+    Test RobustPPGProcessor with standard method.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("processor_init_standard")
     proc = RobustPPGProcessor(fs=100.0, method="standard")
@@ -651,7 +1028,14 @@ def processor_init_standard(debug=False):
 
 
 def processor_init_adaptive(debug=False):
-    """Test RobustPPGProcessor with adaptive method."""
+    """
+    Test RobustPPGProcessor with adaptive method.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("processor_init_adaptive")
     proc = RobustPPGProcessor(fs=100.0, method="adaptive")
@@ -659,7 +1043,14 @@ def processor_init_adaptive(debug=False):
 
 
 def processor_init_ekf(debug=False):
-    """Test RobustPPGProcessor with EKF method."""
+    """
+    Test RobustPPGProcessor with EKF method.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("processor_init_ekf")
     proc = RobustPPGProcessor(fs=100.0, method="ekf", hr_estimate=80.0)
@@ -667,7 +1058,14 @@ def processor_init_ekf(debug=False):
 
 
 def processor_process_standard(debug=False):
-    """Test full processing pipeline with standard filter."""
+    """
+    Test full processing pipeline with standard filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("processor_process_standard")
     proc = RobustPPGProcessor(fs=100.0, method="standard")
@@ -682,7 +1080,14 @@ def processor_process_standard(debug=False):
 
 
 def processor_process_adaptive(debug=False):
-    """Test processing pipeline with adaptive filter."""
+    """
+    Test processing pipeline with adaptive filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("processor_process_adaptive")
     proc = RobustPPGProcessor(fs=100.0, method="adaptive")
@@ -694,7 +1099,14 @@ def processor_process_adaptive(debug=False):
 
 
 def processor_process_ekf(debug=False):
-    """Test processing pipeline with EKF filter."""
+    """
+    Test processing pipeline with EKF filter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("processor_process_ekf")
     proc = RobustPPGProcessor(fs=100.0, method="ekf", hr_estimate=75.0)
@@ -706,7 +1118,14 @@ def processor_process_ekf(debug=False):
 
 
 def processor_process_with_missing(debug=False):
-    """Test processing pipeline with missing data."""
+    """
+    Test processing pipeline with missing data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("processor_process_with_missing")
     proc = RobustPPGProcessor(fs=100.0, method="standard")
@@ -718,7 +1137,14 @@ def processor_process_with_missing(debug=False):
 
 
 def processor_process_low_quality_threshold(debug=False):
-    """Test processing pipeline with very high quality threshold."""
+    """
+    Test processing pipeline with very high quality threshold.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("processor_process_low_quality_threshold")
     proc = RobustPPGProcessor(fs=100.0, method="standard")
@@ -735,7 +1161,14 @@ def processor_process_low_quality_threshold(debug=False):
 
 
 def features_init(debug=False):
-    """Test PPGFeatureExtractor initialization."""
+    """
+    Test PPGFeatureExtractor initialization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("features_init")
     fe = PPGFeatureExtractor(fs=200.0)
@@ -743,7 +1176,14 @@ def features_init(debug=False):
 
 
 def features_hrv_basic(debug=False):
-    """Test HRV feature extraction with regular peaks."""
+    """
+    Test HRV feature extraction with regular peaks.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("features_hrv_basic")
     fe = PPGFeatureExtractor(fs=100.0)
@@ -760,7 +1200,14 @@ def features_hrv_basic(debug=False):
 
 
 def features_hrv_too_few_peaks(debug=False):
-    """Test HRV extraction with too few peaks returns None."""
+    """
+    Test HRV extraction with too few peaks returns None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("features_hrv_too_few_peaks")
     fe = PPGFeatureExtractor(fs=100.0)
@@ -769,7 +1216,14 @@ def features_hrv_too_few_peaks(debug=False):
 
 
 def features_hrv_single_peak(debug=False):
-    """Test HRV extraction with single peak returns None."""
+    """
+    Test HRV extraction with single peak returns None.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("features_hrv_single_peak")
     fe = PPGFeatureExtractor(fs=100.0)
@@ -778,7 +1232,14 @@ def features_hrv_single_peak(debug=False):
 
 
 def features_hrv_frequency_domain(debug=False):
-    """Test HRV extraction includes frequency domain features with enough data."""
+    """
+    Test HRV extraction includes frequency domain features with enough data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("features_hrv_frequency_domain")
     fe = PPGFeatureExtractor(fs=100.0)
@@ -796,7 +1257,14 @@ def features_hrv_frequency_domain(debug=False):
 
 
 def features_morphology(debug=False):
-    """Test morphological feature extraction."""
+    """
+    Test morphological feature extraction.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("features_morphology")
     fe = PPGFeatureExtractor(fs=100.0)
@@ -811,7 +1279,14 @@ def features_morphology(debug=False):
 
 
 def features_morphology_with_dicrotic_notch(debug=False):
-    """Test morphology extraction finds dicrotic notch."""
+    """
+    Test morphology extraction finds dicrotic notch.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("features_morphology_with_dicrotic_notch")
     fe = PPGFeatureExtractor(fs=100.0)
@@ -826,7 +1301,14 @@ def features_morphology_with_dicrotic_notch(debug=False):
 
 
 def features_spo2_proxy(debug=False):
-    """Test SpO2 proxy computation."""
+    """
+    Test SpO2 proxy computation.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("features_spo2_proxy")
     fe = PPGFeatureExtractor(fs=100.0)
@@ -837,7 +1319,14 @@ def features_spo2_proxy(debug=False):
 
 
 def features_spo2_proxy_flat(debug=False):
-    """Test SpO2 proxy with flat signal (zero AC)."""
+    """
+    Test SpO2 proxy with flat signal (zero AC).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("features_spo2_proxy_flat")
     fe = PPGFeatureExtractor(fs=100.0)
@@ -851,7 +1340,14 @@ def features_spo2_proxy_flat(debug=False):
 
 
 def synthetic_ppg_shapes(debug=False):
-    """Test generate_synthetic_ppg output shapes."""
+    """
+    Test generate_synthetic_ppg output shapes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("synthetic_ppg_shapes")
     np.random.seed(42)
@@ -868,7 +1364,14 @@ def synthetic_ppg_shapes(debug=False):
 
 
 def synthetic_ppg_nan_at_missing(debug=False):
-    """Test that corrupted signal has NaN at missing indices."""
+    """
+    Test that corrupted signal has NaN at missing indices.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("synthetic_ppg_nan_at_missing")
     np.random.seed(42)
@@ -880,7 +1383,14 @@ def synthetic_ppg_nan_at_missing(debug=False):
 
 
 def synthetic_ppg_no_missing(debug=False):
-    """Test synthetic PPG with 0% missing data."""
+    """
+    Test synthetic PPG with 0% missing data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("synthetic_ppg_no_missing")
     np.random.seed(42)
@@ -890,7 +1400,14 @@ def synthetic_ppg_no_missing(debug=False):
 
 
 def synthetic_ppg_no_artifacts(debug=False):
-    """Test synthetic PPG without motion artifacts."""
+    """
+    Test synthetic PPG without motion artifacts.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("synthetic_ppg_no_artifacts")
     np.random.seed(42)
@@ -902,7 +1419,14 @@ def synthetic_ppg_no_artifacts(debug=False):
 
 
 def synthetic_ppg_different_hr(debug=False):
-    """Test synthetic PPG at different heart rates."""
+    """
+    Test synthetic PPG at different heart rates.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("synthetic_ppg_different_hr")
     for hr in [60, 90, 120]:
@@ -922,7 +1446,14 @@ def synthetic_ppg_different_hr(debug=False):
 
 
 def read_happy_ppg_basic(debug=False):
-    """Test read_happy_ppg with mocked IO."""
+    """
+    Test read_happy_ppg with mocked IO.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("read_happy_ppg_basic")
     n = 1000
@@ -956,7 +1487,14 @@ def read_happy_ppg_basic(debug=False):
 
 
 def read_happy_ppg_alt_columns(debug=False):
-    """Test read_happy_ppg with alternative column names."""
+    """
+    Test read_happy_ppg with alternative column names.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("read_happy_ppg_alt_columns")
     n = 500
@@ -973,7 +1511,14 @@ def read_happy_ppg_alt_columns(debug=False):
 
 
 def read_happy_ppg_missing_raw_column(debug=False):
-    """Test read_happy_ppg raises ValueError when raw column is missing."""
+    """
+    Test read_happy_ppg raises ValueError when raw column is missing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("read_happy_ppg_missing_raw_column")
     mock_columns = ["pleth"]
@@ -986,7 +1531,14 @@ def read_happy_ppg_missing_raw_column(debug=False):
 
 
 def read_happy_ppg_missing_clean_column(debug=False):
-    """Test read_happy_ppg raises ValueError when clean column is missing."""
+    """
+    Test read_happy_ppg raises ValueError when clean column is missing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("read_happy_ppg_missing_clean_column")
     mock_columns = ["cardiacfromfmri", "badpts"]
@@ -1003,6 +1555,14 @@ def read_happy_ppg_missing_clean_column(debug=False):
 
 def test_ppgproc(debug=False):
     # PPGKalmanFilter tests
+    """
+    Verify ppgproc.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("Running PPGKalmanFilter tests")
     ppgkalman_init_default(debug=debug)

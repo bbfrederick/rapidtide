@@ -219,8 +219,15 @@ def test_normalizergb_hex_string_overflows_above_a_factor_of_one():
 
 
 def test_the_plotting_helpers_run(monkeypatch):
-    """plot_sd and plot_swatch are called for their side effects; they still have to
-    accept what the rest of the module produces."""
+    """
+    Plot_sd and plot_swatch are called for their side effects; they still have to
+    accept what the rest of the module produces.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     import matplotlib
 
     matplotlib.use("Agg")

@@ -361,6 +361,11 @@ def n4correct(inputfile: str, outputdir: str, fake: bool = False, debug: bool = 
         This function does not return any value but saves the corrected image to the
         specified output directory
 
+    See Also
+    --------
+    tide_io.niftisplitext : Function used to split filename and extension
+    runcmd : Function used to execute the N4 command
+
     Notes
     -----
     The output file will be saved with the naming convention: {input_filename}_n4{file_extension}
@@ -369,11 +374,6 @@ def n4correct(inputfile: str, outputdir: str, fake: bool = False, debug: bool = 
     --------
     >>> n4correct('subject1.nii.gz', '/path/to/output')
     >>> n4correct('subject1.nii.gz', '/path/to/output', fake=True, debug=True)
-
-    See Also
-    --------
-    tide_io.niftisplitext : Function used to split filename and extension
-    runcmd : Function used to execute the N4 command
     """
     thename, theext = tide_io.niftisplitext(inputfile)
     n4cmd = []

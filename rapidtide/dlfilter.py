@@ -190,7 +190,7 @@ class DeepLearningFilter:
             Number of samples to skip when reading data. Default is None.
         countlim : int, optional
             Limit on number of timecourses to process. Default is None.
-        **kwargs
+        **kwargs : object
             Additional keyword arguments passed to the parent class.
 
         Notes
@@ -344,45 +344,6 @@ class DeepLearningFilter:
         FFT and non-FFT modes of data preprocessing. The loaded data is stored in
         instance variables for use in subsequent training steps.
 
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the following attributes:
-            - initialized : bool
-                Indicates whether the model has been initialized.
-            - dofft : bool
-                Whether to apply FFT transformation to the data.
-            - window_size : int
-                Size of the sliding window used for data segmentation.
-            - thesuffix : str
-                Suffix to append to filenames when reading data.
-            - thedatadir : str
-                Directory path where the data files are located.
-            - inputfrag : str
-                Fragment identifier for input data.
-            - targetfrag : str
-                Fragment identifier for target data.
-            - startskip : int
-                Number of samples to skip at the beginning of each file.
-            - endskip : int
-                Number of samples to skip at the end of each file.
-            - corrthresh_rp : float
-                Correlation threshold for filtering data.
-            - step : int
-                Step size for sliding window.
-            - usebadpts : bool
-                Whether to include bad points in the data.
-            - excludethresh : float
-                Threshold for excluding data points.
-            - excludebysubject : bool
-                Whether to exclude data by subject.
-            - readlim : int
-                Limit on the number of samples to read.
-            - readskip : int
-                Number of samples to skip while reading.
-            - countlim : int
-                Limit on the number of data points to process.
-
         Returns
         -------
         None
@@ -524,11 +485,6 @@ class DeepLearningFilter:
         between input and actual values). The method also generates and saves a
         plot of the training and validation loss over epochs.
 
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the model and data attributes.
-
         Returns
         -------
         tuple[list, list, float, float]
@@ -609,11 +565,6 @@ class DeepLearningFilter:
         This function creates a dictionary containing various model configuration parameters
         and writes them to a JSON file for future reference and reproducibility.
 
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the metadata attributes.
-
         Returns
         -------
         None
@@ -659,24 +610,6 @@ class DeepLearningFilter:
         This method updates the internal information dictionary with various model
         performance metrics and writes the complete metadata to a JSON file for
         model persistence and tracking.
-
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the metadata and model information.
-            Expected to have the following attributes:
-            - infodict : dict
-                Dictionary containing model metadata.
-            - loss : float
-                Training loss value.
-            - val_loss : float
-                Validation loss value.
-            - raw_error : float
-                Raw error metric.
-            - pred_error : float
-                Prediction error metric.
-            - modelname : str
-                Name/path of the model for file output.
 
         Returns
         -------
@@ -825,11 +758,6 @@ class DeepLearningFilter:
         saving the model configuration, initializing metadata, and setting appropriate
         flags to indicate initialization status.
 
-        Parameters
-        ----------
-        self : object
-            The instance of the model class being initialized.
-
         Returns
         -------
         None
@@ -866,20 +794,6 @@ class DeepLearningFilter:
         This method performs model training with optional pretraining and logging. It supports
         TensorBoard logging, model checkpointing, early stopping, and NaN termination. The trained
         model is saved at the end of training.
-
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the model and training configuration.
-            Expected attributes include:
-            - `model`: The Keras model to be trained.
-            - `train_x`, `train_y`: Training data inputs and labels.
-            - `val_x`, `val_y`: Validation data inputs and labels.
-            - `modelname`: Name of the model for saving purposes.
-            - `usetensorboard`: Boolean flag to enable TensorBoard logging.
-            - `num_pretrain_epochs`: Number of epochs for pretraining phase.
-            - `num_epochs`: Total number of training epochs.
-            - `savemodel()`: Method to save the trained model.
 
         Returns
         -------
@@ -1038,9 +952,9 @@ class CNNDLFilter(DeepLearningFilter):
             Size of the convolutional kernel, by default 5.
         dilation_rate : int, optional
             Dilation rate for the convolutional layer, by default 1.
-        *args
+        *args : object
             Variable length argument list passed to parent class.
-        **kwargs
+        **kwargs : object
             Arbitrary keyword arguments passed to parent class.
 
         Returns
@@ -1076,26 +990,6 @@ class CNNDLFilter(DeepLearningFilter):
         This method constructs a descriptive model name by joining various configuration
         parameters with specific prefixes and zero-padded numbers. The resulting name
         is used to create a unique directory path for model storage.
-
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing model configuration parameters.
-            Expected attributes include:
-            - window_size : int
-            - num_layers : int
-            - num_filters : int
-            - kernel_size : int
-            - num_epochs : int
-            - excludethresh : float
-            - corrthresh_rp : float
-            - step : int
-            - dilation_rate : int
-            - activation : str
-            - modelroot : str
-            - usebadpts : bool
-            - excludebysubject : bool
-            - namesuffix : str, optional
 
         Returns
         -------
@@ -1176,26 +1070,6 @@ class CNNDLFilter(DeepLearningFilter):
         batch normalization, dropout regularization, and ReLU activation functions. The network
         is designed for sequence-to-sequence mapping with skip connections.
 
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the model configuration parameters.
-            Expected attributes include:
-            - num_filters : int
-                Number of convolutional filters in each layer.
-            - kernel_size : int
-                Size of the convolutional kernel.
-            - inputsize : int
-                Size of the input sequence.
-            - num_layers : int
-                Total number of layers in the network.
-            - dilation_rate : int
-                Dilation rate for dilated convolutions.
-            - dropout_rate : float
-                Dropout rate for regularization.
-            - activation : str or callable
-                Activation function to use.
-
         Returns
         -------
         None
@@ -1269,11 +1143,11 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
 
         Parameters
         ----------
-        encoding_dim : int, default=10
+        encoding_dim : int, default=10, optional
             The dimensionality of the encoding layer in the autoencoder.
-        *args
+        *args : object
             Variable length argument list passed to the parent class constructor.
-        **kwargs
+        **kwargs : object
             Arbitrary keyword arguments passed to the parent class constructor.
 
         Returns
@@ -1307,23 +1181,6 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
         parameters with specific prefixes and formatting conventions. The generated name
         is used to create a unique identifier for the model and its corresponding directory
         path.
-
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the model configuration attributes.
-            Expected attributes include:
-            - `window_size`: int, size of the window
-            - `encoding_dim`: int, dimension of the encoding layer
-            - `num_epochs`: int, number of training epochs
-            - `excludethresh`: float, threshold for exclusion
-            - `corrthresh_rp`: float, correlation threshold
-            - `step`: int, step size
-            - `activation`: str, activation function name
-            - `modelroot`: str, root directory for models
-            - `usebadpts`: bool, flag to include bad points
-            - `excludebysubject`: bool, flag to exclude by subject
-            - `namesuffix`: str, optional suffix to append to the model name
 
         Returns
         -------
@@ -1397,23 +1254,6 @@ class DenseAutoencoderDLFilter(DeepLearningFilter):
         decoding layers, and an output layer. Batch normalization, dropout, and
         activation functions are applied at each layer as specified by the instance
         attributes.
-
-        Parameters
-        ----------
-        self : object
-            The instance of the class containing the following attributes:
-            - num_layers : int
-                Number of layers in the network.
-            - encoding_dim : int
-                Dimension of the encoding layer.
-            - inputsize : int
-                Size of the input data.
-            - dropout_rate : float
-                Dropout rate applied to all layers.
-            - activation : str or callable
-                Activation function used in all layers.
-            - model : keras.Sequential
-                The constructed Keras model (assigned within the function).
 
         Returns
         -------
@@ -1505,9 +1345,9 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
             Size of the convolutional kernel, by default 5.
         dilation_rate : int, optional
             Dilation rate for the convolutional layers, by default 1.
-        *args
+        *args : object
             Variable length argument list.
-        **kwargs
+        **kwargs : object
             Arbitrary keyword arguments.
 
         Returns
@@ -1547,25 +1387,6 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         parameters and creates the corresponding directory path for model storage. The generated
         name includes information about window size, encoding dimensions, filter settings,
         training parameters, and optional flags.
-
-        Parameters
-        ----------
-        self : object
-            The instance containing configuration parameters for model naming.
-            Expected attributes include:
-            - window_size : int
-            - encoding_dim : int
-            - num_filters : int
-            - kernel_size : int
-            - num_epochs : int
-            - excludethresh : float
-            - corrthresh_rp : float
-            - step : int
-            - activation : str
-            - usebadpts : bool
-            - excludebysubject : bool
-            - namesuffix : str or None
-            - modelroot : str
 
         Returns
         -------
@@ -1637,25 +1458,6 @@ class ConvAutoencoderDLFilter(DeepLearningFilter):
         This function constructs a symmetric encoder-decoder architecture using 1D convolutions,
         batch normalization, dropout, and pooling layers. The model is designed for sequence
         processing tasks such as time-series or signal denoising.
-
-        Parameters
-        ----------
-        self : object
-            Instance of the class containing the following attributes:
-            - window_size : int
-                The length of the input sequence.
-            - inputsize : int
-                The number of input features at each time step.
-            - num_filters : int
-                Initial number of filters in the first convolutional layer.
-            - kernel_size : int
-                Size of the convolutional kernel.
-            - dropout_rate : float
-                Dropout rate applied after batch normalization.
-            - activation : str or callable
-                Activation function used in layers.
-            - encoding_dim : int
-                Dimensionality of the encoded representation.
 
         Returns
         -------

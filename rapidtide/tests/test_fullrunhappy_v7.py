@@ -88,7 +88,8 @@ def _makerespirationfile(
 def test_fullrunhappy_v7(
     debug: bool = False, local: bool = False, displayplots: bool = False
 ) -> None:
-    """Run happy with a respiration waveform supplied from a file.
+    """
+    Run happy with a respiration waveform supplied from a file.
 
     Parameters
     ----------
@@ -99,10 +100,6 @@ def test_fullrunhappy_v7(
         file directly rather than under pytest.
     displayplots : bool, optional
         Unused here, kept for the signature the other full run tests share.
-
-    Returns
-    -------
-    None
     """
     exampleroot, testtemproot = get_example_and_temp_roots(local)
 

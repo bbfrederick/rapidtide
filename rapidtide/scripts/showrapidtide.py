@@ -6,6 +6,7 @@ import rapidtide.workflows.showrapidtide as theworkflow
 
 
 def entrypoint():
+    """Run the `showrapidtide` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.main)
 
 

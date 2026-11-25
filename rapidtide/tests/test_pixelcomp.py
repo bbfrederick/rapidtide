@@ -41,7 +41,19 @@ from rapidtide.workflows.pixelcomp import (
 
 
 def _make_default_args(**overrides):
-    """Create default args Namespace for pixelcomp."""
+    """
+    Create default args Namespace for pixelcomp.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         inputfilename1="input1.nii.gz",
         maskfilename1="mask1.nii.gz",
@@ -60,10 +72,23 @@ def _make_default_args(**overrides):
 
 
 def _make_3d_test_data(shape=(4, 5, 3), rng=None):
-    """Create synthetic 3D image data, masks, and dims arrays.
+    """
+    Create synthetic 3D image data, masks, and dims arrays.
 
     Returns (input1, mask1, input2, mask2, dims, sizes).
     Input2 = 2*Input1 + 1 + noise for a known linear relationship.
+
+    Parameters
+    ----------
+    shape : tuple of int, optional
+        Dimensions of the test array.
+    rng : numpy.random.Generator, optional
+        Random number generator for test data.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     if rng is None:
         rng = np.random.RandomState(42)
@@ -84,9 +109,34 @@ def _make_3d_test_data(shape=(4, 5, 3), rng=None):
 def _run_pixelcomp_with_mocks(
     args, input1, mask1, input2, mask2, dims, sizes, dim_match_results=None
 ):
-    """Run pixelcomp with fully mocked I/O.
+    """
+    Run pixelcomp with fully mocked I/O.
 
     Returns dict with captured output.
+
+    Parameters
+    ----------
+    args : object
+        Arguments passed to the test helper.
+    input1 : object
+        Value supplied as ``input1`` by the test case.
+    mask1 : object
+        Value supplied as ``mask1`` by the test case.
+    input2 : object
+        Value supplied as ``input2`` by the test case.
+    mask2 : object
+        Value supplied as ``mask2`` by the test case.
+    dims : array-like
+        Image dimensions.
+    sizes : array-like
+        Image voxel sizes.
+    dim_match_results : object or None, optional
+        Value supplied as ``dim_match_results`` by the test case.
+
+    Returns
+    -------
+    dict
+        The ``captured`` value supplied to the caller.
     """
     captured = {
         "savefig_calls": [],
@@ -101,6 +151,21 @@ def _run_pixelcomp_with_mocks(
     }
 
     def mock_readfromnifti(fname, headeronly=False):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        headeronly : bool, optional
+            Request header information only.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if fname in file_map:
             return file_map[fname]
         raise ValueError(f"Unexpected file: {fname}")
@@ -108,28 +173,88 @@ def _run_pixelcomp_with_mocks(
     if dim_match_results is None:
 
         def mock_checkspacedimmatch(d1, d2):
+            """
+            Simulate ``checkspacedimmatch`` for the test.
+
+            Parameters
+            ----------
+            d1 : object
+                Value supplied as ``d1`` by the test case.
+            d2 : object
+                Value supplied as ``d2`` by the test case.
+
+            Returns
+            -------
+            bool
+                Boolean result supplied by the test substitute.
+            """
             return True
 
     else:
         call_idx = [0]
 
         def mock_checkspacedimmatch(d1, d2):
+            """
+            Simulate ``checkspacedimmatch`` for the test.
+
+            Parameters
+            ----------
+            d1 : object
+                Value supplied as ``d1`` by the test case.
+            d2 : object
+                Value supplied as ``d2`` by the test case.
+
+            Returns
+            -------
+            object
+                Output values supplied to the caller.
+            """
             result = dim_match_results[call_idx[0]]
             call_idx[0] += 1
             return result
 
     def mock_savefig(fname, **kwargs):
+        """
+        Simulate ``savefig`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["savefig_calls"].append(fname)
 
     original_open = open
 
     def mock_open(fname, mode="r", *a, **kw):
+        """
+        Simulate ``open`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        mode : str, optional
+            Value supplied as ``mode`` by the test case.
+        *a : object
+            Additional positional arguments passed by the caller.
+        **kw : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         if "w" in mode and args.outputroot in str(fname):
             sio = io.StringIO()
             sio.close_original = sio.close
             sio.name = fname
 
             def mock_close():
+                """Simulate ``close`` for the test."""
                 captured["written_files"][fname] = sio.getvalue()
                 sio.close_original()
 
@@ -159,7 +284,14 @@ def _run_pixelcomp_with_mocks(
 
 
 def parser_basic(debug=False):
-    """Test that _get_parser returns a valid parser."""
+    """
+    Test that _get_parser returns a valid parser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
     assert parser.prog == "pixelcomp"
@@ -169,7 +301,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
-    """Test that parser requires all five positional arguments."""
+    """
+    Test that parser requires all five positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     with pytest.raises(SystemExit):
         parser.parse_args([])
@@ -185,7 +324,14 @@ def parser_required_args(debug=False):
 
 
 def parser_all_positional(debug=False):
-    """Test parser with all five positional arguments."""
+    """
+    Test parser with all five positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in1.nii", "mask1.nii", "in2.nii", "mask2.nii", "output"])
     assert args.inputfilename1 == "in1.nii"
@@ -199,7 +345,14 @@ def parser_all_positional(debug=False):
 
 
 def parser_defaults(debug=False):
-    """Test default values from the parser."""
+    """
+    Test default values from the parser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in1", "m1", "in2", "m2", "out"])
 
@@ -215,7 +368,14 @@ def parser_defaults(debug=False):
 
 
 def parser_scatter(debug=False):
-    """Test --scatter flag."""
+    """
+    Test --scatter flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in1", "m1", "in2", "m2", "out", "--scatter"])
     assert args.scatter is True
@@ -225,7 +385,14 @@ def parser_scatter(debug=False):
 
 
 def parser_fitonly(debug=False):
-    """Test --fitonly flag."""
+    """
+    Test --fitonly flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in1", "m1", "in2", "m2", "out", "--fitonly"])
     assert args.fitonly is True
@@ -235,7 +402,14 @@ def parser_fitonly(debug=False):
 
 
 def parser_nodisplay(debug=False):
-    """Test --nodisplay flag."""
+    """
+    Test --nodisplay flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in1", "m1", "in2", "m2", "out", "--nodisplay"])
     assert args.display is False
@@ -245,7 +419,14 @@ def parser_nodisplay(debug=False):
 
 
 def parser_fitorder(debug=False):
-    """Test --fitorder option."""
+    """
+    Test --fitorder option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in1", "m1", "in2", "m2", "out", "--fitorder", "3"])
     assert args.fitorder == 3
@@ -255,7 +436,14 @@ def parser_fitorder(debug=False):
 
 
 def parser_usex(debug=False):
-    """Test --usex flag."""
+    """
+    Test --usex flag.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in1", "m1", "in2", "m2", "out", "--usex"])
     assert args.usex is True
@@ -265,7 +453,14 @@ def parser_usex(debug=False):
 
 
 def parser_histbins(debug=False):
-    """Test --histbins option."""
+    """
+    Test --histbins option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     args = parser.parse_args(["in1", "m1", "in2", "m2", "out", "--histbins", "100"])
     assert args.histbins == 100
@@ -278,7 +473,14 @@ def parser_histbins(debug=False):
 
 
 def bland_altman_basic(debug=False):
-    """Test bland_altman_plot runs with basic inputs."""
+    """
+    Test bland_altman_plot runs with basic inputs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     data2 = np.array([1.1, 2.2, 2.8, 4.1, 4.9])
 
@@ -291,7 +493,14 @@ def bland_altman_basic(debug=False):
 
 
 def bland_altman_usex_false(debug=False):
-    """Test bland_altman_plot with usex=False uses mean of data1 and data2."""
+    """
+    Test bland_altman_plot with usex=False uses mean of data1 and data2.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     data2 = np.array([1.5, 2.5, 3.5, 4.5, 5.5])
 
@@ -309,7 +518,14 @@ def bland_altman_usex_false(debug=False):
 
 
 def bland_altman_usex_true(debug=False):
-    """Test bland_altman_plot with usex=True uses mean of data1 (scalar)."""
+    """
+    Test bland_altman_plot with usex=True uses mean of data1 (scalar).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     data2 = np.array([1.5, 2.5, 3.5, 4.5, 5.5])
 
@@ -326,7 +542,14 @@ def bland_altman_usex_true(debug=False):
 
 
 def bland_altman_diff(debug=False):
-    """Test bland_altman_plot passes correct diff to scatter."""
+    """
+    Test bland_altman_plot passes correct diff to scatter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0])
     data2 = np.array([1.5, 2.0, 3.5])
 
@@ -343,7 +566,14 @@ def bland_altman_diff(debug=False):
 
 
 def bland_altman_axhlines(debug=False):
-    """Test bland_altman_plot draws three horizontal lines."""
+    """
+    Test bland_altman_plot draws three horizontal lines.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     data2 = np.array([1.5, 2.5, 3.5, 4.5, 5.5])
 
@@ -356,7 +586,14 @@ def bland_altman_axhlines(debug=False):
 
 
 def bland_altman_axhline_values(debug=False):
-    """Test bland_altman_plot draws lines at md, md+2sd, md-2sd."""
+    """
+    Test bland_altman_plot draws lines at md, md+2sd, md-2sd.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data1 = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     data2 = np.array([2.0, 3.0, 4.0, 5.0, 6.0])
 
@@ -377,7 +614,14 @@ def bland_altman_axhline_values(debug=False):
 
 
 def bland_altman_identical_data(debug=False):
-    """Test bland_altman_plot with identical data (diff=0)."""
+    """
+    Test bland_altman_plot with identical data (diff=0).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
 
     with patch("rapidtide.workflows.pixelcomp.plt.axhline") as mock_axhline:
@@ -396,7 +640,14 @@ def bland_altman_identical_data(debug=False):
 
 
 def pairdata_basic(debug=False):
-    """Test pairdata with basic 3D arrays."""
+    """
+    Test pairdata with basic 3D arrays.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input1 = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], dtype=np.float64)
     input2 = np.array([[[9, 10], [11, 12]], [[13, 14], [15, 16]]], dtype=np.float64)
     mask = np.array([[[1, 0], [0, 1]], [[1, 1], [0, 0]]], dtype=np.float64)
@@ -415,7 +666,14 @@ def pairdata_basic(debug=False):
 
 
 def pairdata_values(debug=False):
-    """Test that pairdata extracts correct value pairs."""
+    """
+    Test that pairdata extracts correct value pairs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input1 = np.zeros((2, 2, 2), dtype=np.float64)
     input2 = np.zeros((2, 2, 2), dtype=np.float64)
     mask = np.zeros((2, 2, 2), dtype=np.float64)
@@ -443,7 +701,14 @@ def pairdata_values(debug=False):
 
 
 def pairdata_all_masked(debug=False):
-    """Test pairdata with all-ones mask (all voxels paired)."""
+    """
+    Test pairdata with all-ones mask (all voxels paired).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (3, 4, 2)
     rng = np.random.RandomState(42)
     input1 = rng.normal(0, 1, shape)
@@ -460,7 +725,14 @@ def pairdata_all_masked(debug=False):
 
 
 def pairdata_empty_mask(debug=False):
-    """Test pairdata with all-zeros mask (no voxels paired)."""
+    """
+    Test pairdata with all-zeros mask (no voxels paired).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (3, 4, 2)
     input1 = np.ones(shape, dtype=np.float64)
     input2 = np.ones(shape, dtype=np.float64)
@@ -475,7 +747,14 @@ def pairdata_empty_mask(debug=False):
 
 
 def pairdata_partial_mask(debug=False):
-    """Test pairdata with partial mask."""
+    """
+    Test pairdata with partial mask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (4, 4, 4)
     rng = np.random.RandomState(42)
     input1 = rng.normal(0, 1, shape)
@@ -494,7 +773,14 @@ def pairdata_partial_mask(debug=False):
 
 
 def pairdata_first_col_from_input1(debug=False):
-    """Test that first column of result comes from input1."""
+    """
+    Test that first column of result comes from input1.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (2, 2, 2)
     input1 = np.arange(8, dtype=np.float64).reshape(shape)
     input2 = (np.arange(8, dtype=np.float64) * 10).reshape(shape)
@@ -514,7 +800,14 @@ def pairdata_first_col_from_input1(debug=False):
 
 
 def pixelcomp_scatter(debug=False):
-    """Test pixelcomp with scatter plot mode."""
+    """
+    Test pixelcomp with scatter plot mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input1, mask1, input2, mask2, dims, sizes = _make_3d_test_data()
     args = _make_default_args(scatter=True, fitonly=False)
 
@@ -531,7 +824,14 @@ def pixelcomp_scatter(debug=False):
 
 
 def pixelcomp_contour(debug=False):
-    """Test pixelcomp with contour plot mode (default)."""
+    """
+    Test pixelcomp with contour plot mode (default).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input1, mask1, input2, mask2, dims, sizes = _make_3d_test_data()
     args = _make_default_args(scatter=False, fitonly=False)
 
@@ -545,7 +845,14 @@ def pixelcomp_contour(debug=False):
 
 
 def pixelcomp_fitonly(debug=False):
-    """Test pixelcomp with fitonly=True skips pairdata file and bland-altman."""
+    """
+    Test pixelcomp with fitonly=True skips pairdata file and bland-altman.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input1, mask1, input2, mask2, dims, sizes = _make_3d_test_data()
     args = _make_default_args(fitonly=True, scatter=True)
 
@@ -564,7 +871,14 @@ def pixelcomp_fitonly(debug=False):
 
 
 def pixelcomp_fit_coefficients(debug=False):
-    """Test that pixelcomp writes polynomial fit coefficients."""
+    """
+    Test that pixelcomp writes polynomial fit coefficients.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input1, mask1, input2, mask2, dims, sizes = _make_3d_test_data()
     args = _make_default_args(fitorder=1, scatter=True)
 
@@ -578,7 +892,14 @@ def pixelcomp_fit_coefficients(debug=False):
 
 
 def pixelcomp_higher_fitorder(debug=False):
-    """Test pixelcomp with higher fit order."""
+    """
+    Test pixelcomp with higher fit order.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input1, mask1, input2, mask2, dims, sizes = _make_3d_test_data()
     args = _make_default_args(fitorder=2, scatter=True)
 
@@ -592,7 +913,14 @@ def pixelcomp_higher_fitorder(debug=False):
 
 
 def pixelcomp_pairdata_file(debug=False):
-    """Test that pixelcomp writes pairdata file when not fitonly."""
+    """
+    Test that pixelcomp writes pairdata file when not fitonly.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input1, mask1, input2, mask2, dims, sizes = _make_3d_test_data()
     args = _make_default_args(fitonly=False, scatter=True, outputroot="/tmp/test_pixelcomp_out")
 
@@ -606,7 +934,14 @@ def pixelcomp_pairdata_file(debug=False):
 
 
 def pixelcomp_dim_mismatch_input1_mask1(debug=False):
-    """Test that pixelcomp exits when input1 dims don't match mask1."""
+    """
+    Test that pixelcomp exits when input1 dims don't match mask1.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input1, mask1, input2, mask2, dims, sizes = _make_3d_test_data()
     args = _make_default_args()
 
@@ -628,7 +963,14 @@ def pixelcomp_dim_mismatch_input1_mask1(debug=False):
 
 
 def pixelcomp_dim_mismatch_input2_mask2(debug=False):
-    """Test that pixelcomp exits when input2 dims don't match mask2."""
+    """
+    Test that pixelcomp exits when input2 dims don't match mask2.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input1, mask1, input2, mask2, dims, sizes = _make_3d_test_data()
     args = _make_default_args()
 
@@ -650,7 +992,14 @@ def pixelcomp_dim_mismatch_input2_mask2(debug=False):
 
 
 def pixelcomp_dim_mismatch_input1_input2(debug=False):
-    """Test that pixelcomp exits when input1 and input2 dims don't match."""
+    """
+    Test that pixelcomp exits when input1 and input2 dims don't match.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input1, mask1, input2, mask2, dims, sizes = _make_3d_test_data()
     args = _make_default_args()
 
@@ -672,7 +1021,14 @@ def pixelcomp_dim_mismatch_input1_input2(debug=False):
 
 
 def pixelcomp_mask_intersection(debug=False):
-    """Test that pixelcomp uses intersection of both masks."""
+    """
+    Test that pixelcomp uses intersection of both masks.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (4, 5, 3)
     rng = np.random.RandomState(42)
     input1 = rng.normal(10.0, 3.0, shape)
@@ -703,7 +1059,14 @@ def pixelcomp_mask_intersection(debug=False):
 
 
 def pixelcomp_output_root(debug=False):
-    """Test that output files use the correct outputroot."""
+    """
+    Test that output files use the correct outputroot.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input1, mask1, input2, mask2, dims, sizes = _make_3d_test_data()
     args = _make_default_args(outputroot="/tmp/myanalysis", scatter=True)
 
@@ -717,7 +1080,14 @@ def pixelcomp_output_root(debug=False):
 
 
 def pixelcomp_prints_coefficients(debug=False):
-    """Test that pixelcomp prints fit coefficients."""
+    """
+    Test that pixelcomp prints fit coefficients.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     input1, mask1, input2, mask2, dims, sizes = _make_3d_test_data()
     args = _make_default_args(scatter=True)
 
@@ -737,6 +1107,14 @@ def pixelcomp_prints_coefficients(debug=False):
 
 def test_pixelcomp(debug=False):
     # parser tests
+    """
+    Verify pixelcomp.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_all_positional(debug=debug)

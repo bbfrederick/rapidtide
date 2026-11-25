@@ -30,6 +30,19 @@ from rapidtide.workflows.resamplenifti import _get_parser, resamplenifti
 
 
 def _make_default_args(**overrides):
+    """
+    Create default args.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         inputfile="input.nii.gz",
         outputfile="output.nii.gz",
@@ -43,7 +56,19 @@ def _make_default_args(**overrides):
 
 
 def _make_mock_header(pixdim=None):
-    """Create a mock NIfTI header that supports item access and copy()."""
+    """
+    Create a mock NIfTI header that supports item access and copy().
+
+    Parameters
+    ----------
+    pixdim : sequence of float or None, optional
+        Values for the NIfTI pixel dimension field.
+
+    Returns
+    -------
+    MagicMock
+        Mock object configured for the test case.
+    """
     if pixdim is None:
         pixdim = [0.0, 2.0, 2.0, 2.0, 1.0, 0.0, 0.0, 0.0]
     storage = {"pixdim": list(pixdim)}
@@ -54,6 +79,14 @@ def _make_mock_header(pixdim=None):
     hdr.copy_fn = lambda: _make_mock_header(pixdim=list(storage["pixdim"]))
 
     def _copy():
+        """
+        Provide the ``_copy`` test substitute.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         new_pixdim = list(storage["pixdim"])
         return _make_mock_header(pixdim=new_pixdim)
 
@@ -62,7 +95,27 @@ def _make_mock_header(pixdim=None):
 
 
 def _make_mock_nifti_data(xsize=2, ysize=2, numslices=1, timepoints=10, inputtr=1.0):
-    """Create synthetic 4D data with a known signal."""
+    """
+    Create synthetic 4D data with a known signal.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+    inputtr : float, optional
+        Input repetition time in seconds.
+
+    Returns
+    -------
+    numpy.ndarray
+        Output values supplied to the caller.
+    """
     data = np.zeros((xsize, ysize, numslices, timepoints), dtype=np.float64)
     t = np.arange(timepoints) * inputtr
     for x in range(xsize):
@@ -85,7 +138,39 @@ def _run_resamplenifti_with_mocks(
     niftisplitext_return=("output", ".nii.gz"),
     niftisplitext_mock=None,
 ):
-    """Run resamplenifti with the common mock stack used in function tests."""
+    """
+    Run resamplenifti with the common mock stack used in function tests.
+
+    Parameters
+    ----------
+    args : object
+        Arguments passed to the test helper.
+    inputtr : float
+        Input repetition time in seconds.
+    numinputtrs : object
+        Value supplied as ``numinputtrs`` by the test case.
+    input_data : object
+        Value supplied as ``input_data`` by the test case.
+    input_hdr : object
+        Value supplied as ``input_hdr`` by the test case.
+    thedims : object
+        Value supplied as ``thedims`` by the test case.
+    thesizes : object
+        Value supplied as ``thesizes`` by the test case.
+    doresample_side_effect : object
+        Value supplied as ``doresample_side_effect`` by the test case.
+    savetonifti_side_effect : object or None, optional
+        Value supplied as ``savetonifti_side_effect`` by the test case.
+    niftisplitext_return : tuple, optional
+        Value supplied as ``niftisplitext_return`` by the test case.
+    niftisplitext_mock : object or None, optional
+        Value supplied as ``niftisplitext_mock`` by the test case.
+
+    Returns
+    -------
+    object
+        The ``splitext_patch_target`` value supplied to the caller.
+    """
     mock_img = MagicMock()
     splitext_patch_target = (
         niftisplitext_mock
@@ -124,6 +209,14 @@ def _run_resamplenifti_with_mocks(
 
 
 def parser_basic(debug=False):
+    """
+    Check that the command-line parser initializes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -132,6 +225,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
+    """
+    Check that the parser requires the mandatory arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -140,6 +241,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
+    """
+    Check the parser defaults.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     parser = _get_parser()
@@ -153,6 +262,14 @@ def parser_defaults(debug=False):
 
 
 def parser_noantialias_flag(debug=False):
+    """
+    Check that the parser accepts ``--noantialias``.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_noantialias_flag")
     parser = _get_parser()
@@ -161,6 +278,14 @@ def parser_noantialias_flag(debug=False):
 
 
 def parser_normalize_flag(debug=False):
+    """
+    Check that the parser accepts ``--normalize``.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_normalize_flag")
     parser = _get_parser()
@@ -169,6 +294,14 @@ def parser_normalize_flag(debug=False):
 
 
 def parser_debug_flag(debug=False):
+    """
+    Check that the parser accepts ``--debug``.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_debug_flag")
     parser = _get_parser()
@@ -177,6 +310,14 @@ def parser_debug_flag(debug=False):
 
 
 def parser_all_flags(debug=False):
+    """
+    Parse a command line with all optional flags enabled.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_all_flags")
     parser = _get_parser()
@@ -190,7 +331,14 @@ def parser_all_flags(debug=False):
 
 
 def parser_outputtr_type(debug=False):
-    """Verify outputtr is parsed as float."""
+    """
+    Verify outputtr is parsed as float.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_outputtr_type")
     parser = _get_parser()
@@ -205,7 +353,14 @@ def parser_outputtr_type(debug=False):
 
 
 def resamplenifti_basic_downsample(debug=False):
-    """Test basic downsampling (outputtr > inputtr): antialias stays on."""
+    """
+    Test basic downsampling (outputtr > inputtr): antialias stays on.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resamplenifti_basic_downsample")
 
@@ -221,6 +376,27 @@ def resamplenifti_basic_downsample(debug=False):
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
+        """
+        Simulate ``doresample`` for the test.
+
+        Parameters
+        ----------
+        orig_x : numpy.ndarray
+            Sample coordinates on the original grid.
+        orig_y : numpy.ndarray
+            Values on the original grid.
+        new_x : numpy.ndarray
+            Sample coordinates on the destination grid.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         captured.setdefault("calls", []).append(
             {
                 "orig_x": orig_x.copy(),
@@ -232,6 +408,20 @@ def resamplenifti_basic_downsample(debug=False):
         return np.interp(new_x, orig_x, orig_y)
 
     def _mock_savetonifti(thearray, theheader, thename, **kwargs):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        thearray : object
+            Value supplied as ``thearray`` by the test case.
+        theheader : object
+            Value supplied as ``theheader`` by the test case.
+        thename : object
+            Value supplied as ``thename`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["saved_array"] = thearray.copy()
         captured["saved_header"] = theheader
         captured["saved_name"] = thename
@@ -266,7 +456,14 @@ def resamplenifti_basic_downsample(debug=False):
 
 
 def resamplenifti_upsample_disables_antialias(debug=False):
-    """Test that upsampling (inputtr > outputtr) disables antialias."""
+    """
+    Test that upsampling (inputtr > outputtr) disables antialias.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resamplenifti_upsample_disables_antialias")
 
@@ -282,6 +479,27 @@ def resamplenifti_upsample_disables_antialias(debug=False):
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
+        """
+        Simulate ``doresample`` for the test.
+
+        Parameters
+        ----------
+        orig_x : numpy.ndarray
+            Sample coordinates on the original grid.
+        orig_y : numpy.ndarray
+            Values on the original grid.
+        new_x : numpy.ndarray
+            Sample coordinates on the destination grid.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         captured["antialias"] = antialias
         return np.interp(new_x, orig_x, orig_y)
 
@@ -303,7 +521,14 @@ def resamplenifti_upsample_disables_antialias(debug=False):
 
 
 def resamplenifti_noantialias_flag(debug=False):
-    """Test that --noantialias flag is respected during downsampling."""
+    """
+    Test that --noantialias flag is respected during downsampling.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resamplenifti_noantialias_flag")
 
@@ -319,6 +544,27 @@ def resamplenifti_noantialias_flag(debug=False):
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
+        """
+        Simulate ``doresample`` for the test.
+
+        Parameters
+        ----------
+        orig_x : numpy.ndarray
+            Sample coordinates on the original grid.
+        orig_y : numpy.ndarray
+            Values on the original grid.
+        new_x : numpy.ndarray
+            Sample coordinates on the destination grid.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         captured["antialias"] = antialias
         return np.interp(new_x, orig_x, orig_y)
 
@@ -339,7 +585,14 @@ def resamplenifti_noantialias_flag(debug=False):
 
 
 def resamplenifti_output_shape(debug=False):
-    """Verify the output array has the correct shape based on outputtr."""
+    """
+    Verify the output array has the correct shape based on outputtr.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resamplenifti_output_shape")
 
@@ -355,9 +608,44 @@ def resamplenifti_output_shape(debug=False):
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
+        """
+        Simulate ``doresample`` for the test.
+
+        Parameters
+        ----------
+        orig_x : numpy.ndarray
+            Sample coordinates on the original grid.
+        orig_y : numpy.ndarray
+            Values on the original grid.
+        new_x : numpy.ndarray
+            Sample coordinates on the destination grid.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.interp(new_x, orig_x, orig_y)
 
     def _mock_savetonifti(thearray, theheader, thename, **kwargs):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        thearray : object
+            Value supplied as ``thearray`` by the test case.
+        theheader : object
+            Value supplied as ``theheader`` by the test case.
+        thename : object
+            Value supplied as ``thename`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["shape"] = thearray.shape
 
     args = _make_default_args(outputtr=outputtr)
@@ -381,7 +669,14 @@ def resamplenifti_output_shape(debug=False):
 
 
 def resamplenifti_header_updated(debug=False):
-    """Verify the output header pixdim[4] is set to the new TR."""
+    """
+    Verify the output header pixdim[4] is set to the new TR.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resamplenifti_header_updated")
 
@@ -397,9 +692,44 @@ def resamplenifti_header_updated(debug=False):
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
+        """
+        Simulate ``doresample`` for the test.
+
+        Parameters
+        ----------
+        orig_x : numpy.ndarray
+            Sample coordinates on the original grid.
+        orig_y : numpy.ndarray
+            Values on the original grid.
+        new_x : numpy.ndarray
+            Sample coordinates on the destination grid.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.interp(new_x, orig_x, orig_y)
 
     def _mock_savetonifti(thearray, theheader, thename, **kwargs):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        thearray : object
+            Value supplied as ``thearray`` by the test case.
+        theheader : object
+            Value supplied as ``theheader`` by the test case.
+        thename : object
+            Value supplied as ``thename`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         captured["pixdim4"] = theheader["pixdim"][4]
 
     args = _make_default_args(outputtr=outputtr)
@@ -420,7 +750,14 @@ def resamplenifti_header_updated(debug=False):
 
 
 def resamplenifti_header_not_mutated(debug=False):
-    """Verify the original header is not mutated (copy is used)."""
+    """
+    Verify the original header is not mutated (copy is used).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resamplenifti_header_not_mutated")
 
@@ -435,6 +772,27 @@ def resamplenifti_header_not_mutated(debug=False):
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
+        """
+        Simulate ``doresample`` for the test.
+
+        Parameters
+        ----------
+        orig_x : numpy.ndarray
+            Sample coordinates on the original grid.
+        orig_y : numpy.ndarray
+            Values on the original grid.
+        new_x : numpy.ndarray
+            Sample coordinates on the destination grid.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.interp(new_x, orig_x, orig_y)
 
     args = _make_default_args(outputtr=outputtr)
@@ -455,7 +813,14 @@ def resamplenifti_header_not_mutated(debug=False):
 
 
 def resamplenifti_niftisplitext_called(debug=False):
-    """Verify niftisplitext is called with the output filename."""
+    """
+    Verify niftisplitext is called with the output filename.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resamplenifti_niftisplitext_called")
 
@@ -469,6 +834,27 @@ def resamplenifti_niftisplitext_called(debug=False):
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
+        """
+        Simulate ``doresample`` for the test.
+
+        Parameters
+        ----------
+        orig_x : numpy.ndarray
+            Sample coordinates on the original grid.
+        orig_y : numpy.ndarray
+            Values on the original grid.
+        new_x : numpy.ndarray
+            Sample coordinates on the destination grid.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.interp(new_x, orig_x, orig_y)
 
     args = _make_default_args(outputfile="myoutput.nii.gz")
@@ -491,7 +877,14 @@ def resamplenifti_niftisplitext_called(debug=False):
 
 
 def resamplenifti_doresample_receives_correct_data(debug=False):
-    """Verify that doresample receives correct input time axis and voxel data."""
+    """
+    Verify that doresample receives correct input time axis and voxel data.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resamplenifti_doresample_receives_correct_data")
 
@@ -509,6 +902,27 @@ def resamplenifti_doresample_receives_correct_data(debug=False):
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
+        """
+        Simulate ``doresample`` for the test.
+
+        Parameters
+        ----------
+        orig_x : numpy.ndarray
+            Sample coordinates on the original grid.
+        orig_y : numpy.ndarray
+            Values on the original grid.
+        new_x : numpy.ndarray
+            Sample coordinates on the destination grid.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         captured["orig_x"] = orig_x.copy()
         captured["orig_y"] = orig_y.copy()
         captured["new_x"] = new_x.copy()
@@ -540,7 +954,14 @@ def resamplenifti_doresample_receives_correct_data(debug=False):
 
 
 def resamplenifti_debug_mode(debug=False):
-    """Verify that debug mode runs without error."""
+    """
+    Verify that debug mode runs without error.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resamplenifti_debug_mode")
 
@@ -555,6 +976,27 @@ def resamplenifti_debug_mode(debug=False):
     thesizes = np.array([0.0, 2.0, 2.0, 2.0, inputtr, 0.0, 0.0, 0.0])
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
+        """
+        Simulate ``doresample`` for the test.
+
+        Parameters
+        ----------
+        orig_x : numpy.ndarray
+            Sample coordinates on the original grid.
+        orig_y : numpy.ndarray
+            Values on the original grid.
+        new_x : numpy.ndarray
+            Sample coordinates on the destination grid.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.interp(new_x, orig_x, orig_y)
 
     args = _make_default_args(outputtr=outputtr, debug=True)
@@ -573,7 +1015,14 @@ def resamplenifti_debug_mode(debug=False):
 
 
 def resamplenifti_multi_slice(debug=False):
-    """Test with multiple slices to verify all voxels are processed."""
+    """
+    Test with multiple slices to verify all voxels are processed.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resamplenifti_multi_slice")
 
@@ -589,6 +1038,27 @@ def resamplenifti_multi_slice(debug=False):
     call_count = {"n": 0}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
+        """
+        Simulate ``doresample`` for the test.
+
+        Parameters
+        ----------
+        orig_x : numpy.ndarray
+            Sample coordinates on the original grid.
+        orig_y : numpy.ndarray
+            Values on the original grid.
+        new_x : numpy.ndarray
+            Sample coordinates on the destination grid.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         call_count["n"] += 1
         return np.interp(new_x, orig_x, orig_y)
 
@@ -610,7 +1080,14 @@ def resamplenifti_multi_slice(debug=False):
 
 
 def resamplenifti_same_tr(debug=False):
-    """Test resampling to the same TR (should still work, no antialias override)."""
+    """
+    Test resampling to the same TR (should still work, no antialias override).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("resamplenifti_same_tr")
 
@@ -626,6 +1103,27 @@ def resamplenifti_same_tr(debug=False):
     captured = {}
 
     def _mock_doresample(orig_x, orig_y, new_x, antialias=False, **kwargs):
+        """
+        Simulate ``doresample`` for the test.
+
+        Parameters
+        ----------
+        orig_x : numpy.ndarray
+            Sample coordinates on the original grid.
+        orig_y : numpy.ndarray
+            Values on the original grid.
+        new_x : numpy.ndarray
+            Sample coordinates on the destination grid.
+        antialias : bool, optional
+            Apply antialiasing when downsampling.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         captured["antialias"] = antialias
         return np.interp(new_x, orig_x, orig_y)
 
@@ -681,12 +1179,32 @@ WORKFLOW_CASES = [
 @pytest.mark.parametrize("case_func", PARSER_CASES, ids=lambda func: func.__name__)
 @pytest.mark.unit
 def test_resamplenifti_parser_cases(case_runner, case_func):
+    """
+    Verify resamplenifti parser cases.
+
+    Parameters
+    ----------
+    case_runner : callable
+        Run the selected test case with the test fixtures.
+    case_func : callable
+        Test case to execute.
+    """
     case_runner(case_func)
 
 
 @pytest.mark.parametrize("case_func", WORKFLOW_CASES, ids=lambda func: func.__name__)
 @pytest.mark.slow
 def test_resamplenifti_workflow_cases(case_runner, case_func):
+    """
+    Verify resamplenifti workflow cases.
+
+    Parameters
+    ----------
+    case_runner : callable
+        Run the selected test case with the test fixtures.
+    case_func : callable
+        Test case to execute.
+    """
     case_runner(case_func)
 
 

@@ -6,6 +6,7 @@ import rapidtide.workflows.videotoblood as theworkflow
 
 
 def entrypoint():
+    """Run the `videotoblood` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.main)
 
 

@@ -574,10 +574,6 @@ def main() -> None:
     This function parses command line arguments, prints them for debugging purposes,
     and executes the FDICA algorithm with the specified parameters.
 
-    Parameters
-    ----------
-    None
-
     Returns
     -------
     None

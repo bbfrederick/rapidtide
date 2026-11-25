@@ -27,6 +27,16 @@ from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 def test_runmisc(debug=False, displayplots=False):
     # run showtc
+    """
+    Verify runmisc.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     inputargs = [
         os.path.join(
             get_examples_path(),

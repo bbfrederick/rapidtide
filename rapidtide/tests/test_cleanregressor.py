@@ -74,9 +74,15 @@ def _makeechoedregressor(samplerate=10.0, numpoints=3000, echodelay=8.0, echoamp
 
 
 def compute_acf_tests(debug=False):
-    """The ACF is the input to every sidelobe decision, so its scaling and axis have
+    """
+    The ACF is the input to every sidelobe decision, so its scaling and axis have
     to be right.  corrnormalize already normalizes the energy, so a second division by
     n would leave the values around 1/n and no sidelobe would ever clear a threshold.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("compute_acf_tests")
@@ -107,8 +113,17 @@ def compute_acf_tests(debug=False):
 
 
 def sharpen_regressor_finds_and_removes_sidelobes(testtemproot, debug=False):
-    """A regressor carrying an echo has a sidelobe at the echo delay.  Sharpening has
-    to shrink it - that is the entire purpose of the routine."""
+    """
+    A regressor carrying an echo has a sidelobe at the echo delay.  Sharpening has
+    to shrink it - that is the entire purpose of the routine.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("sharpen_regressor_finds_and_removes_sidelobes")
 
@@ -152,8 +167,17 @@ def sharpen_regressor_finds_and_removes_sidelobes(testtemproot, debug=False):
 
 
 def sharpen_regressor_leaves_a_clean_regressor_alone(testtemproot, debug=False):
-    """With nothing to sharpen the input is returned untouched.  Running the
-    deconvolution anyway would distort a perfectly good regressor."""
+    """
+    With nothing to sharpen the input is returned untouched.  Running the
+    deconvolution anyway would distort a perfectly good regressor.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("sharpen_regressor_leaves_a_clean_regressor_alone")
 
@@ -183,9 +207,18 @@ def sharpen_regressor_leaves_a_clean_regressor_alone(testtemproot, debug=False):
 
 
 def sharpen_regressor_falls_back_when_wiener_does_not_help(testtemproot, debug=False):
-    """Wiener deconvolution is tried first and only kept if it cuts the sidelobe by at
+    """
+    Wiener deconvolution is tried first and only kept if it cuts the sidelobe by at
     least 20 percent; otherwise an iterative echo subtraction runs instead.  Forcing
-    the acceptance threshold to be unreachable exercises that fallback."""
+    the acceptance threshold to be unreachable exercises that fallback.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("sharpen_regressor_falls_back_when_wiener_does_not_help")
 
@@ -215,6 +248,18 @@ def sharpen_regressor_falls_back_when_wiener_does_not_help(testtemproot, debug=F
 
 def test_cleanregressor(debug=False, local=False, displayplots=False):
     # set input and output directories
+    """
+    Verify cleanregressor.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    displayplots : bool, optional
+        Display plots from the test.
+    """
     exampleroot = get_examples_path(local)
     testtemproot = get_test_temp_path(local)
 
@@ -359,13 +404,29 @@ def test_cleanregressor(debug=False, local=False, displayplots=False):
 
 
 def _runwithsidelobe(autodespecklethresh, local=False, debug=False):
-    """Run cleanregressor on a strongly periodic regressor, which puts a sidelobe in its
+    """
+    Run cleanregressor on a strongly periodic regressor, which puts a sidelobe in its
     autocorrelation at the driving period, and report the despeckle_thresh that comes back.
 
     A periodic driver rather than a delayed echo, because the autocorrelation of
     lfo-filtered noise already has its first sidelobe near 9 s from the passband alone -
     that is below 2 * 5.0, so the threshold raise would be a no-op and the test would
-    not discriminate no matter where the echo was put."""
+    not discriminate no matter where the echo was put.
+
+    Parameters
+    ----------
+    autodespecklethresh : object
+        Value supplied as ``autodespecklethresh`` by the test case.
+    local : bool, optional
+        Use the local mode of the test harness.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     outputname = os.path.join(get_test_temp_path(local), "autodespecklethreshtest")
     fmrifreq = 1.0
     oversampfreq = 2.0
@@ -431,7 +492,16 @@ def _runwithsidelobe(autodespecklethresh, local=False, debug=False):
 
 
 def test_sharpenregressor(debug=False, local=False):
-    """Entry point for the ACF sharpening tests."""
+    """
+    Entry point for the ACF sharpening tests.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     testtemproot = get_test_temp_path(local)
     compute_acf_tests(debug=debug)
     sharpen_regressor_finds_and_removes_sidelobes(testtemproot, debug=debug)
@@ -440,9 +510,18 @@ def test_sharpenregressor(debug=False, local=False):
 
 
 def test_autodespecklethresh(local=False, debug=False):
-    """--noautodespecklethresh must hold despeckle_thresh at the requested value even
+    """
+    --noautodespecklethresh must hold despeckle_thresh at the requested value even
     when a sidelobe is found.  Without it the threshold is raised to sidelobetime / 2,
-    which makes the effective threshold vary from run to run."""
+    which makes the effective threshold vary from run to run.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     onthresh, onamp, ontime = _runwithsidelobe(True, local=local, debug=debug)
     offthresh, offamp, offtime = _runwithsidelobe(False, local=local, debug=debug)
 

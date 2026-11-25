@@ -36,7 +36,8 @@ import rapidtide.multiproc as tide_multiproc
 
 
 def _doublingconsumer(inQ, outQ):
-    """Return (index, 2*index) for every index, until the TERM signal arrives.
+    """
+    Return (index, 2*index) for every index, until the TERM signal arrives.
 
     Parameters
     ----------
@@ -44,10 +45,6 @@ def _doublingconsumer(inQ, outQ):
         Source of voxel indices.  A None value means stop.
     outQ : Queue
         Destination for results.
-
-    Returns
-    -------
-    None
     """
     while True:
         val = inQ.get()
@@ -57,7 +54,8 @@ def _doublingconsumer(inQ, outQ):
 
 
 def _skippingconsumer(inQ, outQ):
-    """Return a result for even indices and None for odd ones.
+    """
+    Return a result for even indices and None for odd ones.
 
     A consumer is allowed to report "nothing to see here" by returning None, which
     the collector counts as done but does not accumulate.  This exercises that.
@@ -68,10 +66,6 @@ def _skippingconsumer(inQ, outQ):
         Source of voxel indices.  A None value means stop.
     outQ : Queue
         Destination for results.
-
-    Returns
-    -------
-    None
     """
     while True:
         val = inQ.get()
@@ -100,6 +94,16 @@ class _FakeWorker:
     """
 
     def __init__(self, target=None, args=()):
+        """
+        Initialize the test double for ``_FakeWorker``.
+
+        Parameters
+        ----------
+        target : object or None, optional
+            Value supplied as ``target`` by the test case.
+        args : object, optional
+            Arguments passed to the test helper.
+        """
         self.target = target
         self.args = args
         self.started = False
@@ -140,14 +144,36 @@ class _FakeContext:
     """
 
     def __init__(self):
+        """Initialize the test double for ``_FakeContext``."""
         self.workers = []
 
     def Queue(self):
-        """Return an ordinary in-process queue in place of a multiprocessing one."""
+        """
+        Return an ordinary in-process queue in place of a multiprocessing one.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return thrQueue.Queue()
 
     def Process(self, target=None, args=()):
-        """Return a worker that does nothing, and remember it."""
+        """
+        Return a worker that does nothing, and remember it.
+
+        Parameters
+        ----------
+        target : object or None, optional
+            Value supplied as ``target`` by the test case.
+        args : object, optional
+            Arguments passed to the test helper.
+
+        Returns
+        -------
+        object
+            The ``theworker`` value supplied to the caller.
+        """
         theworker = _FakeWorker(target=target, args=args)
         self.workers.append(theworker)
         return theworker
@@ -157,7 +183,14 @@ class _FakeContext:
 
 
 def maxcpus_reserves_a_core_unless_told_not_to(debug=False):
-    """The reservation is what keeps a full-tilt run from starving the machine."""
+    """
+    The reservation is what keeps a full-tilt run from starving the machine.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("maxcpus_reserves_a_core_unless_told_not_to")
 
@@ -172,7 +205,8 @@ def maxcpus_reserves_a_core_unless_told_not_to(debug=False):
 
 
 def _collectwithathread(theconsumer, thedata, **thekwargs):
-    """Run _process_data against a single live worker thread.
+    """
+    Run _process_data against a single live worker thread.
 
     Parameters
     ----------
@@ -180,7 +214,7 @@ def _collectwithathread(theconsumer, thedata, **thekwargs):
         Consumer function taking (inQ, outQ).
     thedata : list
         Indices to feed through.
-    **thekwargs
+    **thekwargs : dict
         Passed through to _process_data.
 
     Returns
@@ -201,10 +235,16 @@ def _collectwithathread(theconsumer, thedata, **thekwargs):
 
 
 def process_data_handles_a_partial_final_chunk(debug=False):
-    """Work is shipped a chunk at a time, and the last chunk is usually short.
+    """
+    Work is shipped a chunk at a time, and the last chunk is usually short.
 
     The remainder is handled by a separate block of code from the full chunks, so a
     count that divides evenly would leave it unexecuted.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("process_data_handles_a_partial_final_chunk")
@@ -219,7 +259,14 @@ def process_data_handles_a_partial_final_chunk(debug=False):
 
 
 def process_data_handles_an_exact_multiple(debug=False):
-    """With no remainder the trailing block must be skipped, not run on nothing."""
+    """
+    With no remainder the trailing block must be skipped, not run on nothing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("process_data_handles_an_exact_multiple")
 
@@ -232,10 +279,16 @@ def process_data_handles_an_exact_multiple(debug=False):
 
 
 def process_data_counts_but_discards_empty_results(debug=False):
-    """A None from a consumer means "no result", not "no work".
+    """
+    A None from a consumer means "no result", not "no work".
 
     If Nones were counted as missing the collector would wait forever for returns
     that are never coming, so this pins the accounting as well as the filtering.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("process_data_counts_but_discards_empty_results")
@@ -249,7 +302,14 @@ def process_data_counts_but_discards_empty_results(debug=False):
 
 
 def process_data_handles_a_chunk_larger_than_the_data(debug=False):
-    """A chunk size above the item count means everything is one short remainder."""
+    """
+    A chunk size above the item count means everything is one short remainder.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("process_data_handles_a_chunk_larger_than_the_data")
 
@@ -261,7 +321,14 @@ def process_data_handles_a_chunk_larger_than_the_data(debug=False):
 
 
 def process_data_handles_no_data_at_all(debug=False):
-    """An empty mask leaves nothing to do, and that has to return rather than block."""
+    """
+    An empty mask leaves nothing to do, and that has to return rather than block.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("process_data_handles_no_data_at_all")
 
@@ -269,7 +336,16 @@ def process_data_handles_no_data_at_all(debug=False):
 
 
 def process_data_can_show_a_progress_bar(capsys, debug=False):
-    """The progress bar path adds a trailing newline, and must not disturb results."""
+    """
+    The progress bar path adds a trailing newline, and must not disturb results.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("process_data_can_show_a_progress_bar")
 
@@ -285,7 +361,14 @@ def process_data_can_show_a_progress_bar(capsys, debug=False):
 
 
 def run_multithread_processes_every_index(debug=False):
-    """With no mask, every index along the chosen axis is work."""
+    """
+    With no mask, every index along the chosen axis is work.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("run_multithread_processes_every_index")
 
@@ -302,7 +385,14 @@ def run_multithread_processes_every_index(debug=False):
 
 
 def run_multithread_honours_the_mask(debug=False):
-    """A mask is how a run skips voxels outside the brain, so only those survive."""
+    """
+    A mask is how a run skips voxels outside the brain, so only those survive.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("run_multithread_honours_the_mask")
 
@@ -322,7 +412,14 @@ def run_multithread_honours_the_mask(debug=False):
 
 
 def run_multithread_indexes_the_axis_it_is_told_to(debug=False):
-    """indexaxis picks which dimension is iterated over; the other one is untouched."""
+    """
+    Indexaxis picks which dimension is iterated over; the other one is untouched.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("run_multithread_indexes_the_axis_it_is_told_to")
 
@@ -340,7 +437,16 @@ def run_multithread_indexes_the_axis_it_is_told_to(debug=False):
 
 
 def run_multithread_reports_what_it_is_doing(capsys, debug=False):
-    """The verbose line names the unit, which is how a log tells voxels from slices."""
+    """
+    The verbose line names the unit, which is how a log tells voxels from slices.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("run_multithread_reports_what_it_is_doing")
 
@@ -359,8 +465,15 @@ def run_multithread_reports_what_it_is_doing(capsys, debug=False):
 
 
 def run_multithread_rejects_a_mismatched_mask(debug=False):
-    """A mask of the wrong length means the caller has confused two axes, and
-    processing it anyway would silently analyse the wrong voxels."""
+    """
+    A mask of the wrong length means the caller has confused two axes, and
+    processing it anyway would silently analyse the wrong voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("run_multithread_rejects_a_mismatched_mask")
 
@@ -382,7 +495,14 @@ def run_multithread_rejects_a_mismatched_mask(debug=False):
 
 
 def run_multiproc_processes_every_index(debug=False):
-    """The real thing: forked worker processes, over a deliberately small problem."""
+    """
+    The real thing: forked worker processes, over a deliberately small problem.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("run_multiproc_processes_every_index")
 
@@ -399,7 +519,14 @@ def run_multiproc_processes_every_index(debug=False):
 
 
 def run_multiproc_honours_the_mask(debug=False):
-    """Masked out indices are never queued, so no worker ever sees them."""
+    """
+    Masked out indices are never queued, so no worker ever sees them.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("run_multiproc_honours_the_mask")
 
@@ -419,12 +546,18 @@ def run_multiproc_honours_the_mask(debug=False):
 
 
 def run_multiproc_thresholds_the_mask_at_a_half(debug=False):
-    """Both entry points threshold the mask at 0.5, and must agree.
+    """
+    Both entry points threshold the mask at 0.5, and must agree.
 
     A soft-edged mask - the kind a resampled or partial-volume mask produces - is
     where the two could diverge, so it is a fractional mask that is used here rather
     than a binary one.  The threshold matters: a workflow that switches between
     processes and threads must analyse the same voxels either way.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("run_multiproc_thresholds_the_mask_at_a_half")
@@ -456,7 +589,16 @@ def run_multiproc_thresholds_the_mask_at_a_half(debug=False):
 
 
 def run_multiproc_reports_what_it_is_doing(capsys, debug=False):
-    """The verbose line counts processes, not threads."""
+    """
+    The verbose line counts processes, not threads.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("run_multiproc_reports_what_it_is_doing")
 
@@ -473,7 +615,14 @@ def run_multiproc_reports_what_it_is_doing(capsys, debug=False):
 
 
 def run_multiproc_rejects_a_mismatched_mask(debug=False):
-    """As for run_multithread, a mask that does not match the index axis is fatal."""
+    """
+    As for run_multithread, a mask that does not match the index axis is fatal.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("run_multiproc_rejects_a_mismatched_mask")
 
@@ -495,12 +644,18 @@ def run_multiproc_rejects_a_mismatched_mask(debug=False):
 
 
 def run_multiproc_has_a_non_fork_path(debug=False):
-    """Fork is unavailable on Windows and on Python before 3.8, and the fallback
+    """
+    Fork is unavailable on Windows and on Python before 3.8, and the fallback
     branch that covers those cases is otherwise never executed on this machine.
 
     Threads stand in for processes so the branch can be driven end to end; what is
     under test is the branch selection and the surrounding queueing, both of which
     are indifferent to whether the workers are processes or threads.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("run_multiproc_has_a_non_fork_path")
@@ -526,7 +681,14 @@ def run_multiproc_has_a_non_fork_path(debug=False):
 
 
 def run_multiproc_has_a_legacy_python_path(debug=False):
-    """The same fallback is selected by the Python version, independently of the OS."""
+    """
+    The same fallback is selected by the Python version, independently of the OS.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("run_multiproc_has_a_legacy_python_path")
 
@@ -554,7 +716,14 @@ def run_multiproc_has_a_legacy_python_path(debug=False):
 
 
 def test_multiproc(debug=False):
-    """Entry point for the sub-tests that need no fixtures."""
+    """
+    Entry point for the sub-tests that need no fixtures.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     maxcpus_reserves_a_core_unless_told_not_to(debug=debug)
     process_data_handles_a_partial_final_chunk(debug=debug)
     process_data_handles_an_exact_multiple(debug=debug)
@@ -574,7 +743,14 @@ def test_multiproc(debug=False):
 
 
 def test_multiprocmessages(capsys):
-    """Entry point for the sub-tests that capture printed output."""
+    """
+    Entry point for the sub-tests that capture printed output.
+
+    Parameters
+    ----------
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    """
     process_data_can_show_a_progress_bar(capsys)
     run_multithread_reports_what_it_is_doing(capsys)
     run_multiproc_reports_what_it_is_doing(capsys)

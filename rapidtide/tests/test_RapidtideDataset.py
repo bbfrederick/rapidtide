@@ -52,7 +52,29 @@ runninglocally = False
 def create_synthetic_nifti(
     filepath, shape=(10, 10, 10), tr=2.0, toffset=0.0, data=None, affine=None
 ):
-    """Create a synthetic NIfTI file for testing."""
+    """
+    Create a synthetic NIfTI file for testing.
+
+    Parameters
+    ----------
+    filepath : path-like
+        Path to the test input or output file.
+    shape : tuple of int, optional
+        Dimensions of the test array.
+    tr : float, optional
+        Repetition time in seconds.
+    toffset : float, optional
+        Value supplied as ``toffset`` by the test case.
+    data : array-like, optional
+        Data passed to the test helper.
+    affine : numpy.ndarray, optional
+        Affine mapping voxel to world coordinates.
+
+    Returns
+    -------
+    numpy.ndarray
+        Output values supplied to the caller.
+    """
     if data is None:
         data = np.random.rand(*shape).astype(np.float32)
     if affine is None:
@@ -69,7 +91,23 @@ def create_synthetic_nifti(
 
 
 def create_synthetic_timecourse(filepath, length=100, samplerate=1.0):
-    """Create a synthetic timecourse file for testing."""
+    """
+    Create a synthetic timecourse file for testing.
+
+    Parameters
+    ----------
+    filepath : path-like
+        Path to the test input or output file.
+    length : int, optional
+        Value supplied as ``length`` by the test case.
+    samplerate : float, optional
+        Sampling rate in Hz.
+
+    Returns
+    -------
+    numpy.ndarray
+        The ``timedata`` value supplied to the caller.
+    """
     timedata = np.sin(np.linspace(0, 4 * np.pi, length))
     tide_io.writevec(timedata, filepath)
     return timedata
@@ -82,7 +120,19 @@ def create_synthetic_timecourse(filepath, length=100, samplerate=1.0):
 
 @pytest.fixture
 def rapidtide_output(tmp_path):
-    """Create a minimal set of synthetic BIDS-format rapidtide output files."""
+    """
+    Create a minimal set of synthetic BIDS-format rapidtide output files.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+
+    Returns
+    -------
+    str
+        The ``datafileroot`` value supplied to the caller.
+    """
     datafileroot = str(tmp_path / "sub-TESTDATA_")
     shape = (5, 5, 5)
 
@@ -158,6 +208,28 @@ class MockDataset:
     """Mock dataset for testing check_rt_spatialmatch."""
 
     def __init__(self, xdim, ydim, zdim, xsize, ysize, zsize, space, affine):
+        """
+        Initialize the test double for ``MockDataset``.
+
+        Parameters
+        ----------
+        xdim : object
+            Value supplied as ``xdim`` by the test case.
+        ydim : object
+            Value supplied as ``ydim`` by the test case.
+        zdim : object
+            Value supplied as ``zdim`` by the test case.
+        xsize : int
+            Number of voxels along the x axis.
+        ysize : int
+            Number of voxels along the y axis.
+        zsize : object
+            Value supplied as ``zsize`` by the test case.
+        space : object
+            Value supplied as ``space`` by the test case.
+        affine : numpy.ndarray
+            Affine mapping voxel to world coordinates.
+        """
         self.xdim = xdim
         self.ydim = ydim
         self.zdim = zdim
@@ -227,7 +299,14 @@ class TestTimecourse:
     """Tests for the Timecourse class."""
 
     def test_init_basic(self, tmp_path):
-        """Test basic Timecourse initialization."""
+        """
+        Test basic Timecourse initialization.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         # Create a test timecourse file
         filepath = str(tmp_path / "test_timecourse.txt")
         timedata = create_synthetic_timecourse(filepath, length=100)
@@ -252,7 +331,14 @@ class TestTimecourse:
         assert len(tc.timedata) == 100
 
     def test_init_with_label(self, tmp_path):
-        """Test Timecourse initialization with custom label."""
+        """
+        Test Timecourse initialization with custom label.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_timecourse.txt")
         create_synthetic_timecourse(filepath)
 
@@ -269,7 +355,14 @@ class TestTimecourse:
         assert tc.label == "Custom Label"
 
     def test_init_label_defaults_to_name(self, tmp_path):
-        """Test that label defaults to name when not provided."""
+        """
+        Test that label defaults to name when not provided.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_timecourse.txt")
         create_synthetic_timecourse(filepath)
 
@@ -285,7 +378,14 @@ class TestTimecourse:
         assert tc.label == "myname"
 
     def test_readTimeData(self, tmp_path):
-        """Test the readTimeData method."""
+        """
+        Test the readTimeData method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_timecourse.txt")
         expected_data = create_synthetic_timecourse(filepath, length=50)
 
@@ -309,7 +409,14 @@ class TestTimecourse:
         assert hasattr(tc, "skewness")
 
     def test_readTimeData_with_limits(self, tmp_path):
-        """Test readTimeData with specified limits."""
+        """
+        Test readTimeData with specified limits.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_timecourse.txt")
         create_synthetic_timecourse(filepath, length=100)
 
@@ -329,7 +436,16 @@ class TestTimecourse:
         assert tc.specdata is not None
 
     def test_summarize(self, tmp_path, capsys):
-        """Test the summarize method."""
+        """
+        Test the summarize method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         filepath = str(tmp_path / "test_timecourse.txt")
         create_synthetic_timecourse(filepath)
 
@@ -360,7 +476,14 @@ class TestOverlay:
     """Tests for the Overlay class."""
 
     def test_init_basic(self, tmp_path):
-        """Test basic Overlay initialization."""
+        """
+        Test basic Overlay initialization.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         expected_data = create_synthetic_nifti(filepath, shape=(10, 10, 10))
 
@@ -382,7 +505,14 @@ class TestOverlay:
         assert overlay.data is not None
 
     def test_init_with_label(self, tmp_path):
-        """Test Overlay initialization with custom label."""
+        """
+        Test Overlay initialization with custom label.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath)
 
@@ -398,7 +528,14 @@ class TestOverlay:
         assert overlay.label == "Custom Label"
 
     def test_init_label_defaults_to_name(self, tmp_path):
-        """Test that label defaults to name when not provided."""
+        """
+        Test that label defaults to name when not provided.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath)
 
@@ -413,7 +550,14 @@ class TestOverlay:
         assert overlay.label == "myname"
 
     def test_init_with_funcmask(self, tmp_path):
-        """Test Overlay initialization with functional mask."""
+        """
+        Test Overlay initialization with functional mask.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath, shape=(10, 10, 10))
 
@@ -433,7 +577,14 @@ class TestOverlay:
         assert np.array_equal(overlay.funcmask, funcmask)
 
     def test_init_with_geommask(self, tmp_path):
-        """Test Overlay initialization with geometric mask."""
+        """
+        Test Overlay initialization with geometric mask.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath, shape=(10, 10, 10))
 
@@ -453,7 +604,14 @@ class TestOverlay:
         assert np.array_equal(overlay.geommask, geommask)
 
     def test_init_as_mask(self, tmp_path):
-        """Test Overlay initialization as a binary mask."""
+        """
+        Test Overlay initialization as a binary mask.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_mask.nii.gz")
         # Create data with values that should be binarized
         data = np.array([[[0.2, 0.8], [0.3, 0.9]], [[0.1, 0.7], [0.4, 0.6]]]).astype(np.float32)
@@ -472,7 +630,14 @@ class TestOverlay:
         assert np.all(np.isin(overlay.data, [0.0, 1.0]))
 
     def test_init_invert_on_load(self, tmp_path):
-        """Test Overlay initialization with inversion on load."""
+        """
+        Test Overlay initialization with inversion on load.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         original_data = np.ones((5, 5, 5)).astype(np.float32) * 2.0
         create_synthetic_nifti(filepath, shape=(5, 5, 5), data=original_data)
@@ -490,7 +655,14 @@ class TestOverlay:
         assert np.allclose(overlay.data, -original_data)
 
     def test_duplicate(self, tmp_path):
-        """Test the duplicate method."""
+        """
+        Test the duplicate method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath)
 
@@ -509,7 +681,14 @@ class TestOverlay:
         assert duplicate.filename == overlay.filename
 
     def test_updateStats(self, tmp_path):
-        """Test the updateStats method."""
+        """
+        Test the updateStats method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         data = np.random.rand(10, 10, 10).astype(np.float32)
         create_synthetic_nifti(filepath, shape=(10, 10, 10), data=data)
@@ -532,7 +711,14 @@ class TestOverlay:
         assert overlay.minval <= overlay.maxval
 
     def test_setData(self, tmp_path):
-        """Test the setData method."""
+        """
+        Test the setData method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath, shape=(5, 5, 5))
 
@@ -550,7 +736,14 @@ class TestOverlay:
         assert np.allclose(overlay.data, new_data)
 
     def test_setData_as_mask(self, tmp_path):
-        """Test setData with isaMask=True."""
+        """
+        Test setData with isaMask=True.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         # Create data with shape that matches what we'll set
         data = np.array([[[0.3, 0.7], [0.2, 0.8]], [[0.1, 0.9], [0.4, 0.6]]]).astype(np.float32)
@@ -573,7 +766,14 @@ class TestOverlay:
         assert np.all(np.isin(overlay.data, [0.0, 1.0]))
 
     def test_readImageData(self, tmp_path):
-        """Test the readImageData method."""
+        """
+        Test the readImageData method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         # Use 4D data to properly test TR (3D NIfTI doesn't store TR in zooms)
         expected_data = create_synthetic_nifti(filepath, shape=(8, 9, 10, 5), tr=1.5)
@@ -594,7 +794,14 @@ class TestOverlay:
         assert overlay.data.shape == (8, 9, 10, 5)
 
     def test_setLabel(self, tmp_path):
-        """Test the setLabel method."""
+        """
+        Test the setLabel method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath)
 
@@ -610,7 +817,14 @@ class TestOverlay:
         assert overlay.label == "New Label"
 
     def test_real2tr(self, tmp_path):
-        """Test the real2tr method."""
+        """
+        Test the real2tr method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         # Use 4D data to properly set TR
         create_synthetic_nifti(filepath, shape=(5, 5, 5, 10), tr=2.0, toffset=1.0)
@@ -631,7 +845,14 @@ class TestOverlay:
         assert overlay.real2tr(5.0) == 2.0
 
     def test_tr2real(self, tmp_path):
-        """Test the tr2real method."""
+        """
+        Test the tr2real method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         # Use 4D data to properly set TR
         create_synthetic_nifti(filepath, shape=(5, 5, 5, 10), tr=2.0, toffset=1.0)
@@ -652,7 +873,14 @@ class TestOverlay:
         assert overlay.tr2real(3) == 7.0
 
     def test_setXYZpos(self, tmp_path):
-        """Test the setXYZpos method."""
+        """
+        Test the setXYZpos method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath)
 
@@ -670,7 +898,14 @@ class TestOverlay:
         assert overlay.zpos == 7
 
     def test_setTpos(self, tmp_path):
-        """Test the setTpos method."""
+        """
+        Test the setTpos method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath, shape=(10, 10, 10, 20))
 
@@ -690,7 +925,14 @@ class TestOverlay:
         assert overlay.tpos == overlay.tdim - 1
 
     def test_getFocusVal_3d(self, tmp_path):
-        """Test getFocusVal for 3D data."""
+        """
+        Test getFocusVal for 3D data.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         data = np.arange(1000).reshape((10, 10, 10)).astype(np.float32)
         create_synthetic_nifti(filepath, shape=(10, 10, 10), data=data)
@@ -708,7 +950,14 @@ class TestOverlay:
         assert overlay.getFocusVal() == expected_value
 
     def test_getFocusVal_4d(self, tmp_path):
-        """Test getFocusVal for 4D data."""
+        """
+        Test getFocusVal for 4D data.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         data = np.arange(2000).reshape((10, 10, 10, 2)).astype(np.float32)
         create_synthetic_nifti(filepath, shape=(10, 10, 10, 2), data=data)
@@ -727,7 +976,14 @@ class TestOverlay:
         assert overlay.getFocusVal() == expected_value
 
     def test_setFuncMask(self, tmp_path):
-        """Test the setFuncMask method."""
+        """
+        Test the setFuncMask method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath, shape=(10, 10, 10))
 
@@ -747,7 +1003,14 @@ class TestOverlay:
         assert np.array_equal(overlay.funcmask, funcmask)
 
     def test_setFuncMask_none(self, tmp_path):
-        """Test setFuncMask with None creates default mask."""
+        """
+        Test setFuncMask with None creates default mask.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath, shape=(10, 10, 10))
 
@@ -764,7 +1027,14 @@ class TestOverlay:
         assert overlay.funcmask.shape == (10, 10, 10)
 
     def test_setGeomMask(self, tmp_path):
-        """Test the setGeomMask method."""
+        """
+        Test the setGeomMask method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath, shape=(10, 10, 10))
 
@@ -784,7 +1054,14 @@ class TestOverlay:
         assert np.array_equal(overlay.geommask, geommask)
 
     def test_setGeomMask_none(self, tmp_path):
-        """Test setGeomMask with None creates default mask."""
+        """
+        Test setGeomMask with None creates default mask.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath, shape=(10, 10, 10))
 
@@ -801,7 +1078,14 @@ class TestOverlay:
         assert overlay.geommask.shape == (10, 10, 10)
 
     def test_maskData(self, tmp_path):
-        """Test the maskData method."""
+        """
+        Test the maskData method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         data = np.ones((10, 10, 10)).astype(np.float32) * 5.0
         create_synthetic_nifti(filepath, shape=(10, 10, 10), data=data)
@@ -825,7 +1109,14 @@ class TestOverlay:
         assert np.all(overlay.maskeddata[:5, :, :] == 5.0)
 
     def test_setReport(self, tmp_path):
-        """Test the setReport method."""
+        """
+        Test the setReport method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath)
 
@@ -844,7 +1135,14 @@ class TestOverlay:
         assert overlay.report is False
 
     def test_setTR(self, tmp_path):
-        """Test the setTR method."""
+        """
+        Test the setTR method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath, tr=2.0)
 
@@ -860,7 +1158,14 @@ class TestOverlay:
         assert overlay.tr == 3.5
 
     def test_settoffset(self, tmp_path):
-        """Test the settoffset method."""
+        """
+        Test the settoffset method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath)
 
@@ -876,7 +1181,14 @@ class TestOverlay:
         assert overlay.toffset == 5.0
 
     def test_setisdisplayed(self, tmp_path):
-        """Test the setisdisplayed method."""
+        """
+        Test the setisdisplayed method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath)
 
@@ -895,7 +1207,16 @@ class TestOverlay:
         assert overlay.display_state is False
 
     def test_summarize(self, tmp_path, capsys):
-        """Test the summarize method."""
+        """
+        Test the summarize method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         create_synthetic_nifti(filepath)
 
@@ -916,7 +1237,14 @@ class TestOverlay:
         assert "zdim:" in captured.out
 
     def test_real2vox(self, tmp_path):
-        """Test the real2vox method."""
+        """
+        Test the real2vox method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         # Create with known affine and 4D data for proper TR handling
         affine = np.eye(4)
@@ -941,7 +1269,14 @@ class TestOverlay:
         assert isinstance(t, int)
 
     def test_vox2real(self, tmp_path):
-        """Test the vox2real method."""
+        """
+        Test the vox2real method.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         # Use 4D data for proper TR handling
         create_synthetic_nifti(filepath, shape=(10, 10, 10, 5), tr=2.0, toffset=0.0)
@@ -960,7 +1295,14 @@ class TestOverlay:
         assert isinstance(result, np.ndarray)
 
     def test_orientation_detection_neurological(self, tmp_path):
-        """Test neurological orientation detection."""
+        """
+        Test neurological orientation detection.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         affine = np.eye(4)
         affine[0, 0] = -2.0  # Negative = neurological
@@ -979,7 +1321,14 @@ class TestOverlay:
         assert overlay.RLfactor == -1.0
 
     def test_orientation_detection_radiological(self, tmp_path):
-        """Test radiological orientation detection."""
+        """
+        Test radiological orientation detection.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         filepath = str(tmp_path / "test_overlay.nii.gz")
         affine = np.eye(4)
         affine[0, 0] = 2.0  # Positive = radiological
@@ -1007,7 +1356,14 @@ class TestRapidtideDataset:
     """Tests for the RapidtideDataset class using synthetic output files."""
 
     def test_init_basic(self, rapidtide_output):
-        """Test basic RapidtideDataset initialization."""
+        """
+        Test basic RapidtideDataset initialization.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         thesubject = RapidtideDataset(
             "main",
             rapidtide_output,
@@ -1028,7 +1384,14 @@ class TestRapidtideDataset:
         assert thesubject.bidsformat is True
 
     def test_getoverlays(self, rapidtide_output):
-        """Test the getoverlays method."""
+        """
+        Test the getoverlays method.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         thesubject = RapidtideDataset(
             "main",
             rapidtide_output,
@@ -1042,7 +1405,14 @@ class TestRapidtideDataset:
         assert "lagtimes" in overlays
 
     def test_getregressors(self, rapidtide_output):
-        """Test the getregressors method."""
+        """
+        Test the getregressors method.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         thesubject = RapidtideDataset(
             "main",
             rapidtide_output,
@@ -1055,7 +1425,14 @@ class TestRapidtideDataset:
         assert "prefilt" in regressors
 
     def test_setfocusregressor(self, rapidtide_output):
-        """Test the setfocusregressor method."""
+        """
+        Test the setfocusregressor method.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         thesubject = RapidtideDataset(
             "main",
             rapidtide_output,
@@ -1072,7 +1449,14 @@ class TestRapidtideDataset:
         assert thesubject.focusregressor == "prefilt"
 
     def test_setfocusmap(self, rapidtide_output):
-        """Test the setfocusmap method."""
+        """
+        Test the setfocusmap method.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         thesubject = RapidtideDataset(
             "main",
             rapidtide_output,
@@ -1089,7 +1473,14 @@ class TestRapidtideDataset:
         assert thesubject.focusmap == "lagtimes"
 
     def test_setFuncMaskName(self, rapidtide_output):
-        """Test the setFuncMaskName method."""
+        """
+        Test the setFuncMaskName method.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         thesubject = RapidtideDataset(
             "main",
             rapidtide_output,
@@ -1101,7 +1492,14 @@ class TestRapidtideDataset:
         assert thesubject.funcmaskname == "new_mask_name"
 
     def test_dataset_dimensions(self, rapidtide_output):
-        """Test that dataset dimensions are properly set."""
+        """
+        Test that dataset dimensions are properly set.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         thesubject = RapidtideDataset(
             "main",
             rapidtide_output,
@@ -1117,7 +1515,14 @@ class TestRapidtideDataset:
         assert thesubject.zsize > 0
 
     def test_regressorfilterlimits(self, rapidtide_output):
-        """Test that regressor filter limits are set."""
+        """
+        Test that regressor filter limits are set.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         thesubject = RapidtideDataset(
             "main",
             rapidtide_output,
@@ -1139,7 +1544,14 @@ class TestIntegration:
     """Integration tests using synthetic rapidtide output."""
 
     def test_full_workflow(self, rapidtide_output):
-        """Test a complete workflow with RapidtideDataset."""
+        """
+        Test a complete workflow with RapidtideDataset.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         # Create dataset
         thesubject = RapidtideDataset(
             "main",
@@ -1191,20 +1603,48 @@ class FakeGradient:
     """
 
     def __init__(self):
+        """Initialize the test double for ``FakeGradient``."""
         self.restoredstates = []
 
     def restoreState(self, thestate):
-        """Record a gradient state instead of rendering it."""
+        """
+        Record a gradient state instead of rendering it.
+
+        Parameters
+        ----------
+        thestate : object
+            Value supplied as ``thestate`` by the test case.
+        """
         self.restoredstates.append(thestate)
 
     def getLookupTable(self, thesize, alpha=True):
-        """Return a lookup table of the requested size, filled with zeros."""
+        """
+        Return a lookup table of the requested size, filled with zeros.
+
+        Parameters
+        ----------
+        thesize : object
+            Value supplied as ``thesize`` by the test case.
+        alpha : bool, optional
+            Setting for ``alpha`` in the test case.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.zeros((thesize, 4 if alpha else 3), dtype=np.uint8)
 
 
 @pytest.fixture
 def fake_gradient(monkeypatch):
-    """Replace getagradient in the RapidtideDataset namespace with a fake.
+    """
+    Replace getagradient in the RapidtideDataset namespace with a fake.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
 
     Yields
     ------
@@ -1217,7 +1657,8 @@ def fake_gradient(monkeypatch):
 
 
 def _writemnistylenifti(filepath, shape=(61, 73, 61), formcode=4, xscale=-3.0):
-    """Write a nifti that claims to be in a standard space.
+    """
+    Write a nifti that claims to be in a standard space.
 
     Space detection keys off the form code plus the array dimensions, so both have
     to be set deliberately; a default header never reaches that branch.
@@ -1234,10 +1675,6 @@ def _writemnistylenifti(filepath, shape=(61, 73, 61), formcode=4, xscale=-3.0):
     xscale : float, optional
         The [0][0] entry of the affine.  Negative is neurological, positive
         radiological, zero indeterminate.
-
-    Returns
-    -------
-    None
     """
     theaffine = np.eye(4)
     theaffine[0, 0] = xscale
@@ -1252,12 +1689,18 @@ def _writemnistylenifti(filepath, shape=(61, 73, 61), formcode=4, xscale=-3.0):
 
 @pytest.fixture
 def legacy_output(tmp_path):
-    """Create a rapidtide output set using the oldest, non-BIDS file names.
+    """
+    Create a rapidtide output set using the oldest, non-BIDS file names.
 
     The dataset class supports three naming generations, and picks between them by
     looking for particular files.  Only the BIDS one is otherwise exercised, so the
     legacy branches - a different map list, a different mask list and a different set
     of regressor filenames - are reached only through a fixture like this one.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
 
     Returns
     -------
@@ -1315,7 +1758,16 @@ class TestOverlayLUT:
     """Tests for the lookup table setup an Overlay does when init_LUT is True."""
 
     def test_lut_is_built_on_init(self, tmp_path, fake_gradient):
-        """With init_LUT on, the overlay builds a gradient and a lookup table."""
+        """
+        With init_LUT on, the overlay builds a gradient and a lookup table.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        fake_gradient : object
+            Test substitute for ``gradient``.
+        """
         thepath = str(tmp_path / "lutmap.nii.gz")
         create_synthetic_nifti(thepath, shape=(4, 4, 4))
 
@@ -1327,9 +1779,18 @@ class TestOverlayLUT:
         assert len(fake_gradient.restoredstates) == 1
 
     def test_alpha_is_applied_to_intermediate_ticks_only(self, tmp_path, fake_gradient):
-        """The alpha override rewrites the middle colour stops but leaves the two
+        """
+        The alpha override rewrites the middle colour stops but leaves the two
         ends alone, which is what keeps a colour table transparent in the middle and
-        opaque at its extremes."""
+        opaque at its extremes.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        fake_gradient : object
+            Test substitute for ``gradient``.
+        """
         thepath = str(tmp_path / "alphamap.nii.gz")
         create_synthetic_nifti(thepath, shape=(4, 4, 4))
 
@@ -1362,7 +1823,16 @@ class TestOverlayLUT:
         assert theoverlay.LUTname == "testlut"
 
     def test_alpha_none_leaves_the_ticks_alone(self, tmp_path, fake_gradient):
-        """Passing no alpha means only the ends are touched."""
+        """
+        Passing no alpha means only the ends are touched.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        fake_gradient : object
+            Test substitute for ``gradient``.
+        """
         thepath = str(tmp_path / "noalpha.nii.gz")
         create_synthetic_nifti(thepath, shape=(4, 4, 4))
 
@@ -1391,11 +1861,17 @@ class TestOverlayMaskValues:
     """Tests for masks built from a list of label values rather than a threshold."""
 
     def test_filevals_select_specific_labels(self, tmp_path):
-        """A filespec with a value list turns a label image into a binary mask
+        """
+        A filespec with a value list turns a label image into a binary mask
         containing exactly those labels.
 
         This is how a segmentation is turned into a gray or white matter mask, so
         the values not asked for have to come out as zero rather than as themselves.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
         """
         thepath = str(tmp_path / "labels.nii.gz")
         thelabels = np.zeros((4, 4, 4), dtype=np.float32)
@@ -1421,7 +1897,14 @@ class TestOverlaySpaceDetection:
     """Tests for the standard-space and orientation detection done at load time."""
 
     def test_mni152_grid_is_recognised(self, tmp_path):
-        """A form code of 4 on one of the two MNI152 grids means MNI152."""
+        """
+        A form code of 4 on one of the two MNI152 grids means MNI152.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         thepath = str(tmp_path / "mni3mm.nii.gz")
         _writemnistylenifti(thepath, shape=(61, 73, 61))
 
@@ -1431,7 +1914,14 @@ class TestOverlaySpaceDetection:
         assert theoverlay.RLfactor == -1.0
 
     def test_other_standard_grid_is_assumed_asymmetric(self, tmp_path):
-        """A form code of 4 on any other grid is taken to be the asymmetric template."""
+        """
+        A form code of 4 on any other grid is taken to be the asymmetric template.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         thepath = str(tmp_path / "mniother.nii.gz")
         _writemnistylenifti(thepath, shape=(50, 50, 50))
 
@@ -1439,8 +1929,17 @@ class TestOverlaySpaceDetection:
         assert theoverlay.space == "MNI152NLin2009cAsym"
 
     def test_radiological_and_indeterminate_orientation(self, tmp_path, capsys):
-        """The sign of the affine's first entry is the orientation, and a zero there
-        means the file does not say."""
+        """
+        The sign of the affine's first entry is the orientation, and a zero there
+        means the file does not say.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         theradpath = str(tmp_path / "radiological.nii.gz")
         _writemnistylenifti(theradpath, shape=(20, 20, 20), formcode=1, xscale=3.0)
         theradoverlay = Overlay("rad", theradpath, "base", init_LUT=False, verbose=2)
@@ -1494,7 +1993,14 @@ class TestLegacyNaming:
     """Tests for the two pre-BIDS naming conventions."""
 
     def test_oldstyle_dataset_loads(self, legacy_output):
-        """The oldest layout has no desc- prefixes anywhere."""
+        """
+        The oldest layout has no desc- prefixes anywhere.
+
+        Parameters
+        ----------
+        legacy_output : object
+            Legacy workflow output supplied by the test fixture.
+        """
         thesubject = RapidtideDataset("legacy", legacy_output, init_LUT=False, verbose=2)
 
         assert thesubject.bidsformat is False
@@ -1505,8 +2011,15 @@ class TestLegacyNaming:
         assert "prefilt" in thesubject.getregressors()
 
     def test_newstyle_dataset_is_detected_by_fitmask(self, legacy_output):
-        """The intermediate layout is told apart by the presence of fitmask.nii.gz,
-        and renames two things: the fit mask, and the linear fit coefficient map."""
+        """
+        The intermediate layout is told apart by the presence of fitmask.nii.gz,
+        and renames two things: the fit mask, and the linear fit coefficient map.
+
+        Parameters
+        ----------
+        legacy_output : object
+            Legacy workflow output supplied by the test fixture.
+        """
         create_synthetic_nifti(
             legacy_output + "fitmask.nii.gz",
             shape=(5, 5, 5),
@@ -1522,8 +2035,15 @@ class TestLegacyNaming:
         assert "lagmask" in thesubject.getoverlays()
 
     def test_newstyle_usecorrout(self, legacy_output):
-        """The intermediate layout has its own names for the similarity function
-        and the fit failure reasons."""
+        """
+        The intermediate layout has its own names for the similarity function
+        and the fit failure reasons.
+
+        Parameters
+        ----------
+        legacy_output : object
+            Legacy workflow output supplied by the test fixture.
+        """
         create_synthetic_nifti(
             legacy_output + "fitmask.nii.gz",
             shape=(5, 5, 5),
@@ -1541,8 +2061,15 @@ class TestLegacyNaming:
         assert "failimage" in thesubject.getoverlays()
 
     def test_userise_swaps_in_the_epoch_maps(self, legacy_output):
-        """A RISE analysis produces per-epoch maps instead of the width and norm
-        maps, so the map list is different again."""
+        """
+        A RISE analysis produces per-epoch maps instead of the width and norm
+        maps, so the map list is different again.
+
+        Parameters
+        ----------
+        legacy_output : object
+            Legacy workflow output supplied by the test fixture.
+        """
         for themap in ["risetime_epoch_0", "starttime_epoch_0", "maxamp_epoch_0"]:
             create_synthetic_nifti(legacy_output + themap + ".nii.gz", shape=(5, 5, 5))
 
@@ -1557,8 +2084,15 @@ class TestLegacyNaming:
         assert "fitNorm" not in theoverlays
 
     def test_usecorrout_adds_the_similarity_function(self, legacy_output):
-        """The similarity function and the fit failure reasons are large and only
-        loaded on request."""
+        """
+        The similarity function and the fit failure reasons are large and only
+        loaded on request.
+
+        Parameters
+        ----------
+        legacy_output : object
+            Legacy workflow output supplied by the test fixture.
+        """
         create_synthetic_nifti(legacy_output + "corrout.nii.gz", shape=(5, 5, 5, 7))
         create_synthetic_nifti(legacy_output + "failimage.nii.gz", shape=(5, 5, 5, 7))
 
@@ -1572,7 +2106,14 @@ class TestLegacyNaming:
         assert theoverlays["corrout"].tdim == 7
 
     def test_usecorrout_in_bids_format(self, rapidtide_output):
-        """The BIDS layout names the same two files differently."""
+        """
+        The BIDS layout names the same two files differently.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         create_synthetic_nifti(rapidtide_output + "desc-corrout_info.nii.gz", shape=(5, 5, 5, 7))
         create_synthetic_nifti(
             rapidtide_output + "desc-corrfitfailreason_info.nii.gz", shape=(5, 5, 5, 7)
@@ -1596,7 +2137,16 @@ class TestOptionalOverlays:
     loaded only if a matching file turns up."""
 
     def test_named_anatomic_is_used(self, rapidtide_output, tmp_path):
-        """An explicitly named anatomic beats everything else."""
+        """
+        An explicitly named anatomic beats everything else.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         theanatpath = str(tmp_path / "myanat.nii.gz")
         create_synthetic_nifti(theanatpath, shape=(5, 5, 5))
 
@@ -1608,8 +2158,17 @@ class TestOptionalOverlays:
         assert "anatomic" in thesubject.allloadedmaps
 
     def test_named_anatomic_that_does_not_exist_is_skipped(self, rapidtide_output, tmp_path):
-        """A name that points nowhere leaves the dataset without an anatomic rather
-        than falling through to one of the defaults."""
+        """
+        A name that points nowhere leaves the dataset without an anatomic rather
+        than falling through to one of the defaults.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         create_synthetic_nifti(rapidtide_output + "mean.nii.gz", shape=(5, 5, 5))
 
         thesubject = RapidtideDataset(
@@ -1623,8 +2182,15 @@ class TestOptionalOverlays:
         assert "anatomic" not in thesubject.getoverlays()
 
     def test_highres_head_is_preferred_over_highres(self, rapidtide_output):
-        """With both present, the head image wins, since it shows more of the
-        anatomy an overlay is being judged against."""
+        """
+        With both present, the head image wins, since it shows more of the
+        anatomy an overlay is being judged against.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         create_synthetic_nifti(rapidtide_output + "highres_head.nii.gz", shape=(5, 5, 5))
         create_synthetic_nifti(rapidtide_output + "highres.nii.gz", shape=(5, 5, 5))
 
@@ -1633,7 +2199,14 @@ class TestOptionalOverlays:
         assert thesubject.overlays["anatomic"].filename.endswith("highres_head.nii.gz")
 
     def test_highres_is_used_when_there_is_no_head(self, rapidtide_output):
-        """Without the head image the brain-only one is next in line."""
+        """
+        Without the head image the brain-only one is next in line.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         create_synthetic_nifti(rapidtide_output + "highres.nii.gz", shape=(5, 5, 5))
 
         thesubject = RapidtideDataset("main", rapidtide_output, init_LUT=False, verbose=2)
@@ -1641,7 +2214,14 @@ class TestOptionalOverlays:
         assert thesubject.overlays["anatomic"].filename.endswith("highres.nii.gz")
 
     def test_mean_image_is_the_last_resort(self, rapidtide_output):
-        """With no anatomic of any kind, the mean of the functional data stands in."""
+        """
+        With no anatomic of any kind, the mean of the functional data stands in.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         create_synthetic_nifti(rapidtide_output + "mean.nii.gz", shape=(5, 5, 5))
 
         thesubject = RapidtideDataset("main", rapidtide_output, init_LUT=False, verbose=2)
@@ -1649,14 +2229,30 @@ class TestOptionalOverlays:
         assert thesubject.overlays["anatomic"].filename.endswith("mean.nii.gz")
 
     def test_no_anatomic_at_all(self, rapidtide_output):
-        """None of the candidates existing is not an error."""
+        """
+        None of the candidates existing is not an error.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         thesubject = RapidtideDataset("main", rapidtide_output, init_LUT=False, verbose=2)
 
         assert "anatomic" not in thesubject.getoverlays()
         assert "anatomic" not in thesubject.allloadedmaps
 
     def test_named_geometric_mask_is_used(self, rapidtide_output, tmp_path):
-        """A geometric mask trims the display to the brain."""
+        """
+        A geometric mask trims the display to the brain.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         themaskpath = str(tmp_path / "brainmask.nii.gz")
         create_synthetic_nifti(
             themaskpath, shape=(5, 5, 5), data=np.ones((5, 5, 5), dtype=np.float32)
@@ -1670,8 +2266,17 @@ class TestOptionalOverlays:
         assert "geommask" in thesubject.allloadedmaps
 
     def test_tissue_masks_are_loaded_from_their_specs(self, rapidtide_output, tmp_path):
-        """Gray and white masks are given as file specs, so they can name the label
-        values to pull out of a segmentation."""
+        """
+        Gray and white masks are given as file specs, so they can name the label
+        values to pull out of a segmentation.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         theseg = np.zeros((5, 5, 5), dtype=np.float32)
         theseg[0, :, :] = 2.0
         theseg[1, :, :] = 41.0
@@ -1694,7 +2299,8 @@ class TestOptionalOverlays:
         assert np.all(thesubject.overlays["whitemask"].data[1, :, :] == 1)
 
     def test_a_tissue_mask_that_does_not_exist_returns_none(self, rapidtide_output, tmp_path):
-        """A spec naming a file that is not there returns None rather than False.
+        """
+        A spec naming a file that is not there returns None rather than False.
 
         Pinned, not fixed.  Both loaders are annotated ``-> bool``, and both return
         True or False on every path except this one: when the spec is set but the
@@ -1702,6 +2308,13 @@ class TestOptionalOverlays:
         None is returned.  The callers write ``if self._loadgraymask():``, so None
         behaves the same as False and nothing breaks today - but the annotation is
         wrong, and any caller comparing against False explicitly would be surprised.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
         """
         thesubject = RapidtideDataset(
             "main",
@@ -1721,8 +2334,15 @@ class TestOptionalOverlays:
         assert "geommask" not in thesubject.allloadedmaps
 
     def test_forceoffset_overrides_the_header_toffset(self, rapidtide_output):
-        """A dataset whose headers carry the wrong start time can be corrected at
-        load, which is what this switch is for."""
+        """
+        A dataset whose headers carry the wrong start time can be corrected at
+        load, which is what this switch is for.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         thesubject = RapidtideDataset(
             "main",
             rapidtide_output,
@@ -1735,7 +2355,8 @@ class TestOptionalOverlays:
         assert thesubject.overlays["lagtimes"].toffset == 12.5
 
     def test_forcetr_raises_because_trval_is_never_set(self, rapidtide_output):
-        """Asking for a forced TR fails with an AttributeError.
+        """
+        Asking for a forced TR fails with an AttributeError.
 
         Pinned, not fixed.  setupoverlays does ``self.overlays[themap].setTR(
         self.trval)`` when forcetr is on, but ``trval`` is neither a constructor
@@ -1744,6 +2365,11 @@ class TestOptionalOverlays:
         ``args.trval``, and then constructs the dataset without passing it, so the
         option cannot work: it raises before any overlay is set up.  The fix is to
         thread trval through the constructor the way offsettime already is.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
         """
         with pytest.raises(AttributeError, match="trval"):
             RapidtideDataset(
@@ -1760,8 +2386,15 @@ class TestOptionalOverlays:
         assert thesubject.overlays["lagtimes"].tr == 3.7
 
     def test_no_geommask_without_a_coordinate_space(self, rapidtide_output):
-        """With no mask named and no standard space, there is nothing to fall back
-        on and the dataset simply has no geometric mask."""
+        """
+        With no mask named and no standard space, there is nothing to fall back
+        on and the dataset simply has no geometric mask.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         thesubject = RapidtideDataset("main", rapidtide_output, init_LUT=False, verbose=2)
 
         assert thesubject._loadgeommask() is False
@@ -1778,13 +2411,21 @@ class TestRunOptionsDefaults:
 
     @pytest.fixture
     def sparse_output(self, tmp_path, monkeypatch):
-        """A dataset whose run options carry nothing but a pass count.
+        """
+        A dataset whose run options carry nothing but a pass count.
 
         Older rapidtide versions wrote fewer keys, so setupregressors has a fallback
         for every one of them; a complete options file leaves all of those
         unexecuted.  The options are supplied by patching the reader rather than by
         writing a sparse file, because readoptionsfile does its own backfilling on
         the way past and would put most of the missing keys back.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
 
         Returns
         -------
@@ -1817,7 +2458,14 @@ class TestRunOptionsDefaults:
         return thefileroot
 
     def test_every_missing_option_gets_a_default(self, sparse_output):
-        """Each absent key falls back to a documented default rather than raising."""
+        """
+        Each absent key falls back to a documented default rather than raising.
+
+        Parameters
+        ----------
+        sparse_output : object
+            Value supplied as ``sparse_output`` by the test case.
+        """
         thesubject = RapidtideDataset("sparse", sparse_output, init_LUT=False, verbose=2)
 
         assert thesubject.regressorfilterlimits == (0.0, 100.0)
@@ -1829,8 +2477,15 @@ class TestRunOptionsDefaults:
         assert thesubject.regressorsimcalclimits == (0.0, 10000000.0)
 
     def test_pass_count_comes_from_passes_when_actual_passes_is_absent(self, sparse_output):
-        """With more than four passes, the last two regressors loaded are the last
-        two actually run, rather than a fixed pass 3 and pass 4."""
+        """
+        With more than four passes, the last two regressors loaded are the last
+        two actually run, rather than a fixed pass 3 and pass 4.
+
+        Parameters
+        ----------
+        sparse_output : object
+            Value supplied as ``sparse_output`` by the test case.
+        """
         thesubject = RapidtideDataset("sparse", sparse_output, init_LUT=False, verbose=2)
 
         assert thesubject.numberofpasses == 6
@@ -1838,8 +2493,15 @@ class TestRunOptionsDefaults:
         assert thelabels[-2:] == ["pass5", "pass6"]
 
     def test_a_required_regressor_that_is_missing_is_fatal(self, tmp_path):
-        """Some regressors are optional and some are not; the initial moving
-        regressor is the analysis input, so its absence cannot be shrugged off."""
+        """
+        Some regressors are optional and some are not; the initial moving
+        regressor is the analysis input, so its absence cannot be shrugged off.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         thefileroot = str(tmp_path / "noreg_")
         with open(thefileroot + "desc-runoptions_info.json", "w") as thefile:
             json.dump({"passes": 2, "lowerpass": 0.01, "upperpass": 0.15}, thefile)
@@ -1855,7 +2517,8 @@ class TestRunOptionsDefaults:
 
 
 def _writestandardspacenifti(filepath, shape, voxelsize):
-    """Write a nifti that declares itself to be in a standard space.
+    """
+    Write a nifti that declares itself to be in a standard space.
 
     Parameters
     ----------
@@ -1865,10 +2528,6 @@ def _writestandardspacenifti(filepath, shape, voxelsize):
         Array shape.
     voxelsize : float
         Isotropic voxel size, in mm.
-
-    Returns
-    -------
-    None
     """
     theaffine = np.eye(4)
     theaffine[0, 0] = -voxelsize
@@ -1927,11 +2586,19 @@ def _makestandardspacedataset(tmp_path, thename, shape, voxelsize):
 
 @pytest.fixture
 def fake_fsldir(tmp_path, monkeypatch):
-    """Point FSLDIR at a temporary tree holding the 2mm MNI152 template and mask.
+    """
+    Point FSLDIR at a temporary tree holding the 2mm MNI152 template and mask.
 
     The real FSL templates are found only on machines with FSL installed, so a test
     that depended on them would pass locally and be skipped in CI - exactly the
     branches most worth covering.  This makes them present everywhere.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
 
     Yields
     ------
@@ -1954,8 +2621,17 @@ class TestStandardSpaceDatasets:
     dataset triggers."""
 
     def test_mni152_2mm_finds_its_template_and_mask(self, tmp_path, fake_fsldir):
-        """At 2mm in MNI152 both the anatomic template and the brain mask come from
-        the FSL installation."""
+        """
+        At 2mm in MNI152 both the anatomic template and the brain mask come from
+        the FSL installation.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        fake_fsldir : object
+            Fixture providing a simulated FSL installation.
+        """
         thefileroot = _makestandardspacedataset(tmp_path, "mni2mm_", (91, 109, 91), 2.0)
 
         thesubject = RapidtideDataset("mni", thefileroot, init_LUT=False, verbose=2)
@@ -1967,8 +2643,17 @@ class TestStandardSpaceDatasets:
         assert "geommask" in thesubject.allloadedmaps
 
     def test_mni152_2mm_loads_the_atlas(self, tmp_path, fake_fsldir):
-        """The arterial territory atlas ships with rapidtide at 2mm, and is what
-        turns a lag map into a per-territory summary."""
+        """
+        The arterial territory atlas ships with rapidtide at 2mm, and is what
+        turns a lag map into a per-territory summary.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        fake_fsldir : object
+            Fixture providing a simulated FSL installation.
+        """
         thefileroot = _makestandardspacedataset(tmp_path, "mniatlas_", (91, 109, 91), 2.0)
 
         thesubject = RapidtideDataset("mni", thefileroot, useatlas=True, init_LUT=False, verbose=2)
@@ -1980,8 +2665,19 @@ class TestStandardSpaceDatasets:
         assert len(thesubject.atlaslabels) > 0
 
     def test_mni152_3mm_has_no_atlas_to_load(self, tmp_path, fake_fsldir, capsys):
-        """Only the 2mm atlas is shipped, so a 3mm dataset is told the template it
-        wants is not there rather than silently going without."""
+        """
+        Only the 2mm atlas is shipped, so a 3mm dataset is told the template it
+        wants is not there rather than silently going without.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        fake_fsldir : object
+            Fixture providing a simulated FSL installation.
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         thefileroot = _makestandardspacedataset(tmp_path, "mni3mm_", (61, 73, 61), 3.0)
 
         thesubject = RapidtideDataset(
@@ -1997,11 +2693,19 @@ class TestStandardSpaceDatasets:
         assert "there is not an atlas" in theoutput
 
     def test_mni152_3mm_brain_mask_comes_from_the_reference_dir(self, tmp_path, fake_fsldir):
-        """A 3mm MNI dataset gets its geometric mask from the shipped reference file.
+        """
+        A 3mm MNI dataset gets its geometric mask from the shipped reference file.
 
         Unlike the 2mm case, which takes its mask from FSL, the 3mm mask is the
         ``MNI152_T1_3mm_brain_mask.nii.gz`` that ships in the reference directory, so
         it loads whether or not FSL is installed.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        fake_fsldir : object
+            Fixture providing a simulated FSL installation.
         """
         thefileroot = _makestandardspacedataset(tmp_path, "mni3mask_", (61, 73, 61), 3.0)
 
@@ -2015,8 +2719,17 @@ class TestStandardSpaceDatasets:
         assert thesubject.overlays["geommask"].filename == thesubject.geommaskname
 
     def test_asymmetric_template_is_looked_for_at_two_resolutions(self, tmp_path, fake_fsldir):
-        """A standard-space file on any other grid is taken to be MNI152NLin2009cAsym,
-        whose templates are looked up at 1mm and 2mm."""
+        """
+        A standard-space file on any other grid is taken to be MNI152NLin2009cAsym,
+        whose templates are looked up at 1mm and 2mm.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        fake_fsldir : object
+            Fixture providing a simulated FSL installation.
+        """
         for theshape, thesize in [((50, 50, 50), 2.0), ((60, 60, 60), 1.0)]:
             thefileroot = _makestandardspacedataset(
                 tmp_path, f"asym{int(thesize)}_", theshape, thesize
@@ -2028,7 +2741,16 @@ class TestStandardSpaceDatasets:
             assert "anatomic" not in thesubject.getoverlays()
 
     def test_no_geometric_mask_without_fsl(self, tmp_path, monkeypatch):
-        """At 2mm the brain mask comes from FSL, so without FSL there is none."""
+        """
+        At 2mm the brain mask comes from FSL, so without FSL there is none.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        monkeypatch : pytest.MonkeyPatch
+            Temporarily replace dependencies or environment values.
+        """
         monkeypatch.delenv("FSLDIR", raising=False)
         thefileroot = _makestandardspacedataset(tmp_path, "nofsl_", (91, 109, 91), 2.0)
 
@@ -2051,8 +2773,17 @@ class TestAnatomicFallbacks:
         "thefilename", ["meanvalue.nii.gz", "desc-unfiltmean_map.nii.gz", "desc-mean_map.nii.gz"]
     )
     def test_each_mean_image_can_stand_in(self, rapidtide_output, thefilename):
-        """Four different rapidtide versions named the mean image four different
-        ways, and any of them will do as a backdrop."""
+        """
+        Four different rapidtide versions named the mean image four different
+        ways, and any of them will do as a backdrop.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        thefilename : object
+            Value supplied as ``thefilename`` by the test case.
+        """
         create_synthetic_nifti(rapidtide_output + thefilename, shape=(5, 5, 5))
 
         thesubject = RapidtideDataset("main", rapidtide_output, init_LUT=False, verbose=2)
@@ -2060,7 +2791,14 @@ class TestAnatomicFallbacks:
         assert thesubject.overlays["anatomic"].filename.endswith(thefilename)
 
     def test_mean_beats_the_later_candidates(self, rapidtide_output):
-        """The search order is fixed, and mean.nii.gz comes before the rest."""
+        """
+        The search order is fixed, and mean.nii.gz comes before the rest.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         for thefilename in [
             "mean.nii.gz",
             "meanvalue.nii.gz",
@@ -2083,7 +2821,8 @@ class TestOverlayAffineSelection:
     """Tests for which of a nifti header's three affines an overlay uses."""
 
     def _writewithcodes(self, filepath, sformcode, qformcode):
-        """Write a nifti declaring the given sform and qform codes.
+        """
+        Write a nifti declaring the given sform and qform codes.
 
         Parameters
         ----------
@@ -2093,10 +2832,6 @@ class TestOverlayAffineSelection:
             sform_code to declare.
         qformcode : int
             qform_code to declare.
-
-        Returns
-        -------
-        None
         """
         theaffine = np.eye(4)
         theaffine[0, 0] = -2.0
@@ -2109,7 +2844,14 @@ class TestOverlayAffineSelection:
         nib.save(theimage, filepath)
 
     def test_qform_is_used_when_there_is_no_sform(self, tmp_path):
-        """The qform is the fallback, and is what an older scanner writes."""
+        """
+        The qform is the fallback, and is what an older scanner writes.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         thepath = str(tmp_path / "qformonly.nii.gz")
         self._writewithcodes(thepath, 0, 1)
 
@@ -2118,8 +2860,15 @@ class TestOverlayAffineSelection:
         assert theoverlay.RLfactor == -1.0
 
     def test_base_affine_is_used_when_neither_is_set(self, tmp_path):
-        """With both codes zero the header carries no orientation at all, and the
-        voxel-size-only base affine is all there is to go on."""
+        """
+        With both codes zero the header carries no orientation at all, and the
+        voxel-size-only base affine is all there is to go on.
+
+        Parameters
+        ----------
+        tmp_path : pathlib.Path
+            Temporary directory for files created by the test.
+        """
         thepath = str(tmp_path / "nocodes.nii.gz")
         self._writewithcodes(thepath, 0, 0)
 
@@ -2138,16 +2887,30 @@ class TestFuncMapConsistency:
     """Tests for the checks that keep a mismatched map out of a dataset."""
 
     def test_a_map_with_the_wrong_dimensions_is_fatal(self, rapidtide_output):
-        """Every map has to be on the same grid, since they are indexed together by
-        a single set of cursor coordinates."""
+        """
+        Every map has to be on the same grid, since they are indexed together by
+        a single set of cursor coordinates.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         create_synthetic_nifti(rapidtide_output + "desc-MTT_map.nii.gz", shape=(6, 6, 6))
 
         with pytest.raises(SystemExit):
             RapidtideDataset("mismatch", rapidtide_output, init_LUT=False, verbose=2)
 
     def test_a_map_with_the_wrong_voxel_size_is_fatal(self, rapidtide_output):
-        """Matching dimensions are not enough - the voxels have to be the same size
-        too, or the maps cover different amounts of brain."""
+        """
+        Matching dimensions are not enough - the voxels have to be the same size
+        too, or the maps cover different amounts of brain.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         thedata = np.random.rand(5, 5, 5).astype(np.float32)
         theaffine = np.eye(4)
         theaffine[0, 0] = -2.0
@@ -2162,8 +2925,15 @@ class TestFuncMapConsistency:
             RapidtideDataset("mismatch", rapidtide_output, init_LUT=False, verbose=2)
 
     def test_varchange_is_inverted_on_load(self, rapidtide_output):
-        """The in-band variance change map is stored one way round and displayed the
-        other, so it is negated as it is read."""
+        """
+        The in-band variance change map is stored one way round and displayed the
+        other, so it is negated as it is read.
+
+        Parameters
+        ----------
+        rapidtide_output : str
+            Path prefix of the synthetic Rapidtide output files.
+        """
         thedata = np.linspace(-1.0, 1.0, 125).reshape((5, 5, 5)).astype(np.float32)
         create_synthetic_nifti(
             rapidtide_output + "desc-lfofilterInbandVarianceChange_map.nii.gz",
@@ -2177,7 +2947,14 @@ class TestFuncMapConsistency:
 
 
 def main(debug=False):
-    """Run tests manually for local development."""
+    """
+    Run tests manually for local development.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     exampleroot = get_examples_path(runninglocally)
     testtemproot = get_test_temp_path(runninglocally)
     print(f"get_examples_path={exampleroot}")

@@ -7,6 +7,7 @@ from . import _version
 
 
 def _configure_matplotlib_cache():
+    """Configure a writable cache directory for Matplotlib when needed."""
     if "MPLCONFIGDIR" in os.environ:
         return
 

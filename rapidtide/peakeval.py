@@ -47,6 +47,41 @@ def _procOneVoxelPeaks(
     sort: bool = True,
     interptype: str = "univariate",
 ) -> tuple[int, list]:
+    """
+    Evaluate candidate similarity peaks for one voxel.
+
+    Parameters
+    ----------
+    vox : int
+        Index of the voxel being processed.
+    thetc : NDArray
+        Time course to process.
+    theMutualInformationator : object
+        Mutual-information calculator used to score candidate peaks.
+    fmri_x : NDArray
+        Time coordinates of the original fMRI samples.
+    fmritc : NDArray
+        Input fMRI time course.
+    os_fmri_x : NDArray
+        Time coordinates on the oversampled fMRI grid.
+    xcorr_x : NDArray
+        Lag coordinates of the cross-correlation values.
+    thexcorr : NDArray
+        Cross-correlation values indexed by lag.
+    bipolar : bool, optional
+        Consider negative as well as positive correlation peaks.
+    oversampfactor : int, optional
+        Ratio of oversampled to original sampling frequency.
+    sort : bool, optional
+        Sort the candidate peaks before returning them.
+    interptype : str, optional
+        Interpolation method for time-series resampling.
+
+    Returns
+    -------
+    tuple
+        Voxel index and candidate peaks ranked by similarity.
+    """
     if oversampfactor >= 1:
         thetc[:] = tide_resample.doresample(fmri_x, fmritc, os_fmri_x, method=interptype)
     else:
@@ -82,28 +117,45 @@ def peakevalpass(
     rt_floattype: np.dtype = np.float64,
 ) -> tuple[int, dict]:
     """
+    Evaluate candidate similarity peaks across voxels.
 
     Parameters
     ----------
-    fmridata
-    referencetc
-    theCorrelator
-    fmri_x
-    os_fmri_x
-    tr
-    corrout
-    meanval
-    nprocs
-    alwaysmultiproc
-    oversampfactor
-    interptype
-    showprogressbar
-    chunksize
-    rt_floattype
+    fmridata : NDArray
+        Voxel time series to correlate with the reference.
+    referencetc : NDArray
+        Reference time series used for comparison.
+    fmri_x : NDArray
+        Time coordinates of the original fMRI samples.
+    os_fmri_x : NDArray
+        Time coordinates on the oversampled fMRI grid.
+    theMutualInformationator : object
+        Mutual-information calculator used to score candidate peaks.
+    xcorr_x : NDArray
+        Lag coordinates of the cross-correlation values.
+    corrdata : NDArray
+        Voxelwise correlation functions on the lag axis.
+    nprocs : int, optional
+        Number of worker processes.
+    alwaysmultiproc : bool, optional
+        Use multiprocessing even when only one worker is requested.
+    bipolar : bool, optional
+        Consider negative as well as positive correlation peaks.
+    oversampfactor : int, optional
+        Ratio of oversampled to original sampling frequency.
+    interptype : str, optional
+        Interpolation method for time-series resampling.
+    showprogressbar : bool, optional
+        Display processing progress.
+    chunksize : int, optional
+        Number of work items to submit to each worker at a time.
+    rt_floattype : np.dtype, optional
+        Floating-point data type used for intermediate computations.
 
     Returns
     -------
-
+    tuple
+        Number of voxels processed and their peak lists.
     """
     peakdict = {}
     theMutualInformationator.setreftc(referencetc)
@@ -114,6 +166,16 @@ def peakevalpass(
     if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments
         def correlation_consumer(inQ, outQ):
+            """
+            Calculate correlations for queued voxel work items.
+
+            Parameters
+            ----------
+            inQ : queue-like
+                Queue supplying work items.
+            outQ : queue-like
+                Queue receiving processed results.
+            """
             while True:
                 try:
                     # get a new message

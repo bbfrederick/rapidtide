@@ -657,6 +657,19 @@ def computeopticalflow(
         thekernels.append(thekernel / thekernel.sum())
 
     def smoothspatially(thevolume: NDArray) -> NDArray:
+        """
+        Apply spatial smoothing to a volume.
+
+        Parameters
+        ----------
+        thevolume : NDArray
+            Image volume to smooth.
+
+        Returns
+        -------
+        NDArray
+            The thevolume.
+        """
         for theaxis, thekernel in enumerate(thekernels):
             thevolume = correlate1d(thevolume, thekernel, axis=theaxis, mode="nearest")
         return thevolume
@@ -829,10 +842,6 @@ def corrflow(args: argparse.Namespace) -> None:
     ----------
     args : argparse.Namespace
         The parsed command line arguments.
-
-    Returns
-    -------
-    None
     """
     starttime = time.time()
     therunoptions: Dict[str, Any] = {}
@@ -1191,6 +1200,7 @@ def corrflow(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
+    """Run the `corrflow` command."""
     try:
         args = _get_parser().parse_args()
     except SystemExit:

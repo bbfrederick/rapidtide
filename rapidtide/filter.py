@@ -1937,6 +1937,19 @@ def pspec(inputdata: NDArray) -> NDArray:
 
 
 def spectralflatness(spectrum: NDArray) -> float:
+    """
+    Compute the geometric mean of the spectrum divided by its arithmetic mean.
+
+    Parameters
+    ----------
+    spectrum : NDArray
+        Spectral magnitudes used to calculate flatness.
+
+    Returns
+    -------
+    float
+        Ratio of the geometric mean to the arithmetic mean.
+    """
     return np.exp(np.mean(np.log(spectrum))) / np.mean(spectrum)
 
 
@@ -1944,41 +1957,23 @@ def spectrum(
     inputdata: NDArray, Fs: float = 1.0, mode: str = "power", trim: bool = True
 ) -> Tuple[NDArray, Union[NDArray, None]]:
     """
-    Compute the spectral flatness of a spectrum.
-
-    Spectral flatness is a measure of how much a spectrum resembles white noise.
-    It is defined as the ratio of the geometric mean to the arithmetic mean of the spectrum.
+    Calculate the frequency axis and spectrum of a sampled signal.
 
     Parameters
     ----------
-    spectrum : NDArray
-        Input spectrum array. Should contain non-negative values.
+    inputdata : NDArray
+        Sampled signal to transform.
+    Fs : float, optional
+        Sampling frequency in Hz.
+    mode : str, optional
+        Spectral representation to return.
+    trim : bool, optional
+        Retain the first half of the FFT bins.
 
     Returns
     -------
-    float
-        Spectral flatness value. Values close to 1.0 indicate a flat (white noise-like) spectrum,
-        while values closer to 0.0 indicate a more tonal spectrum.
-
-    Notes
-    -----
-    The spectral flatness is computed as:
-    flatness = exp(mean(log(spectrum))) / mean(spectrum)
-
-    This implementation assumes the input spectrum contains non-negative values.
-    If the spectrum contains zeros, the geometric mean will be zero and the result
-    will be zero regardless of the arithmetic mean.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> # White noise spectrum
-    >>> white_noise = np.random.rand(100)
-    >>> flatness = spectralflatness(white_noise)
-    >>> # Tone-like spectrum
-    >>> tone = np.zeros(100)
-    >>> tone[50] = 1.0
-    >>> flatness = spectralflatness(tone)
+    tuple
+        Frequency axis and spectral values in the requested representation.
     """
     if trim:
         specvals = fft.fft(inputdata)[0 : len(inputdata) // 2]
@@ -2457,6 +2452,19 @@ class Plethfilter:
         self.a = retvec[1]
 
     def apply(self, data):
+        """
+        Filter the data with forward and backward passes.
+
+        Parameters
+        ----------
+        data : array-like
+            Input data to filter.
+
+        Returns
+        -------
+        numpy.ndarray
+            Filtered data with the same shape as the input.
+        """
         return signal.filtfilt(self.b, self.a, data, axis=-1, padtype="odd", padlen=None)
 
 
@@ -2464,35 +2472,24 @@ def getfilterbandfreqs(
     band: str, transitionfrac: float = 0.05, species: str = "human", asrange: bool = False
 ) -> Union[str, Tuple[float, float, float, float]]:
     """
-    Apply digital filter forward and backward to data.
-
-    This function applies a digital filter to the input data using forward-backward filtering
-    to eliminate phase distortion. The filter is applied along the last axis of the data.
+    Look up the passband and stopband edges for a named filter band.
 
     Parameters
     ----------
-    data : array_like
-        Input data to be filtered. Can be any shape, but filtering is applied along the
-        last axis (axis=-1).
+    band : str
+        Name of the predefined frequency band.
+    transitionfrac : float, optional
+        Fractional spacing used to compute the stopband edges.
+    species : str, optional
+        Species for the frequency definitions. Only human is supported.
+    asrange : bool, optional
+        Return a formatted passband range.
 
     Returns
     -------
-    NDArray
-        The filtered output with the same shape as the input data.
-
-    Notes
-    -----
-    This function uses `scipy.signal.filtfilt` which applies the filter forward and backward
-    to eliminate phase distortion. The filter coefficients are stored in `self.b` and `self.a`.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from scipy import signal
-    >>> # Create a simple filter
-    >>> b, a = signal.butter(4, 0.2, 'low')
-    >>> # Apply filter to data
-    >>> filtered_data = apply(data)
+    str or tuple of float
+        Formatted passband range, or the lower and upper
+        passband edges followed by the lower and upper stopband edges, in Hz.
     """
     if species == "human":
         if band == "vlf":

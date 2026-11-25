@@ -188,8 +188,7 @@ def process_args(args: Any) -> None:
     Returns
     -------
     None
-        This function modifies the args object in-place and does not return
-        a value.
+        The args.
 
     Notes
     -----
@@ -228,12 +227,6 @@ def endtidalproc() -> None:
     minimum peaks depending on whether the data is treated as oxygen or CO2, and
     interpolates the peak values over the full time range. The resulting interpolated
     data is written to an output file.
-
-    Parameters
-    ----------
-    None
-        This function does not take any direct parameters. It reads from command-line
-        arguments and system input files.
 
     Returns
     -------

@@ -21,6 +21,7 @@ import rapidtide.workflows.plethquality as theworkflow
 
 
 def entrypoint():
+    """Run the `plethquality` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.plethquality)
 
 

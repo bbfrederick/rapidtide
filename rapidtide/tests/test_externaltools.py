@@ -26,6 +26,16 @@ from rapidtide.tests.utils import get_examples_path, get_test_temp_path, mse
 
 def test_externaltools(debug=False, local=False):
     # set input and output directories
+    """
+    Verify externaltools.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     exampleroot = get_examples_path(local)
     testtemproot = get_test_temp_path(local)
 

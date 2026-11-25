@@ -26,6 +26,19 @@ from rapidtide.workflows.tcfrom3col import _get_parser, tcfrom3col
 
 
 def _make_default_args(**overrides):
+    """
+    Create default args.
+
+    Parameters
+    ----------
+    **overrides : object
+        Keyword settings that replace the test defaults.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     defaults = dict(
         infilename="input_3col.txt",
         timestep=0.5,
@@ -38,6 +51,14 @@ def _make_default_args(**overrides):
 
 
 def parser_basic(debug=False):
+    """
+    Check that the command-line parser initializes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -46,6 +67,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
+    """
+    Check that the parser requires the mandatory arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -54,6 +83,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
+    """
+    Check the parser defaults.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     parser = _get_parser()
@@ -66,6 +103,14 @@ def parser_defaults(debug=False):
 
 
 def parser_debug_flag(debug=False):
+    """
+    Check that the parser accepts ``--debug``.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_debug_flag")
     parser = _get_parser()
@@ -74,6 +119,14 @@ def parser_debug_flag(debug=False):
 
 
 def tcfrom3col_basic(debug=False):
+    """
+    Check tcfrom3col basic in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("tcfrom3col_basic")
     args = _make_default_args(debug=False)
@@ -90,6 +143,25 @@ def tcfrom3col_basic(debug=False):
     captured = {}
 
     def _mock_maketcfrom3col(indata, timeaxis, outdata, debug=False):
+        """
+        Simulate ``maketcfrom3col`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        timeaxis : numpy.ndarray
+            Sample times of the test signal.
+        outdata : object
+            Value supplied as ``outdata`` by the test case.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        object
+            The ``expected_output`` value supplied to the caller.
+        """
         captured["indata"] = np.array(indata, copy=True)
         captured["timeaxis"] = np.array(timeaxis, copy=True)
         captured["outdata_initial"] = np.array(outdata, copy=True)
@@ -97,6 +169,16 @@ def tcfrom3col_basic(debug=False):
         return expected_output
 
     def _mock_writenpvecs(outvec, outname):
+        """
+        Simulate ``writenpvecs`` for the test.
+
+        Parameters
+        ----------
+        outvec : object
+            Value supplied as ``outvec`` by the test case.
+        outname : path-like
+            Name of the output file.
+        """
         captured["outvec"] = np.array(outvec, copy=True)
         captured["outname"] = outname
 
@@ -119,6 +201,14 @@ def tcfrom3col_basic(debug=False):
 
 
 def tcfrom3col_debug_propagates(debug=False):
+    """
+    Check tcfrom3col debug propagates in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("tcfrom3col_debug_propagates")
     args = _make_default_args(debug=True)
@@ -126,6 +216,25 @@ def tcfrom3col_debug_propagates(debug=False):
     captured = {}
 
     def _mock_maketcfrom3col(indata, timeaxis, outdata, debug=False):
+        """
+        Simulate ``maketcfrom3col`` for the test.
+
+        Parameters
+        ----------
+        indata : array-like
+            Input values supplied to the test helper.
+        timeaxis : numpy.ndarray
+            Sample times of the test signal.
+        outdata : object
+            Value supplied as ``outdata`` by the test case.
+        debug : bool, optional
+            Enable diagnostic output for the test.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         captured["debug"] = debug
         return np.array(timeaxis, copy=True)
 
@@ -143,6 +252,14 @@ def tcfrom3col_debug_propagates(debug=False):
 
 
 def test_tcfrom3col(debug=False):
+    """
+    Verify tcfrom3col.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_defaults(debug=debug)

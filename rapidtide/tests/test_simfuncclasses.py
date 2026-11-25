@@ -38,12 +38,26 @@ class TestSimilarityFunctionator:
 
     @pytest.fixture
     def sample_filter(self):
-        """Create a sample filter for testing."""
+        """
+        Create a sample filter for testing.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return tide_filt.NoncausalFilter(filtertype="lfo")
 
     @pytest.fixture
     def sample_timecourse(self):
-        """Create a sample timecourse for testing."""
+        """
+        Create a sample timecourse for testing.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         # Use low sampling frequency and long data for LFO filter compatibility
         t = np.linspace(0, 100, 200)
         return np.sin(2 * np.pi * 0.05 * t) + 0.5 * np.sin(2 * np.pi * 0.1 * t)
@@ -61,7 +75,14 @@ class TestSimilarityFunctionator:
         assert sim_func.debug is False
 
     def test_init_with_params(self, sample_filter):
-        """Test initialization with custom parameters."""
+        """
+        Test initialization with custom parameters.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        """
         sim_func = tide_simfunc.SimilarityFunctionator(
             Fs=2.0,
             similarityfuncorigin=50,
@@ -106,7 +127,14 @@ class TestSimilarityFunctionator:
         assert trimmed[-1] == 69
 
     def test_getfunction_no_data(self, capsys):
-        """Test getfunction when no data is calculated."""
+        """
+        Test getfunction when no data is calculated.
+
+        Parameters
+        ----------
+        capsys : pytest.CaptureFixture
+            Capture written output for assertions.
+        """
         sim_func = tide_simfunc.SimilarityFunctionator()
 
         result = sim_func.getfunction()
@@ -126,12 +154,26 @@ class TestMutualInformationator:
 
     @pytest.fixture
     def sample_filter(self):
-        """Create a sample filter for testing."""
+        """
+        Create a sample filter for testing.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return tide_filt.NoncausalFilter(filtertype="lfo")
 
     @pytest.fixture
     def sample_timecourse(self):
-        """Create a sample timecourse for testing."""
+        """
+        Create a sample timecourse for testing.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         t = np.linspace(0, 100, 200)
         return np.sin(2 * np.pi * 0.05 * t)
 
@@ -156,7 +198,14 @@ class TestMutualInformationator:
         assert mi.smoothingfilter is not None
 
     def test_init_with_custom_params(self, sample_filter):
-        """Test initialization with custom parameters."""
+        """
+        Test initialization with custom parameters.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        """
         mi = tide_simfunc.MutualInformationator(
             Fs=2.0,
             windowfunc="hanning",
@@ -189,7 +238,16 @@ class TestMutualInformationator:
         assert mi.getnormfac() == 2.5
 
     def test_setreftc(self, sample_filter, sample_timecourse):
-        """Test setreftc method."""
+        """
+        Test setreftc method.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        """
         mi = tide_simfunc.MutualInformationator(
             Fs=2.0,
             ncprefilter=sample_filter,
@@ -207,7 +265,16 @@ class TestMutualInformationator:
         assert mi.similarityfunclen > 0
 
     def test_setlimits(self, sample_filter, sample_timecourse):
-        """Test setlimits method."""
+        """
+        Test setlimits method.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        """
         mi = tide_simfunc.MutualInformationator(
             Fs=2.0,
             ncprefilter=sample_filter,
@@ -222,7 +289,16 @@ class TestMutualInformationator:
         assert mi.lagmaxinpts == 15
 
     def test_run(self, sample_filter, sample_timecourse):
-        """Test run method."""
+        """
+        Test run method.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        """
         mi = tide_simfunc.MutualInformationator(
             Fs=2.0,
             ncprefilter=sample_filter,
@@ -251,12 +327,26 @@ class TestCorrelator:
 
     @pytest.fixture
     def sample_filter(self):
-        """Create a sample filter for testing."""
+        """
+        Create a sample filter for testing.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return tide_filt.NoncausalFilter(filtertype="lfo")
 
     @pytest.fixture
     def sample_timecourse(self):
-        """Create a sample timecourse for testing."""
+        """
+        Create a sample timecourse for testing.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         t = np.linspace(0, 100, 200)
         return np.sin(2 * np.pi * 0.05 * t)
 
@@ -271,7 +361,14 @@ class TestCorrelator:
         assert corr.baselinefilter is None
 
     def test_init_with_custom_params(self, sample_filter):
-        """Test initialization with custom parameters."""
+        """
+        Test initialization with custom parameters.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        """
         corr = tide_simfunc.Correlator(
             Fs=2.0,
             windowfunc="hanning",
@@ -294,7 +391,16 @@ class TestCorrelator:
         assert corr.lagmaxinpts == 15
 
     def test_setreftc(self, sample_filter, sample_timecourse):
-        """Test setreftc method."""
+        """
+        Test setreftc method.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        """
         corr = tide_simfunc.Correlator(Fs=2.0, ncprefilter=sample_filter)
 
         corr.setreftc(sample_timecourse, offset=0.0)
@@ -307,7 +413,16 @@ class TestCorrelator:
         assert corr.similarityfunclen == len(sample_timecourse) * 2 - 1
 
     def test_run(self, sample_filter, sample_timecourse):
-        """Test run method."""
+        """
+        Test run method.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        """
         corr = tide_simfunc.Correlator(
             Fs=2.0, ncprefilter=sample_filter, lagmininpts=10, lagmaxinpts=10
         )
@@ -323,7 +438,16 @@ class TestCorrelator:
         assert corr.datavalid is True
 
     def test_run_no_trim(self, sample_filter, sample_timecourse):
-        """Test run method without trimming."""
+        """
+        Test run method without trimming.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        """
         corr = tide_simfunc.Correlator(
             Fs=2.0, ncprefilter=sample_filter, lagmininpts=10, lagmaxinpts=10
         )
@@ -335,7 +459,16 @@ class TestCorrelator:
         assert len(simfunc) == corr.similarityfunclen
 
     def test_autocorrelation_peak(self, sample_filter, sample_timecourse):
-        """Test that autocorrelation has peak at zero lag."""
+        """
+        Test that autocorrelation has peak at zero lag.
+
+        Parameters
+        ----------
+        sample_filter : object
+            Filter configured by the test fixture.
+        sample_timecourse : numpy.ndarray
+            Sample time course supplied by the test fixture.
+        """
         corr = tide_simfunc.Correlator(
             Fs=2.0, ncprefilter=sample_filter, lagmininpts=50, lagmaxinpts=50
         )
@@ -359,12 +492,31 @@ class TestSimilarityFunctionFitter:
 
     @pytest.fixture
     def sample_corrtimeaxis(self):
-        """Create a sample correlation time axis."""
+        """
+        Create a sample correlation time axis.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array supplied to the test or its caller.
+        """
         return np.linspace(-10, 10, 201)
 
     @pytest.fixture
     def sample_gaussian_corrfunc(self, sample_corrtimeaxis):
-        """Create a sample Gaussian-shaped correlation function."""
+        """
+        Create a sample Gaussian-shaped correlation function.
+
+        Parameters
+        ----------
+        sample_corrtimeaxis : numpy.ndarray
+            Lag coordinates supplied by the test fixture.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         # Gaussian centered at lag=2 with amplitude 0.8 and sigma=1.5
         return 0.8 * np.exp(-((sample_corrtimeaxis - 2.0) ** 2) / (2 * 1.5**2))
 
@@ -385,14 +537,28 @@ class TestSimilarityFunctionFitter:
         assert fitter.peakfittype == "gauss"
 
     def test_init_with_corrtimeaxis(self, sample_corrtimeaxis):
-        """Test initialization with correlation time axis."""
+        """
+        Test initialization with correlation time axis.
+
+        Parameters
+        ----------
+        sample_corrtimeaxis : numpy.ndarray
+            Lag coordinates supplied by the test fixture.
+        """
         fitter = tide_simfunc.SimilarityFunctionFitter(corrtimeaxis=sample_corrtimeaxis)
 
         assert fitter.corrtimeaxis is not None
         assert len(fitter.corrtimeaxis) == len(sample_corrtimeaxis)
 
     def test_init_with_custom_params(self, sample_corrtimeaxis):
-        """Test initialization with custom parameters."""
+        """
+        Test initialization with custom parameters.
+
+        Parameters
+        ----------
+        sample_corrtimeaxis : numpy.ndarray
+            Lag coordinates supplied by the test fixture.
+        """
         fitter = tide_simfunc.SimilarityFunctionFitter(
             corrtimeaxis=sample_corrtimeaxis,
             lagmin=-5.0,
@@ -444,7 +610,14 @@ class TestSimilarityFunctionFitter:
         assert fitter.lagmax == 5.0
 
     def test_setcorrtimeaxis(self, sample_corrtimeaxis):
-        """Test setcorrtimeaxis method."""
+        """
+        Test setcorrtimeaxis method.
+
+        Parameters
+        ----------
+        sample_corrtimeaxis : numpy.ndarray
+            Lag coordinates supplied by the test fixture.
+        """
         fitter = tide_simfunc.SimilarityFunctionFitter()
 
         fitter.setcorrtimeaxis(sample_corrtimeaxis)
@@ -512,7 +685,16 @@ class TestSimilarityFunctionFitter:
         assert "Fit Lag too low" in result
 
     def test_fit_gaussian(self, sample_corrtimeaxis, sample_gaussian_corrfunc):
-        """Test fit method with Gaussian peak."""
+        """
+        Test fit method with Gaussian peak.
+
+        Parameters
+        ----------
+        sample_corrtimeaxis : numpy.ndarray
+            Lag coordinates supplied by the test fixture.
+        sample_gaussian_corrfunc : numpy.ndarray
+            Sample Gaussian correlation function.
+        """
         fitter = tide_simfunc.SimilarityFunctionFitter(
             corrtimeaxis=sample_corrtimeaxis,
             lagmin=-5.0,
@@ -530,7 +712,16 @@ class TestSimilarityFunctionFitter:
         assert maskval == 1  # Successful fit
 
     def test_fit_fastquad(self, sample_corrtimeaxis, sample_gaussian_corrfunc):
-        """Test fit method with fastquad peak fitting."""
+        """
+        Test fit method with fastquad peak fitting.
+
+        Parameters
+        ----------
+        sample_corrtimeaxis : numpy.ndarray
+            Lag coordinates supplied by the test fixture.
+        sample_gaussian_corrfunc : numpy.ndarray
+            Sample Gaussian correlation function.
+        """
         fitter = tide_simfunc.SimilarityFunctionFitter(
             corrtimeaxis=sample_corrtimeaxis,
             lagmin=-5.0,
@@ -546,7 +737,16 @@ class TestSimilarityFunctionFitter:
         assert maxval is not None
 
     def test_fit_quad(self, sample_corrtimeaxis, sample_gaussian_corrfunc):
-        """Test fit method with quadratic peak fitting."""
+        """
+        Test fit method with quadratic peak fitting.
+
+        Parameters
+        ----------
+        sample_corrtimeaxis : numpy.ndarray
+            Lag coordinates supplied by the test fixture.
+        sample_gaussian_corrfunc : numpy.ndarray
+            Sample Gaussian correlation function.
+        """
         fitter = tide_simfunc.SimilarityFunctionFitter(
             corrtimeaxis=sample_corrtimeaxis,
             lagmin=-5.0,
@@ -562,7 +762,16 @@ class TestSimilarityFunctionFitter:
         assert np.abs(maxlag - 2.0) < 0.5
 
     def test_fit_COM(self, sample_corrtimeaxis, sample_gaussian_corrfunc):
-        """Test fit method with center-of-mass peak fitting."""
+        """
+        Test fit method with center-of-mass peak fitting.
+
+        Parameters
+        ----------
+        sample_corrtimeaxis : numpy.ndarray
+            Lag coordinates supplied by the test fixture.
+        sample_gaussian_corrfunc : numpy.ndarray
+            Sample Gaussian correlation function.
+        """
         fitter = tide_simfunc.SimilarityFunctionFitter(
             corrtimeaxis=sample_corrtimeaxis,
             lagmin=-5.0,
@@ -577,7 +786,16 @@ class TestSimilarityFunctionFitter:
         assert maxlag is not None
 
     def test_fit_none_type(self, sample_corrtimeaxis, sample_gaussian_corrfunc):
-        """Test fit method with None peak fitting (no refinement)."""
+        """
+        Test fit method with None peak fitting (no refinement).
+
+        Parameters
+        ----------
+        sample_corrtimeaxis : numpy.ndarray
+            Lag coordinates supplied by the test fixture.
+        sample_gaussian_corrfunc : numpy.ndarray
+            Sample Gaussian correlation function.
+        """
         fitter = tide_simfunc.SimilarityFunctionFitter(
             corrtimeaxis=sample_corrtimeaxis,
             lagmin=-5.0,
@@ -592,7 +810,14 @@ class TestSimilarityFunctionFitter:
         assert maxlag is not None
 
     def test_fit_bipolar(self, sample_corrtimeaxis):
-        """Test fit method with bipolar option."""
+        """
+        Test fit method with bipolar option.
+
+        Parameters
+        ----------
+        sample_corrtimeaxis : numpy.ndarray
+            Lag coordinates supplied by the test fixture.
+        """
         # Create negative peak
         negative_corrfunc = -0.8 * np.exp(-((sample_corrtimeaxis - 2.0) ** 2) / (2 * 1.5**2))
 
@@ -652,7 +877,16 @@ class TestSimilarityFunctionFitter:
         assert -1.2 < maxlag < -0.2
 
     def test_maxindex_noedge(self, sample_corrtimeaxis, sample_gaussian_corrfunc):
-        """Test _maxindex_noedge method."""
+        """
+        Test _maxindex_noedge method.
+
+        Parameters
+        ----------
+        sample_corrtimeaxis : numpy.ndarray
+            Lag coordinates supplied by the test fixture.
+        sample_gaussian_corrfunc : numpy.ndarray
+            Sample Gaussian correlation function.
+        """
         fitter = tide_simfunc.SimilarityFunctionFitter(
             corrtimeaxis=sample_corrtimeaxis,
             lagmin=-5.0,

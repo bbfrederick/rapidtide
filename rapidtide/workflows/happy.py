@@ -64,44 +64,8 @@ def happy_main(argparsingfunc: Any) -> None:
 
     Parameters
     ----------
-    args : argparse.Namespace
-        Command line arguments containing processing options
-    infodict : dict
-        Dictionary containing processing information including shared memory settings
-    fmri_data : NDArray
-        4D fMRI data array (x, y, z, time)
-    mask : NDArray
-        3D mask array indicating valid voxels
-    projmask_byslice : NDArray
-        2D mask array for each slice indicating valid projection locations
-    cardphasevals : NDArray
-        2D array of cardiac phase values for each slice and timepoint
-    rawapp_byslice : NDArray
-        3D array of raw cardiac signals for each slice and timepoint
-    outphases : NDArray
-        Array of cardiac phases
-    timepoints : int
-        Number of timepoints in the fMRI data
-    xsize : int
-        X dimension of the fMRI data
-    ysize : int
-        Y dimension of the fMRI data
-    numslices : int
-        Number of slices in the fMRI data
-    outputroot : str
-        Root name for output files
-    tide_util : module
-        Utility module for memory management and other operations
-    tide_io : module
-        I/O module for reading/writing data
-    tide_linfitfiltpass : module
-        Linear fitting and filtering module
-    tide_filt : module
-        Filtering module
-    platform : module
-        Platform information module
-    Path : class
-        Path class from pathlib module
+    argparsingfunc : argparse.Namespace
+        Parsed HAPPY configuration and input paths.
 
     Returns
     -------

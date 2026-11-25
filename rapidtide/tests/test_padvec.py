@@ -26,6 +26,19 @@ from rapidtide.filter import NoncausalFilter
 
 def maketestwaves(timeaxis):
     # construct some test waveforms for end effects
+    """
+    Set up ``maketestwaves`` for the test.
+
+    Parameters
+    ----------
+    timeaxis : numpy.ndarray
+        Sample times of the test signal.
+
+    Returns
+    -------
+    list
+        The ``testwaves`` value supplied to the caller.
+    """
     tclen = len(timeaxis)
     testwaves = []
     testwaves.append(
@@ -86,6 +99,22 @@ def maketestwaves(timeaxis):
 def eval_padvecprops(
     sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=False, debug=False
 ):
+    """
+    Evaluate padvecprops.
+
+    Parameters
+    ----------
+    sampletime : float, optional
+        Time between samples in seconds.
+    tclengthinsecs : float, optional
+        Value supplied as ``tclengthinsecs`` by the test case.
+    numruns : int, optional
+        Value supplied as ``numruns`` by the test case.
+    displayplots : bool, optional
+        Display plots from the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     np.random.seed(12345)
     tclen = int(tclengthinsecs // sampletime)
     print("Testing transfer function:")
@@ -206,6 +235,16 @@ def eval_padvecprops(
 
 
 def test_padvec(displayplots=False, debug=False):
+    """
+    Verify padvec.
+
+    Parameters
+    ----------
+    displayplots : bool, optional
+        Display plots from the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     eval_padvecprops(
         sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=displayplots, debug=debug
     )

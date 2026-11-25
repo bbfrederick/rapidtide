@@ -29,11 +29,12 @@ import rapidtide.io as tide_io
 
 
 def read_cosmic_spectrum(path: str = "spectrum-Z-0.06e.txt") -> colour.SpectralDistribution:
-    """Read a tabulated cosmic spectrum and return a spectral distribution.
+    """
+    Read a tabulated cosmic spectrum and return a spectral distribution.
 
     Parameters
     ----------
-    path
+    path : str, optional
         Path to a two-column text file containing wavelength and flux values.
         Wavelength values are expected in Angstrom units.
 
@@ -67,23 +68,24 @@ def spectrumtospecdist(
     highfreq: float = 0.15,
     debug: bool = False,
 ) -> colour.SpectralDistribution:
-    """Map a frequency-domain spectrum onto a visible wavelength interval.
+    """
+    Map a frequency-domain spectrum onto a visible wavelength interval.
 
     Parameters
     ----------
-    freqs
+    freqs : NDArray[np.float64]
         Frequency axis values in Hz.
-    spec
+    spec : NDArray[np.float64]
         Spectrum amplitudes corresponding to ``freqs``.
-    lowwave
+    lowwave : float, optional
         Wavelength in nm assigned to ``lowfreq``.
-    highwave
+    highwave : float, optional
         Wavelength in nm assigned to ``highfreq``.
-    lowfreq
+    lowfreq : float, optional
         Lower frequency bound in Hz used for mapping.
-    highfreq
+    highfreq : float, optional
         Upper frequency bound in Hz used for mapping.
-    debug
+    debug : bool, optional
         If ``True``, print detailed per-bin mapping information.
 
     Returns
@@ -112,12 +114,15 @@ def spectrumtospecdist(
 
 
 def plot_sd(thespectrum: colour.SpectralDistribution, modulate=True) -> None:
-    """Plot a spectral distribution using colour-science plotting utilities.
+    """
+    Plot a spectral distribution using colour-science plotting utilities.
 
     Parameters
     ----------
-    thespectrum
+    thespectrum : colour.SpectralDistribution
         Spectral distribution to plot.
+    modulate : bool, optional
+        Modulate the plotted color values.
 
     Returns
     -------
@@ -132,11 +137,12 @@ def plot_sd(thespectrum: colour.SpectralDistribution, modulate=True) -> None:
 
 
 def spectorgb(thespectrum: colour.SpectralDistribution) -> NDArray[np.float64]:
-    """Convert a spectral distribution to an sRGB triplet.
+    """
+    Convert a spectral distribution to an sRGB triplet.
 
     Parameters
     ----------
-    thespectrum
+    thespectrum : colour.SpectralDistribution
         Spectral distribution to convert.
 
     Returns
@@ -151,12 +157,15 @@ def spectorgb(thespectrum: colour.SpectralDistribution) -> NDArray[np.float64]:
 
 
 def normalizergb(RGB: NDArray[np.float64], factor: float = 1.0) -> NDArray[np.float64]:
-    """Normalize an sRGB triplet.
+    """
+    Normalize an sRGB triplet.
 
     Parameters
     ----------
-    RGB:
-        A 3-element array containing sRGB values.
+    RGB : A 3-element array containing sRGB values.
+        Image or samples with red, green, and blue channels.
+    factor : float, optional
+        Scaling factor for the RGB values.
 
     Returns
     -------
@@ -169,12 +178,17 @@ def normalizergb(RGB: NDArray[np.float64], factor: float = 1.0) -> NDArray[np.fl
 
 
 def plot_swatch(rgb: NDArray[np.float64], factor: float = 1.0, label: str = "sLFO color") -> None:
-    """Display an RGB swatch for a color sample.
+    """
+    Display an RGB swatch for a color sample.
 
     Parameters
     ----------
-    rgb
+    rgb : NDArray[np.float64]
         A 3-element RGB array.
+    factor : float, optional
+        Scaling factor for the RGB values.
+    label : str, optional
+        Text label associated with the color sample.
 
     Returns
     -------
@@ -188,6 +202,14 @@ def plot_swatch(rgb: NDArray[np.float64], factor: float = 1.0, label: str = "sLF
 
 
 def main(debug: bool = False):
+    """
+    Run the `colorops` command.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output.
+    """
     thissamplerate, thisstartoffset, colnames, invec, compression, columnsource, extrainfo = (
         tide_io.readbidstsv(
             "data/examples/dst/sub-RAPIDTIDETEST_desc-oversampledmovingregressor_timeseries.json",

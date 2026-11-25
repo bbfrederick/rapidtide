@@ -17,7 +17,14 @@ from rapidtide.video import (
 
 
 def _rgb_series():
-    """Distinct skin colors, channel covariances, spatial phases, and slow variation."""
+    """
+    Distinct skin colors, channel covariances, spatial phases, and slow variation.
+
+    Returns
+    -------
+    numpy.ndarray
+        The ``rgb`` value supplied to the caller.
+    """
     time = np.arange(180, dtype=float) / 30
     phase = np.arange(6).reshape(2, 3) * 0.17
     slow = np.sin(2 * np.pi * time[:, None, None] / 6 + phase)
@@ -30,7 +37,21 @@ def _rgb_series():
 
 
 def _teleplethy_reference(samples, method):
-    """Direct whole-window formulas, independent of the streaming implementation."""
+    """
+    Direct whole-window formulas, independent of the streaming implementation.
+
+    Parameters
+    ----------
+    samples : object
+        Value supplied as ``samples`` by the test case.
+    method : object
+        Value supplied as ``method`` by the test case.
+
+    Returns
+    -------
+    object
+        Value returned to the caller in this test case.
+    """
     mean = samples.mean(axis=0)
     normalized = samples / mean
     r, g, b = normalized.T
@@ -53,6 +74,14 @@ def _teleplethy_reference(samples, method):
 
 @pytest.mark.parametrize("method", ["grgb", "pos", "chrom"])
 def test_teleplethy_agreement(method):
+    """
+    Verify teleplethy agreement.
+
+    Parameters
+    ----------
+    method : object
+        Value supplied as ``method`` by the test case.
+    """
     rgb = _rgb_series()
     projector = RGBBloodProjector(method)
     for frame in rgb:
@@ -70,7 +99,14 @@ def test_teleplethy_agreement(method):
 
 @pytest.mark.parametrize("method", ["grgb", "pos", "chrom"])
 def test_no_short_window_or_causal_effect(method):
-    """Reversing time must reverse the waveform, without changing its values."""
+    """
+    Reversing time must reverse the waveform, without changing its values.
+
+    Parameters
+    ----------
+    method : object
+        Value supplied as ``method`` by the test case.
+    """
     rgb = _rgb_series()
     results = []
     for frames in (rgb, rgb[::-1]):
@@ -84,6 +120,14 @@ def test_no_short_window_or_causal_effect(method):
 
 @pytest.mark.parametrize("method", ["grgb", "pos", "chrom"])
 def test_invalid_pixels(method):
+    """
+    Verify invalid pixels.
+
+    Parameters
+    ----------
+    method : object
+        Value supplied as ``method`` by the test case.
+    """
     rgb = _rgb_series()
     rgb[:, 0, 0] = 0  # Black for the entire recording.
     rgb[:, 0, 1] = [100, 100, 100]  # Constant: valid zero GRGB, undefined POS/CHROM.
@@ -109,6 +153,7 @@ def test_invalid_pixels(method):
 
 
 def test_projector_validation():
+    """Verify projector validation."""
     with pytest.raises(ValueError, match="method"):
         RGBBloodProjector("green")
     projector = RGBBloodProjector()
@@ -144,7 +189,14 @@ def test_slow_signal_and_spatial_delays():
 
 @pytest.mark.parametrize("method", ["pos", "chrom"])
 def test_small_signal_covariance(method):
-    """Weak fluctuations must survive covariance accumulation against a large DC."""
+    """
+    Weak fluctuations must survive covariance accumulation against a large DC.
+
+    Parameters
+    ----------
+    method : object
+        Value supplied as ``method`` by the test case.
+    """
     rng = np.random.default_rng(123)
     rgb = np.array([100, 140, 80]) + rng.normal(size=(600, 1, 1, 3)) * 0.0001
     projector = RGBBloodProjector(method)
@@ -159,6 +211,7 @@ def test_small_signal_covariance(method):
 
 
 def test_timing():
+    """Verify timing."""
     assert _timing(np.array([2, 2.1, 2.2]))["uniform_sampling"]
     irregular = _timing(np.array([2, 2.1, 2.3]))
     assert not irregular["uniform_sampling"]
@@ -169,7 +222,23 @@ def test_timing():
 
 
 def _spatial_reference(frame, downsamp, lpf):
-    """Independent plane filtering and explicit per-block means."""
+    """
+    Independent plane filtering and explicit per-block means.
+
+    Parameters
+    ----------
+    frame : object
+        Value supplied as ``frame`` by the test case.
+    downsamp : object
+        Value supplied as ``downsamp`` by the test case.
+    lpf : object
+        Value supplied as ``lpf`` by the test case.
+
+    Returns
+    -------
+    numpy.ndarray
+        Output values supplied to the caller.
+    """
     from scipy.ndimage import gaussian_filter
 
     frame = frame.astype(np.float64)
@@ -201,6 +270,20 @@ def _spatial_reference(frame, downsamp, lpf):
     ],
 )
 def test_spatial_frame_block_means_and_truncation(shape, factor, start, retained):
+    """
+    Verify spatial frame block means and truncation.
+
+    Parameters
+    ----------
+    shape : tuple of int
+        Dimensions of the test array.
+    factor : object
+        Value supplied as ``factor`` by the test case.
+    start : object
+        Value supplied as ``start`` by the test case.
+    retained : object
+        Value supplied as ``retained`` by the test case.
+    """
     frame = np.arange(shape[0] * shape[1] * 3, dtype=np.uint16).reshape(*shape, 3)
     original = frame.copy()
     result = _spatial_frame(frame, downsamp=factor)
@@ -222,7 +305,14 @@ def test_spatial_frame_block_means_and_truncation(shape, factor, start, retained
 
 @pytest.mark.parametrize("edge", [(0, 0), (-1, -1)])
 def test_spatial_frame_gaussian_before_crop_and_average(edge):
-    """An edge impulse must spread before cropping, without mixing RGB planes."""
+    """
+    An edge impulse must spread before cropping, without mixing RGB planes.
+
+    Parameters
+    ----------
+    edge : object
+        Value supplied as ``edge`` by the test case.
+    """
     frame = np.zeros((7, 11, 3), dtype=np.uint16)
     frame[edge[0], edge[1], 0] = 1000  # Discarded by centered cropping, after filtering.
     frame[..., 1] = 100
@@ -237,17 +327,43 @@ def test_spatial_frame_gaussian_before_crop_and_average(edge):
 
 @pytest.mark.parametrize("downsamp", [0, -1, 1.5, 2.0, True, np.nan, np.inf])
 def test_bad_downsamp(downsamp):
+    """
+    Verify bad downsamp.
+
+    Parameters
+    ----------
+    downsamp : object
+        Value supplied as ``downsamp`` by the test case.
+    """
     with pytest.raises(ValueError, match="downsamp"):
         video_to_blood("missing.mp4", "blood.zarr", downsamp=downsamp)
 
 
 @pytest.mark.parametrize("lpf", [-1, np.nan, np.inf])
 def test_bad_lpf(lpf):
+    """
+    Verify bad lpf.
+
+    Parameters
+    ----------
+    lpf : object
+        Value supplied as ``lpf`` by the test case.
+    """
     with pytest.raises(ValueError, match="lpf"):
         video_to_blood("missing.mp4", "blood.zarr", lpf=lpf)
 
 
 def test_oversized_downsamp_fails_early(tmp_path, monkeypatch):
+    """
+    Verify oversized downsamp fails early.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     pytest.importorskip("av")
     pytest.importorskip("zarr")
     import rapidtide.video as video
@@ -261,7 +377,16 @@ def test_oversized_downsamp_fails_early(tmp_path, monkeypatch):
 
 
 def test_spatial_preprocessing_rejects_hidden_dimension_changes(tmp_path, monkeypatch):
-    """Cropping must not hide source-size changes that produce equal output sizes."""
+    """
+    Cropping must not hide source-size changes that produce equal output sizes.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     pytest.importorskip("av")
     pytest.importorskip("zarr")
     import rapidtide.video as video
@@ -276,7 +401,16 @@ def test_spatial_preprocessing_rejects_hidden_dimension_changes(tmp_path, monkey
 
 
 def _write_video(filename, rgb):
-    """Lossless RGB FFV1 fixture; no RGB/YUV conversion in the encoder."""
+    """
+    Lossless RGB FFV1 fixture; no RGB/YUV conversion in the encoder.
+
+    Parameters
+    ----------
+    filename : path-like
+        Filename supplied to the test helper.
+    rgb : object
+        Value supplied as ``rgb`` by the test case.
+    """
     av = pytest.importorskip("av")
     with av.open(str(filename), "w") as container:
         stream = container.add_stream("ffv1", rate=30)
@@ -295,7 +429,20 @@ def _write_video(filename, rgb):
 @pytest.mark.parametrize("method", ["grgb", "pos", "chrom"])
 @pytest.mark.parametrize("downsamp,lpf", [(1, 0), (1, 0.8), (2, 0), (2, 0.8), (3, 0), (4, 0.8)])
 def test_spatial_preprocessing_zarr_roundtrip(tmp_path, method, downsamp, lpf):
-    """Validate spatial RGB preprocessing against direct blood formulas after decoding."""
+    """
+    Validate spatial RGB preprocessing against direct blood formulas after decoding.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    method : object
+        Value supplied as ``method`` by the test case.
+    downsamp : object
+        Value supplied as ``downsamp`` by the test case.
+    lpf : object
+        Value supplied as ``lpf`` by the test case.
+    """
     av = pytest.importorskip("av")
     zarr = pytest.importorskip("zarr")
     from rapidtide.zarrio import open_blood_zarr
@@ -360,6 +507,16 @@ def test_spatial_preprocessing_zarr_roundtrip(tmp_path, method, downsamp, lpf):
 
 @pytest.mark.parametrize("method", ["grgb", "pos", "chrom"])
 def test_video_zarr_roundtrip(tmp_path, method):
+    """
+    Verify video zarr roundtrip.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    method : object
+        Value supplied as ``method`` by the test case.
+    """
     zarr = pytest.importorskip("zarr")
     rgb = np.rint(_rgb_series()[:35]).astype(np.uint8)
     rgb[:, 0, 0] = 0
@@ -402,6 +559,14 @@ def test_video_zarr_roundtrip(tmp_path, method):
 
 
 def test_framerate_override(tmp_path):
+    """
+    Verify framerate override.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    """
     zarr = pytest.importorskip("zarr")
     source, output = tmp_path / "rgb.mkv", tmp_path / "blood.zarr"
     _write_video(source, np.rint(_rgb_series()[:17]).astype(np.uint8))
@@ -416,6 +581,18 @@ def test_framerate_override(tmp_path):
 
 @pytest.mark.parametrize("existing", [False, True])
 def test_failure_cleanup(tmp_path, monkeypatch, existing):
+    """
+    Verify failure cleanup.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    existing : object
+        Value supplied as ``existing`` by the test case.
+    """
     pytest.importorskip("zarr")
     pytest.importorskip("av")
     import rapidtide.video as video
@@ -429,6 +606,19 @@ def test_failure_cleanup(tmp_path, monkeypatch, existing):
     passes = []
 
     def changing_video(*args):
+        """
+        Set up ``changing_video`` for the test.
+
+        Parameters
+        ----------
+        *args : object
+            Arguments passed to the test helper.
+
+        Yields
+        ------
+        object
+            Values supplied while the iterator is active.
+        """
         passes.append(True)
         length = len(frames) if len(passes) <= 2 else len(frames) - 1
         yield from zip(frames[:length], np.arange(length) / 30)
@@ -446,19 +636,46 @@ def test_failure_cleanup(tmp_path, monkeypatch, existing):
 
 @pytest.mark.parametrize("chunks", [(0, 1, 1), (1, -1, 1), (1, 1), (1, 1, 1.5)])
 def test_bad_chunks(chunks):
+    """
+    Verify bad chunks.
+
+    Parameters
+    ----------
+    chunks : object
+        Value supplied as ``chunks`` by the test case.
+    """
     with pytest.raises(ValueError, match="chunks"):
         video_to_blood("missing.mp4", "blood.zarr", chunks=chunks)
 
 
 @pytest.mark.parametrize("rate", [0, -1, np.nan, np.inf])
 def test_bad_framerate(rate):
+    """
+    Verify bad framerate.
+
+    Parameters
+    ----------
+    rate : object
+        Value supplied as ``rate`` by the test case.
+    """
     with pytest.raises(ValueError, match="framerate"):
         video_to_blood("missing.mp4", "blood.zarr", framerate=rate)
 
 
 @pytest.mark.parametrize("method", ["grgb", "pos", "chrom"])
 def test_missing_frames_regularized_before_projection(tmp_path, monkeypatch, method):
-    """Recover missing RGB frames on a known grid before nonlinear projection/statistics."""
+    """
+    Recover missing RGB frames on a known grid before nonlinear projection/statistics.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    method : object
+        Value supplied as ``method`` by the test case.
+    """
     pytest.importorskip("av")
     zarr = pytest.importorskip("zarr")
     import rapidtide.video as video
@@ -485,6 +702,7 @@ def test_missing_frames_regularized_before_projection(tmp_path, monkeypatch, met
 
 
 def test_gray_frame_mapping():
+    """Verify gray frame mapping."""
     from rapidtide.video import _gray_frame
 
     frame = np.array([[0.0, 2.0, -2.0], [5.0, -5.0, np.nan], [1.0, -1.0, 0.5]])
@@ -496,6 +714,14 @@ def test_gray_frame_mapping():
 
 
 def test_blood_video(tmp_path):
+    """
+    Verify blood video.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    """
     av = pytest.importorskip("av")
     zarr = pytest.importorskip("zarr")
     from rapidtide.video import write_blood_video
@@ -526,6 +752,14 @@ def test_blood_video(tmp_path):
 
 
 def test_existing_outputs_are_replaced(tmp_path):
+    """
+    Verify existing outputs are replaced.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    """
     av = pytest.importorskip("av")
     zarr = pytest.importorskip("zarr")
     source, output, movie = tmp_path / "rgb.mkv", tmp_path / "blood.zarr", tmp_path / "blood.mp4"
@@ -543,6 +777,16 @@ def test_existing_outputs_are_replaced(tmp_path):
 
 
 def test_blood_video_failure_preserves_existing(tmp_path, monkeypatch):
+    """
+    Verify blood video failure preserves existing.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     av = pytest.importorskip("av")
     pytest.importorskip("zarr")
     from rapidtide.video import write_blood_video
@@ -553,6 +797,16 @@ def test_blood_video_failure_preserves_existing(tmp_path, monkeypatch):
     movie.write_bytes(b"previous movie")
 
     def failed_open(*args, **kwargs):
+        """
+        Raise ``OSError`` to exercise the error path.
+
+        Parameters
+        ----------
+        *args : object
+            Arguments passed to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         raise OSError("encoding failed")
 
     monkeypatch.setattr(av, "open", failed_open)
@@ -564,6 +818,16 @@ def test_blood_video_failure_preserves_existing(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize("collision", ["input_store", "input_movie", "store_movie", "nested"])
 def test_output_paths_must_not_overlap(tmp_path, collision):
+    """
+    Verify output paths must not overlap.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    collision : object
+        Value supplied as ``collision`` by the test case.
+    """
     source, output, movie = tmp_path / "rgb.mkv", tmp_path / "blood.zarr", tmp_path / "blood.mp4"
     source.write_bytes(b"input")
     if collision == "input_store":
@@ -580,6 +844,16 @@ def test_output_paths_must_not_overlap(tmp_path, collision):
 
 
 def test_cli(tmp_path, capsys):
+    """
+    Verify CLI.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    """
     from rapidtide.workflows import parser_funcs as pf
     from rapidtide.workflows import videotoblood as workflow
 
@@ -598,6 +872,16 @@ def test_cli(tmp_path, capsys):
 
 
 def test_cli_spatial_options(tmp_path, capsys):
+    """
+    Verify CLI spatial options.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    """
     from rapidtide.workflows import parser_funcs as pf
     from rapidtide.workflows import videotoblood as workflow
 
@@ -623,6 +907,23 @@ def test_cli_spatial_options(tmp_path, capsys):
 
 
 def _fake_skin_segmenter(monkeypatch, mask_function, model_path):
+    """
+    Simulate ``skin_segmenter`` for the test.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    mask_function : object
+        Value supplied as ``mask_function`` by the test case.
+    model_path : object
+        Path used for model in the test.
+
+    Returns
+    -------
+    list
+        The ``passes`` value supplied to the caller.
+    """
     import rapidtide.skinmask as skinmask
 
     passes = []
@@ -635,18 +936,57 @@ def _fake_skin_segmenter(monkeypatch, mask_function, model_path):
 
     class Segmenter:
         def __enter__(self):
+            """
+            Enter the test context.
+
+            Returns
+            -------
+            object
+                Active test context.
+            """
             self.times = []
             passes.append(self)
             self.closed = False
             return self
 
         def __init__(self, model):
+            """
+            Initialize the test double for ``Segmenter``.
+
+            Parameters
+            ----------
+            model : object
+                Value supplied as ``model`` by the test case.
+            """
             assert model == model_path
 
         def __exit__(self, *args):
+            """
+            Exit the test context.
+
+            Parameters
+            ----------
+            *args : object
+                Arguments passed to the test helper.
+            """
             self.closed = True
 
         def mask(self, rgb, timestamp):
+            """
+            Set up ``mask`` for the test.
+
+            Parameters
+            ----------
+            rgb : object
+                Value supplied as ``rgb`` by the test case.
+            timestamp : object
+                Value supplied as ``timestamp`` by the test case.
+
+            Returns
+            -------
+            object
+                Value returned to the caller in this test case.
+            """
             self.times.append(timestamp)
             return mask_function(rgb, timestamp)
 
@@ -657,6 +997,22 @@ def _fake_skin_segmenter(monkeypatch, mask_function, model_path):
 @pytest.mark.parametrize("method", ["grgb", "pos", "chrom"])
 @pytest.mark.parametrize("downsamp,lpf", [(1, 0), (1, 0.8), (2, 0), (2, 0.8)])
 def test_skinmask_after_filter_before_downsampling(tmp_path, monkeypatch, method, downsamp, lpf):
+    """
+    Verify skinmask after filter before downsampling.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    method : object
+        Value supplied as ``method`` by the test case.
+    downsamp : object
+        Value supplied as ``downsamp`` by the test case.
+    lpf : object
+        Value supplied as ``lpf`` by the test case.
+    """
     zarr = pytest.importorskip("zarr")
     source, output = tmp_path / "rgb.mkv", tmp_path / "blood.zarr"
     rng = np.random.default_rng(293)
@@ -668,6 +1024,21 @@ def test_skinmask_after_filter_before_downsampling(tmp_path, monkeypatch, method
     original_frames = {time: rgb for rgb, time in decoded}
 
     def infer_mask(rgb, timestamp):
+        """
+        Provide the ``infer_mask`` test substitute.
+
+        Parameters
+        ----------
+        rgb : object
+            Value supplied as ``rgb`` by the test case.
+        timestamp : object
+            Value supplied as ``timestamp`` by the test case.
+
+        Returns
+        -------
+        object
+            The ``selected`` value supplied to the caller.
+        """
         np.testing.assert_array_equal(rgb, original_frames[timestamp])
         assert rgb.dtype == original_frames[timestamp].dtype
         return selected
@@ -720,6 +1091,18 @@ def test_skinmask_after_filter_before_downsampling(tmp_path, monkeypatch, method
 
 @pytest.mark.parametrize("method", ["grgb", "pos", "chrom"])
 def test_skinmask_before_missing_frame_interpolation(tmp_path, monkeypatch, method):
+    """
+    Verify skinmask before missing frame interpolation.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    method : object
+        Value supplied as ``method`` by the test case.
+    """
     pytest.importorskip("av")
     zarr = pytest.importorskip("zarr")
     import rapidtide.video as video
@@ -731,6 +1114,21 @@ def test_skinmask_before_missing_frame_interpolation(tmp_path, monkeypatch, meth
     monkeypatch.setattr(video, "_video_frames", lambda *args: iter(zip(frames, source_times)))
 
     def selected(rgb, timestamp):
+        """
+        Provide the ``selected`` test substitute.
+
+        Parameters
+        ----------
+        rgb : object
+            Value supplied as ``rgb`` by the test case.
+        timestamp : object
+            Value supplied as ``timestamp`` by the test case.
+
+        Returns
+        -------
+        numpy.ndarray
+            The ``mask`` value supplied to the caller.
+        """
         mask = np.ones((2, 3), dtype=bool)
         mask[0, 0] = timestamp < 4.2
         mask[0, 1] = timestamp > 4.2
@@ -762,12 +1160,30 @@ def test_skinmask_before_missing_frame_interpolation(tmp_path, monkeypatch, meth
 
 
 def test_skinmask_is_optional(tmp_path, monkeypatch):
+    """
+    Verify skinmask is optional.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     import rapidtide.skinmask as skinmask
 
     source, output = tmp_path / "rgb.mkv", tmp_path / "blood.zarr"
     _write_video(source, np.rint(_rgb_series()[:17]).astype(np.uint8))
 
     def unexpected_model(*args):
+        """
+        Raise ``AssertionError`` to exercise the error path.
+
+        Parameters
+        ----------
+        *args : object
+            Arguments passed to the test helper.
+        """
         raise AssertionError("MediaPipe must not load without --skinmask")
 
     monkeypatch.setattr(skinmask, "prepare_skin_model", unexpected_model)
@@ -777,6 +1193,16 @@ def test_skinmask_is_optional(tmp_path, monkeypatch):
 
 
 def test_empty_skin_mask_does_not_fall_back(tmp_path, monkeypatch):
+    """
+    Verify empty skin mask does not fall back.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     source, output = tmp_path / "rgb.mkv", tmp_path / "blood.zarr"
     _write_video(source, np.rint(_rgb_series()[:17]).astype(np.uint8))
     passes = _fake_skin_segmenter(
@@ -789,6 +1215,16 @@ def test_empty_skin_mask_does_not_fall_back(tmp_path, monkeypatch):
 
 
 def test_cli_skinmask(tmp_path, monkeypatch):
+    """
+    Verify CLI skinmask.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    monkeypatch : pytest.MonkeyPatch
+        Temporarily replace dependencies or environment values.
+    """
     from rapidtide.workflows import parser_funcs as pf
     from rapidtide.workflows import videotoblood as workflow
 
@@ -815,7 +1251,14 @@ def test_cli_skinmask(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize("program", ["videotoblood", "rapidtide"])
 def test_cli_without_installed_tests(program):
-    """Start without test helpers or a package-level version (namespace installs)."""
+    """
+    Start without test helpers or a package-level version (namespace installs).
+
+    Parameters
+    ----------
+    program : object
+        Value supplied as ``program`` by the test case.
+    """
     code = textwrap.dedent("""
         import runpy
         import sys
@@ -852,7 +1295,14 @@ def test_cli_without_installed_tests(program):
 
 @pytest.mark.parametrize("downsamp", [1, 2])
 def test_skinmask_filter_boundary_order(downsamp):
-    """Filter uses the complete RGB image, then masks before block averaging."""
+    """
+    Filter uses the complete RGB image, then masks before block averaging.
+
+    Parameters
+    ----------
+    downsamp : object
+        Value supplied as ``downsamp`` by the test case.
+    """
     rgb = np.full((5, 7, 3), [200, 120, 80], dtype=np.uint16)
     rgb[2, 2] = [20, 40, 60]
     selected = np.zeros((5, 7), dtype=bool)

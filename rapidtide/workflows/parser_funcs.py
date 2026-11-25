@@ -88,6 +88,22 @@ class IndicateSpecifiedStoreTrueAction(argparse.Action):
     """``store_true`` equivalent that also marks the key as explicitly set."""
 
     def __init__(self, option_strings, dest, default=None, required=False, help=None):
+        """
+        Initialize `IndicateSpecifiedStoreTrueAction`.
+
+        Parameters
+        ----------
+        option_strings : list of str
+            Command-line spellings for the option.
+        dest : str
+            Name of the attribute in the parsed namespace.
+        default : object, optional
+            Value stored when the option is omitted.
+        required : bool, optional
+            Whether this option must be specified.
+        help : str or None, optional
+            Help text shown for the option.
+        """
         super().__init__(
             option_strings=option_strings,
             dest=dest,
@@ -99,6 +115,20 @@ class IndicateSpecifiedStoreTrueAction(argparse.Action):
         )
 
     def __call__(self, parser, namespace, values, option_string=None):
+        """
+        Apply the custom command-line argument action.
+
+        Parameters
+        ----------
+        parser : argparse.ArgumentParser
+            Parser that invoked this action.
+        namespace : argparse.Namespace
+            Namespace receiving the parsed value.
+        values : object
+            Values supplied to the operation.
+        option_string : str or None, optional
+            Option spelling used on the command line.
+        """
         setattr(namespace, self.dest, True)
         setattr(namespace, self.dest + "_nondefault", True)
 
@@ -107,6 +137,22 @@ class IndicateSpecifiedStoreFalseAction(argparse.Action):
     """``store_false`` equivalent that also marks the key as explicitly set."""
 
     def __init__(self, option_strings, dest, default=None, required=False, help=None):
+        """
+        Initialize `IndicateSpecifiedStoreFalseAction`.
+
+        Parameters
+        ----------
+        option_strings : list of str
+            Command-line spellings for the option.
+        dest : str
+            Name of the attribute in the parsed namespace.
+        default : object, optional
+            Value stored when the option is omitted.
+        required : bool, optional
+            Whether this option must be specified.
+        help : str or None, optional
+            Help text shown for the option.
+        """
         super().__init__(
             option_strings=option_strings,
             dest=dest,
@@ -118,6 +164,20 @@ class IndicateSpecifiedStoreFalseAction(argparse.Action):
         )
 
     def __call__(self, parser, namespace, values, option_string=None):
+        """
+        Apply the custom command-line argument action.
+
+        Parameters
+        ----------
+        parser : argparse.ArgumentParser
+            Parser that invoked this action.
+        namespace : argparse.Namespace
+            Namespace receiving the parsed value.
+        values : object
+            Values supplied to the operation.
+        option_string : str or None, optional
+            Option spelling used on the command line.
+        """
         setattr(namespace, self.dest, False)
         setattr(namespace, self.dest + "_nondefault", True)
 
@@ -172,6 +232,21 @@ def detailedversion() -> None:
 
 
 def hidearg(helpstring: str, hide: bool = False) -> Any:
+    """
+    Return help text or suppress it in the command-line help.
+
+    Parameters
+    ----------
+    helpstring : str
+        Text to display in the command-line help.
+    hide : bool, optional
+        Suppress this option from the command-line help.
+
+    Returns
+    -------
+    str
+        Help text or argparse's suppression marker.
+    """
     if hide:
         return argparse.SUPPRESS
     else:

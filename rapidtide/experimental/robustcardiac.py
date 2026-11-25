@@ -24,6 +24,7 @@ import rapidtide.ppgproc as tide_ppg
 
 
 def main():  # Example usage
+    """Run the `robustcardiac` command."""
     Fs = 25.0
     process_noise = 0.001
     hr_estimate = 65.0

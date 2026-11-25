@@ -31,6 +31,11 @@ def get_rapidtide_root() -> str:
     """
     Returns the path to the base rapidtide directory, terminated with separator.
     Based on function by Yaroslav Halchenko used in Neurosynth Python package.
+
+    Returns
+    -------
+    str
+        Value returned to the caller in this test case.
     """
     thisdir, thisfile = os.path.split(os.path.join(os.path.realpath(__file__)))
     return os.path.join(thisdir, "..") + os.path.sep
@@ -41,6 +46,11 @@ def get_scripts_path() -> str:
     Returns the path to test datasets, terminated with separator. Test-related
     data are kept in tests folder in "testdata".
     Based on function by Yaroslav Halchenko used in Neurosynth Python package.
+
+    Returns
+    -------
+    str
+        Value returned to the caller in this test case.
     """
     return os.path.realpath(os.path.join(get_rapidtide_root(), "scripts")) + os.path.sep
 
@@ -50,6 +60,11 @@ def get_test_data_path() -> str:
     Returns the path to test datasets, terminated with separator. Test-related
     data are kept in tests folder in "testdata".
     Based on function by Yaroslav Halchenko used in Neurosynth Python package.
+
+    Returns
+    -------
+    str
+        Value returned to the caller in this test case.
     """
     return os.path.realpath(os.path.join(get_rapidtide_root(), "tests", "testdata")) + os.path.sep
 
@@ -58,6 +73,16 @@ def get_test_temp_path(local: bool = False) -> str:
     """
     Returns the path to test temporary directory, terminated with separator.
     Based on function by Yaroslav Halchenko used in Neurosynth Python package.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+
+    Returns
+    -------
+    str
+        Value returned to the caller in this test case.
     """
     if local:
         return "./tmp"
@@ -70,6 +95,16 @@ def get_examples_path(local: bool = False) -> str:
     Returns the path to examples src directory, where larger test files live, terminated with separator. Test-related
     data are kept in tests folder in "data".
     Based on function by Yaroslav Halchenko used in Neurosynth Python package.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+
+    Returns
+    -------
+    str
+        Value returned to the caller in this test case.
     """
     if local:
         return "../data/examples/src"
@@ -82,6 +117,16 @@ def get_examples_path(local: bool = False) -> str:
 
 def create_dir(thedir: str, debug: bool = False) -> None:
     # create a directory if it doesn't exist
+    """
+    Set up ``create_dir`` for the test.
+
+    Parameters
+    ----------
+    thedir : str
+        Value supplied as ``thedir`` by the test case.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     try:
         os.makedirs(thedir)
         if debug:
@@ -96,6 +141,18 @@ def create_dir(thedir: str, debug: bool = False) -> None:
 def mse(ndarr1: npt.NDArray, ndarr2: npt.NDArray) -> np.floating:
     """
     Compute mean-squared error.
+
+    Parameters
+    ----------
+    ndarr1 : npt.NDArray
+        Value supplied as ``ndarr1`` by the test case.
+    ndarr2 : npt.NDArray
+        Value supplied as ``ndarr2`` by the test case.
+
+    Returns
+    -------
+    np.floating
+        Value returned to the caller in this test case.
     """
     return np.mean(np.square(ndarr2 - ndarr1))
 
@@ -103,6 +160,16 @@ def mse(ndarr1: npt.NDArray, ndarr2: npt.NDArray) -> np.floating:
 def get_example_and_temp_roots(local: bool = False) -> tuple[str, str]:
     """
     Return the standard example data and test temp roots as a tuple.
+
+    Parameters
+    ----------
+    local : bool, optional
+        Use the local mode of the test harness.
+
+    Returns
+    -------
+    tuple[str, str]
+        Values supplied together for the test case.
     """
     return get_examples_path(local), get_test_temp_path(local)
 
@@ -110,6 +177,11 @@ def get_example_and_temp_roots(local: bool = False) -> tuple[str, str]:
 def run_happy(inputargs: list[str]) -> None:
     """
     Run happy workflow from CLI-style argument list.
+
+    Parameters
+    ----------
+    inputargs : list[str]
+        Value supplied as ``inputargs`` by the test case.
     """
     import rapidtide.workflows.happy as happy_workflow
     import rapidtide.workflows.happy_parser as happy_parser
@@ -126,10 +198,6 @@ def run_rapidtide(inputargs: list[str]) -> None:
     inputargs : list of str
         The command line arguments, exactly as they would be typed, starting with the
         input file and the output root.
-
-    Returns
-    -------
-    None
 
     Notes
     -----
@@ -149,6 +217,11 @@ def run_rapidtide(inputargs: list[str]) -> None:
 def run_retroregress(inputargs: list[str]) -> None:
     """
     Run retroregress workflow from CLI-style argument list.
+
+    Parameters
+    ----------
+    inputargs : list[str]
+        Value supplied as ``inputargs`` by the test case.
     """
     import rapidtide.workflows.retroregress as rapidtide_retroregress
 
@@ -188,10 +261,6 @@ def assert_output_maps_match(
         Tolerance for the spatial geometry comparison.
     debug : bool, optional
         Print the measured differences for every map, not just failing ones.
-
-    Returns
-    -------
-    None
 
     Raises
     ------
@@ -275,6 +344,19 @@ def assert_text_vectors_match(
 ) -> None:
     """
     Assert that two one-column text vectors and metadata match.
+
+    Parameters
+    ----------
+    infile_spec : str
+        Value supplied as ``infile_spec`` by the test case.
+    outfile_spec : str
+        Value supplied as ``outfile_spec`` by the test case.
+    msethresh : float, optional
+        Value supplied as ``msethresh`` by the test case.
+    aethresh : int, optional
+        Value supplied as ``aethresh`` by the test case.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     import rapidtide.io as tide_io
 

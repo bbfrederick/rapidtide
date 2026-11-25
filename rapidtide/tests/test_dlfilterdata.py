@@ -147,11 +147,17 @@ def _makedataset(thedir, thenumcomplete=3, thenumincomplete=1, thenumpoints=400)
 
 @pytest.mark.parametrize("themodulename", THEMODULENAMES)
 def test_getmatchedtcs_keeps_only_complete_subjects(themodulename):
-    """A subject without its _info file is incomplete and must be dropped.
+    """
+    A subject without its _info file is incomplete and must be dropped.
 
     Silently including one would feed the trainer a subject whose provenance cannot
     be checked; silently dropping a complete one would shrink the training set
     without saying so.
+
+    Parameters
+    ----------
+    themodulename : object
+        Value supplied as ``themodulename`` by the test case.
     """
     themodule = _getmodule(themodulename)
     with tempfile.TemporaryDirectory() as thedir:
@@ -166,8 +172,15 @@ def test_getmatchedtcs_keeps_only_complete_subjects(themodulename):
 
 @pytest.mark.parametrize("themodulename", THEMODULENAMES)
 def test_getmatchedtcs_reports_the_timecourse_length(themodulename):
-    """tclen sets the window arithmetic downstream, so it has to come from the data
-    rather than a default."""
+    """
+    Tclen sets the window arithmetic downstream, so it has to come from the data
+    rather than a default.
+
+    Parameters
+    ----------
+    themodulename : object
+        Value supplied as ``themodulename`` by the test case.
+    """
     themodule = _getmodule(themodulename)
     for thenumpoints in (256, 512):
         with tempfile.TemporaryDirectory() as thedir:
@@ -180,12 +193,18 @@ def test_getmatchedtcs_reports_the_timecourse_length(themodulename):
 
 @pytest.mark.parametrize("themodulename", THEMODULENAMES)
 def test_getmatchedtcs_with_no_matches_raises_indexerror(themodulename):
-    """A search string that matches nothing indexes an empty list.
+    """
+    A search string that matches nothing indexes an empty list.
 
     The result is a bare IndexError rather than a message naming the search string
     that found nothing, which is the single most likely thing to go wrong when
     pointing the trainer at a new dataset.  Pinned rather than changed, since giving
     it a clearer error is a behaviour change for any caller catching IndexError.
+
+    Parameters
+    ----------
+    themodulename : object
+        Value supplied as ``themodulename`` by the test case.
     """
     themodule = _getmodule(themodulename)
     with tempfile.TemporaryDirectory() as thedir:
@@ -205,9 +224,16 @@ def test_getmatchedtcs_with_no_matches_raises_indexerror(themodulename):
 
 @pytest.mark.parametrize("themodulename", ["rapidtide.dlfilter"])
 def test_readindata_returns_aligned_input_and_target(themodulename):
-    """readindata hands back one row per accepted subject, with the input and target
+    """
+    Readindata hands back one row per accepted subject, with the input and target
     arrays the same shape.  A mismatch there would train the filter against the wrong
-    subject's plethysmogram."""
+    subject's plethysmogram.
+
+    Parameters
+    ----------
+    themodulename : object
+        Value supplied as ``themodulename`` by the test case.
+    """
     themodule = _getmodule(themodulename)
     with tempfile.TemporaryDirectory() as thedir:
         thesearchstring = _makedataset(thedir, thenumcomplete=4, thenumincomplete=0)
@@ -228,8 +254,15 @@ def test_readindata_returns_aligned_input_and_target(themodulename):
 
 @pytest.mark.parametrize("themodulename", ["rapidtide.dlfilter"])
 def test_readindata_skip_arguments_trim_the_timecourses(themodulename):
-    """startskip and endskip drop samples from each end, which is how the transient
-    at the start of a run is kept out of training."""
+    """
+    Startskip and endskip drop samples from each end, which is how the transient
+    at the start of a run is kept out of training.
+
+    Parameters
+    ----------
+    themodulename : object
+        Value supplied as ``themodulename`` by the test case.
+    """
     themodule = _getmodule(themodulename)
     with tempfile.TemporaryDirectory() as thedir:
         thesearchstring = _makedataset(thedir, thenumcomplete=3, thenumincomplete=0)
@@ -247,7 +280,14 @@ def test_readindata_skip_arguments_trim_the_timecourses(themodulename):
 
 @pytest.mark.parametrize("themodulename", ["rapidtide.dlfilter"])
 def test_readindata_readlim_limits_how_many_subjects_are_used(themodulename):
-    """readlim caps the number of subjects read, for quick experiments on a subset."""
+    """
+    Readlim caps the number of subjects read, for quick experiments on a subset.
+
+    Parameters
+    ----------
+    themodulename : object
+        Value supplied as ``themodulename`` by the test case.
+    """
     themodule = _getmodule(themodulename)
     with tempfile.TemporaryDirectory() as thedir:
         thesearchstring = _makedataset(thedir, thenumcomplete=5, thenumincomplete=0)
@@ -264,10 +304,17 @@ def test_readindata_readlim_limits_how_many_subjects_are_used(themodulename):
 
 @pytest.mark.parametrize("themodulename", ["rapidtide.dlfilter"])
 def test_readindata_rejects_a_poorly_correlated_subject(themodulename):
-    """A subject whose fMRI estimate does not track its plethysmogram is not usable
+    """
+    A subject whose fMRI estimate does not track its plethysmogram is not usable
     training data, and corrthresh_rp is what excludes it.  Raising the threshold above
     what any subject achieves has to empty the training set rather than quietly
-    keeping everything."""
+    keeping everything.
+
+    Parameters
+    ----------
+    themodulename : object
+        Value supplied as ``themodulename`` by the test case.
+    """
     themodule = _getmodule(themodulename)
     with tempfile.TemporaryDirectory() as thedir:
         thesearchstring = _makedataset(thedir, thenumcomplete=3, thenumincomplete=0)
@@ -287,13 +334,19 @@ def test_readindata_rejects_a_poorly_correlated_subject(themodulename):
 
 @pytest.mark.parametrize("themodulename", ["rapidtide.dlfilter"])
 def test_readindata_with_a_zero_endskip_returns_nothing(themodulename):
-    """readindata's own default of endskip=0 produces empty arrays.
+    """
+    Readindata's own default of endskip=0 produces empty arrays.
 
     The trim is written x1[startskip:-endskip], and with endskip=0 that is
     x1[0:0] - the whole array is sliced away.  Normal use does not hit this because
     the DLFilter class defaults startskip and endskip to 200, but calling readindata
     directly with its documented defaults silently returns nothing at all.  Pinned
     rather than changed: the fix alters what a direct caller gets back.
+
+    Parameters
+    ----------
+    themodulename : object
+        Value supplied as ``themodulename`` by the test case.
     """
     themodule = _getmodule(themodulename)
     with tempfile.TemporaryDirectory() as thedir:

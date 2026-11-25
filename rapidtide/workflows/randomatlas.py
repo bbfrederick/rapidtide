@@ -101,6 +101,14 @@ def _get_parser() -> Any:
 
 
 def randomatlas(args: Any) -> None:
+    """
+    Generate a randomized atlas from the command-line options.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed options for the command.
+    """
     infile, infile_data, infile_hdr, infiledims, infilesizes = tide_io.readfromnifti(
         args.inputfilename
     )

@@ -63,6 +63,7 @@ def _countcomponents(themembership, theoffsets):
 
 
 def test_coerce_tensor_field_from_six_component_layout():
+    """Verify coerce tensor field from six component layout."""
     tensor_components = np.zeros((2, 3, 4, 6), dtype=np.float64)
     tensor_components[..., 0] = 4.0
     tensor_components[..., 1] = 2.0
@@ -81,6 +82,7 @@ def test_coerce_tensor_field_from_six_component_layout():
 
 
 def test_coerce_tensor_field_rejects_mismatched_shape():
+    """Verify coerce tensor field rejects mismatched shape."""
     tensor_components = np.zeros((2, 3, 5, 6), dtype=np.float64)
 
     with pytest.raises(ValueError):
@@ -88,6 +90,7 @@ def test_coerce_tensor_field_rejects_mismatched_shape():
 
 
 def test_directional_preference_score_favors_major_axis():
+    """Verify directional preference score favors major axis."""
     tensor = np.diag([9.0, 1.0, 1.0])
 
     x_score = _directional_preference_score(tensor, np.array([1.0, 0.0, 0.0]))
@@ -360,6 +363,7 @@ def test_partition_3d_anisotropy_elongates_regions_along_the_preferred_axis():
 
 
 def test_partition_3d_accepts_anisotropy_field():
+    """Verify partition 3D accepts anisotropy field."""
     mask = np.ones((5, 5, 5), dtype=np.uint16)
     tensor_field = np.zeros((5, 5, 5, 6), dtype=np.float64)
     tensor_field[..., 0] = 9.0

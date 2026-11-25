@@ -21,6 +21,7 @@ import rapidtide.workflows.rapidtide2std as theworkflow
 
 
 def entrypoint():
+    """Run the `rapidtide2std` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.rapidtide2std)
 
 

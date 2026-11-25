@@ -20,6 +20,7 @@ import rapidtide.workflows.fdica as fdica_workflow
 
 
 def entrypoint():
+    """Run the `fdica` command."""
     fdica_workflow.main()
 
 

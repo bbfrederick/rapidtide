@@ -30,6 +30,14 @@ import rapidtide.io as tide_io
 
 def _get_parser() -> Any:
     # get the command line parameters
+    """
+    Build the command-line argument parser.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Parser configured for this command.
+    """
     parser = argparse.ArgumentParser(
         prog="tp2rt",
         description="Converts a TelePlethy output file to a rapidtide compatible NIFTI image.",
@@ -53,13 +61,39 @@ def _get_parser() -> Any:
 
 
 def showminmax(thearray, thelabel):
+    """
+    Print the minimum and maximum of the labeled array.
+
+    Parameters
+    ----------
+    thearray : numpy.ndarray
+        Array to process.
+    thelabel : str
+        Label printed with the array statistics.
+    """
     themin = np.min(thearray)
     themax = np.max(thearray)
     print(f"\t{thelabel}: {themin=}, {themax=}")
 
 
 def POSproc(theframe: NDArray, xloc, yloc):
+    """
+    Highlight the selected location in the green channel.
 
+    Parameters
+    ----------
+    theframe : NDArray
+        Video frame containing the color samples.
+    xloc : int
+        Horizontal coordinate of the selected pixel.
+    yloc : int
+        Vertical coordinate of the selected pixel.
+
+    Returns
+    -------
+    numpy.ndarray
+        Green channel after highlighting the selected location.
+    """
     posframe = theframe[:, :, 1]
     # print(posframe.shape, xloc, yloc)
     posframe[xloc - 5 : xloc + 5, yloc - 5 : yloc + 5] = 255
@@ -68,6 +102,14 @@ def POSproc(theframe: NDArray, xloc, yloc):
 
 def main(args):
     # 0. Open the tsv file to get the region location
+    """
+    Run the `tp2rt` command.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed options for the command.
+    """
     samplerate, starttime, columns, regionpos, compressed, filetype = (
         tide_io.readvectorsfromtextfile(f"{args.tsvfilename}:focusX,focusY")
     )

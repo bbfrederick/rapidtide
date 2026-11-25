@@ -36,6 +36,29 @@ def _make_args(
     nosmooth=False,
     displayplots=False,
 ):
+    """
+    Create args.
+
+    Parameters
+    ----------
+    textfilename : str, optional
+        Value supplied as ``textfilename`` by the test case.
+    samplerate : float, optional
+        Sampling rate in Hz.
+    lowestbpm : float, optional
+        Value supplied as ``lowestbpm`` by the test case.
+    highestbpm : float, optional
+        Value supplied as ``highestbpm`` by the test case.
+    nosmooth : bool, optional
+        Setting for ``nosmooth`` in the test case.
+    displayplots : bool, optional
+        Display plots from the test.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     return argparse.Namespace(
         textfilename=textfilename,
         samplerate=float(samplerate),
@@ -47,6 +70,29 @@ def _make_args(
 
 
 def _make_sine(freq_hz=1.0, fs=100.0, duration_s=20.0, phase=0.0, noise=0.0, seed=0):
+    """
+    Create sine.
+
+    Parameters
+    ----------
+    freq_hz : float, optional
+        Value supplied as ``freq_hz`` by the test case.
+    fs : float, optional
+        Value supplied as ``fs`` by the test case.
+    duration_s : float, optional
+        Value supplied as ``duration_s`` by the test case.
+    phase : float, optional
+        Value supplied as ``phase`` by the test case.
+    noise : float, optional
+        Value supplied as ``noise`` by the test case.
+    seed : int, optional
+        Random seed for reproducible test data.
+
+    Returns
+    -------
+    object
+        Value returned to the caller in this test case.
+    """
     t = np.arange(0.0, duration_s, 1.0 / fs)
     x = np.sin(2.0 * np.pi * freq_hz * t + phase)
     if noise > 0.0:
@@ -59,6 +105,14 @@ def _make_sine(freq_hz=1.0, fs=100.0, duration_s=20.0, phase=0.0, noise=0.0, see
 
 
 def parser_basic(debug=False):
+    """
+    Check that the command-line parser initializes.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -67,6 +121,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
+    """
+    Check that the parser requires the mandatory arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -75,6 +137,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
+    """
+    Check the parser defaults.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     parser = _get_parser()
@@ -90,6 +160,14 @@ def parser_defaults(debug=False):
 
 
 def getwavefreq_estimates_frequency_smooth_on(debug=False):
+    """
+    Check getwavefreq estimates frequency smooth on in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getwavefreq_estimates_frequency_smooth_on")
     fs = 100.0
@@ -110,6 +188,14 @@ def getwavefreq_estimates_frequency_smooth_on(debug=False):
 
 
 def getwavefreq_estimates_frequency_smooth_off(debug=False):
+    """
+    Check getwavefreq estimates frequency smooth off in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getwavefreq_estimates_frequency_smooth_off")
     fs = 100.0
@@ -130,6 +216,14 @@ def getwavefreq_estimates_frequency_smooth_off(debug=False):
 
 
 def getwavefreq_handles_odd_length(debug=False):
+    """
+    Check getwavefreq handles odd length in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getwavefreq_handles_odd_length")
     fs = 50.0
@@ -156,6 +250,14 @@ def getwavefreq_handles_odd_length(debug=False):
 
 
 def physiofreq_uses_readbidstsv_for_json(debug=False):
+    """
+    Check physiofreq uses readbidstsv for JSON in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("physiofreq_uses_readbidstsv_for_json")
 
@@ -166,9 +268,35 @@ def physiofreq_uses_readbidstsv_for_json(debug=False):
     args = _make_args(textfilename="sub-01_recording-ppg.json", displayplots=False, nosmooth=True)
 
     def mock_parsefilespec(spec):
+        """
+        Simulate ``parsefilespec`` for the test.
+
+        Parameters
+        ----------
+        spec : object
+            Value supplied as ``spec`` by the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return ([spec], None)
 
     def mock_readbidstsv(_fname):
+        """
+        Simulate ``readbidstsv`` for the test.
+
+        Parameters
+        ----------
+        _fname : object
+            Value supplied as ``_fname`` by the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (fs, 0.0, ["ppg"], x, False, False, {})
 
     captured = io.StringIO()
@@ -189,6 +317,14 @@ def physiofreq_uses_readbidstsv_for_json(debug=False):
 
 
 def physiofreq_uses_readvecs_for_text(debug=False):
+    """
+    Check physiofreq uses readvecs for text in the test harness.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("physiofreq_uses_readvecs_for_text")
 
@@ -199,9 +335,35 @@ def physiofreq_uses_readvecs_for_text(debug=False):
     args = _make_args(textfilename="trace.txt", samplerate=fs, displayplots=False, nosmooth=False)
 
     def mock_parsefilespec(spec):
+        """
+        Simulate ``parsefilespec`` for the test.
+
+        Parameters
+        ----------
+        spec : object
+            Value supplied as ``spec`` by the test case.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return ([spec], None)
 
     def mock_readvecs(_fname):
+        """
+        Simulate ``readvecs`` for the test.
+
+        Parameters
+        ----------
+        _fname : object
+            Value supplied as ``_fname`` by the test case.
+
+        Returns
+        -------
+        list
+            Values supplied together for the test case.
+        """
         return [x]
 
     captured = io.StringIO()
@@ -226,6 +388,14 @@ def physiofreq_uses_readvecs_for_text(debug=False):
 
 def test_physiofreq(debug=False):
     # _get_parser tests
+    """
+    Verify physiofreq.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser_basic(debug=debug)
     parser_required_args(debug=debug)
     parser_defaults(debug=debug)

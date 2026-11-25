@@ -37,7 +37,21 @@ from rapidtide.refineRegressorFuncs import (
 
 
 def _make_broadband_signal(n, seed=42):
-    """Create a broadband LFO signal (sum of sinusoids) for realistic testing."""
+    """
+    Create a broadband LFO signal (sum of sinusoids) for realistic testing.
+
+    Parameters
+    ----------
+    n : object
+        Value supplied as ``n`` by the test case.
+    seed : int, optional
+        Random seed for reproducible test data.
+
+    Returns
+    -------
+    numpy.ndarray
+        The ``signal`` value supplied to the caller.
+    """
     rng = np.random.RandomState(seed)
     t = np.arange(n, dtype=np.float64)
     signal = np.zeros(n)
@@ -52,6 +66,14 @@ def _make_broadband_signal(n, seed=42):
 
 
 def test_packvoxeldata_basic(debug=False):
+    """
+    Verify packvoxeldata basic.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     features = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
     labels = np.array([10.0, 20.0])
     extra1 = "param1"
@@ -70,6 +92,14 @@ def test_packvoxeldata_basic(debug=False):
 
 
 def test_packvoxeldata_second_voxel(debug=False):
+    """
+    Verify packvoxeldata second voxel.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     features = np.array([[1.0, 2.0], [4.0, 5.0], [7.0, 8.0]])
     labels = np.array([10.0, 20.0, 30.0])
 
@@ -85,6 +115,14 @@ def test_packvoxeldata_second_voxel(debug=False):
 
 
 def test_unpackvoxeldata_basic(debug=False):
+    """
+    Verify unpackvoxeldata basic.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     nvoxels = 5
     ntimepoints = 10
     voxelproducts = [np.zeros((nvoxels, ntimepoints)) for _ in range(4)]
@@ -109,6 +147,14 @@ def test_unpackvoxeldata_basic(debug=False):
 
 
 def test_unpackvoxeldata_multiple_voxels(debug=False):
+    """
+    Verify unpackvoxeldata multiple voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     nvoxels = 3
     ntimepoints = 5
     voxelproducts = [np.zeros((nvoxels, ntimepoints)) for _ in range(4)]
@@ -137,7 +183,14 @@ def test_unpackvoxeldata_multiple_voxels(debug=False):
 
 
 def test_procOneVoxelTimeShift_zero_shift(debug=False):
-    """With zero lag time and zero offset, output should match detrended input."""
+    """
+    With zero lag time and zero offset, output should match detrended input.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     n = 100
     fmritc = np.sin(np.linspace(0, 4 * np.pi, n))
     lagtime = 0.0
@@ -160,7 +213,14 @@ def test_procOneVoxelTimeShift_zero_shift(debug=False):
 
 
 def test_procOneVoxelTimeShift_nonzero_shift(debug=False):
-    """With nonzero lag, the output should be shifted."""
+    """
+    With nonzero lag, the output should be shifted.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     n = 200
     fmritc = _make_broadband_signal(n)
     lagtime = 2.0  # seconds
@@ -182,7 +242,14 @@ def test_procOneVoxelTimeShift_nonzero_shift(debug=False):
 
 
 def test_procOneVoxelTimeShift_detrending(debug=False):
-    """With detrendorder > 0, linear trends should be removed."""
+    """
+    With detrendorder > 0, linear trends should be removed.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     n = 100
     # Create a signal with a strong linear trend
     fmritc = np.linspace(0, 10, n) + np.sin(np.linspace(0, 4 * np.pi, n))
@@ -201,7 +268,14 @@ def test_procOneVoxelTimeShift_detrending(debug=False):
 
 
 def test_procOneVoxelTimeShift_with_offset(debug=False):
-    """Offset time should shift the result differently than without."""
+    """
+    Offset time should shift the result differently than without.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     n = 200
     fmritc = _make_broadband_signal(n)
     lagtime = 1.0
@@ -227,7 +301,14 @@ def test_procOneVoxelTimeShift_with_offset(debug=False):
 
 
 def test_findecho(debug=False):
-    """Test AR parameter estimation via Levinson-Durbin."""
+    """
+    Test AR parameter estimation via Levinson-Durbin.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 5
     ntimepoints = 200
@@ -267,7 +348,14 @@ def test_findecho(debug=False):
 
 
 def test_makerefinemask_basic(debug=False):
-    """Test basic mask creation with default parameters."""
+    """
+    Test basic mask creation with default parameters.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (5, 5, 5)
     lagstrengths = np.ones(shape) * 0.5
     lagtimes = np.ones(shape) * 2.0
@@ -295,7 +383,14 @@ def test_makerefinemask_basic(debug=False):
 
 
 def test_makerefinemask_ampthresh_filters(debug=False):
-    """Voxels below ampthresh should be excluded."""
+    """
+    Voxels below ampthresh should be excluded.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (5, 5, 5)
     lagstrengths = np.ones(shape) * 0.2  # below threshold
     lagtimes = np.ones(shape) * 2.0
@@ -321,7 +416,14 @@ def test_makerefinemask_ampthresh_filters(debug=False):
 
 
 def test_makerefinemask_lag_filters(debug=False):
-    """Voxels with lag outside range should be excluded."""
+    """
+    Voxels with lag outside range should be excluded.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (5, 5, 5)
     lagstrengths = np.ones(shape) * 0.8
     lagtimes = np.ones(shape) * 10.0  # outside lagmaxthresh=5
@@ -346,7 +448,14 @@ def test_makerefinemask_lag_filters(debug=False):
 
 
 def test_makerefinemask_sigma_filters(debug=False):
-    """Voxels with sigma above sigmathresh should be excluded."""
+    """
+    Voxels with sigma above sigmathresh should be excluded.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (5, 5, 5)
     lagstrengths = np.ones(shape) * 0.8
     lagtimes = np.ones(shape) * 2.0
@@ -372,7 +481,14 @@ def test_makerefinemask_sigma_filters(debug=False):
 
 
 def test_makerefinemask_lagmaskside_upper(debug=False):
-    """Test upper lag mask side."""
+    """
+    Test upper lag mask side.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (5, 5, 5)
     lagstrengths = np.ones(shape) * 0.8
     lagtimes = np.ones(shape) * 2.0
@@ -398,7 +514,14 @@ def test_makerefinemask_lagmaskside_upper(debug=False):
 
 
 def test_makerefinemask_lagmaskside_lower(debug=False):
-    """Test lower lag mask side with negative lags."""
+    """
+    Test lower lag mask side with negative lags.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (5, 5, 5)
     lagstrengths = np.ones(shape) * 0.8
     lagtimes = np.ones(shape) * -2.0  # negative lags
@@ -423,7 +546,14 @@ def test_makerefinemask_lagmaskside_lower(debug=False):
 
 
 def test_makerefinemask_bipolar(debug=False):
-    """Test bipolar mode uses absolute correlation values."""
+    """
+    Test bipolar mode uses absolute correlation values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (5, 5, 5)
     lagstrengths = np.ones(shape) * -0.8  # negative correlations
     lagtimes = np.ones(shape) * 2.0
@@ -462,7 +592,14 @@ def test_makerefinemask_bipolar(debug=False):
 
 
 def test_makerefinemask_includemask(debug=False):
-    """Test that includemask restricts which voxels are considered."""
+    """
+    Test that includemask restricts which voxels are considered.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (5, 5, 5)
     lagstrengths = np.ones(shape) * 0.8
     lagtimes = np.ones(shape) * 2.0
@@ -491,7 +628,14 @@ def test_makerefinemask_includemask(debug=False):
 
 
 def test_makerefinemask_excludemask(debug=False):
-    """Test that excludemask removes specified voxels."""
+    """
+    Test that excludemask removes specified voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (5, 5, 5)
     lagstrengths = np.ones(shape) * 0.8
     lagtimes = np.ones(shape) * 2.0
@@ -520,7 +664,14 @@ def test_makerefinemask_excludemask(debug=False):
 
 
 def test_makerefinemask_fixdelay(debug=False):
-    """When fixdelay=True, lag thresholds should not be applied."""
+    """
+    When fixdelay=True, lag thresholds should not be applied.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (5, 5, 5)
     lagstrengths = np.ones(shape) * 0.8
     lagtimes = np.ones(shape) * 100.0  # way outside normal range
@@ -559,7 +710,14 @@ def test_makerefinemask_fixdelay(debug=False):
 
 
 def test_makerefinemask_negative_ampthresh(debug=False):
-    """Negative ampthresh should be treated as a percentile."""
+    """
+    Negative ampthresh should be treated as a percentile.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (5, 5, 5)
     rng = np.random.RandomState(42)
     lagstrengths = rng.uniform(0.1, 1.0, shape)
@@ -585,7 +743,14 @@ def test_makerefinemask_negative_ampthresh(debug=False):
 
 
 def test_makerefinemask_cleanrefined(debug=False):
-    """When cleanrefined=True, shiftmask should be locationmask instead of refinemask."""
+    """
+    When cleanrefined=True, shiftmask should be locationmask instead of refinemask.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     shape = (5, 5, 5)
     lagstrengths = np.ones(shape) * 0.8
     lagtimes = np.ones(shape) * 2.0
@@ -627,7 +792,14 @@ def test_makerefinemask_cleanrefined(debug=False):
 
 
 def test_prenorm_mean(debug=False):
-    """Test mean normalization."""
+    """
+    Test mean normalization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 10
     ntimepoints = 50
@@ -649,7 +821,14 @@ def test_prenorm_mean(debug=False):
 
 
 def test_prenorm_var(debug=False):
-    """Test variance normalization."""
+    """
+    Test variance normalization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 10
     ntimepoints = 50
@@ -669,7 +848,14 @@ def test_prenorm_var(debug=False):
 
 
 def test_prenorm_std(debug=False):
-    """Test std normalization."""
+    """
+    Test std normalization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 10
     ntimepoints = 50
@@ -689,7 +875,14 @@ def test_prenorm_std(debug=False):
 
 
 def test_prenorm_invlag(debug=False):
-    """Test inverse lag normalization."""
+    """
+    Test inverse lag normalization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 10
     ntimepoints = 50
@@ -709,7 +902,14 @@ def test_prenorm_invlag(debug=False):
 
 
 def test_prenorm_default_norm(debug=False):
-    """Test with unknown normalization type (should use unit divisor)."""
+    """
+    Test with unknown normalization type (should use unit divisor).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 10
     ntimepoints = 50
@@ -733,7 +933,14 @@ def test_prenorm_default_norm(debug=False):
 
 
 def test_prenorm_R2_weighting(debug=False):
-    """Test R2 weighting mode."""
+    """
+    Test R2 weighting mode.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 10
     ntimepoints = 50
@@ -764,7 +971,14 @@ def test_prenorm_R2_weighting(debug=False):
 
 
 def test_prenorm_default_weighting(debug=False):
-    """Test default (sign-based) weighting."""
+    """
+    Test default (sign-based) weighting.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 10
     ntimepoints = 50
@@ -795,7 +1009,14 @@ def test_prenorm_default_weighting(debug=False):
 
 
 def test_prenorm_masked_voxels(debug=False):
-    """Voxels outside refinemask should be zeroed."""
+    """
+    Voxels outside refinemask should be zeroed.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 10
     ntimepoints = 50
@@ -821,7 +1042,14 @@ def test_prenorm_masked_voxels(debug=False):
 
 
 def test_dorefine_unweighted_average(debug=False):
-    """Test unweighted average refinement."""
+    """
+    Test unweighted average refinement.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 20
     ntimepoints = 100
@@ -864,7 +1092,14 @@ def test_dorefine_unweighted_average(debug=False):
 
 
 def test_dorefine_weighted_average(debug=False):
-    """Test weighted average refinement."""
+    """
+    Test weighted average refinement.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 20
     ntimepoints = 100
@@ -904,7 +1139,14 @@ def test_dorefine_weighted_average(debug=False):
 
 
 def test_dorefine_pca(debug=False):
-    """Test PCA refinement."""
+    """
+    Test PCA refinement.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 30
     ntimepoints = 100
@@ -945,7 +1187,14 @@ def test_dorefine_pca(debug=False):
 
 
 def test_dorefine_ica(debug=False):
-    """Test ICA refinement."""
+    """
+    Test ICA refinement.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 30
     ntimepoints = 100
@@ -984,7 +1233,14 @@ def test_dorefine_ica(debug=False):
 
 
 def test_dorefine_partial_mask(debug=False):
-    """Test that refinemask properly selects subset of voxels."""
+    """
+    Test that refinemask properly selects subset of voxels.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 20
     ntimepoints = 100
@@ -1023,7 +1279,14 @@ def test_dorefine_partial_mask(debug=False):
 
 
 def test_dorefine_bipolar(debug=False):
-    """Test bipolar mode flips negative lag strengths."""
+    """
+    Test bipolar mode flips negative lag strengths.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 20
     ntimepoints = 100
@@ -1069,7 +1332,14 @@ def test_dorefine_bipolar(debug=False):
 
 
 def test_dorefine_cleanrefined(debug=False):
-    """Test cleanrefined mode removes discard data via regression."""
+    """
+    Test cleanrefined mode removes discard data via regression.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     rng = np.random.RandomState(42)
     nvoxels = 20
     ntimepoints = 100
@@ -1114,7 +1384,14 @@ def test_dorefine_cleanrefined(debug=False):
 
 
 def test_alignvoxels_single_proc(debug=False):
-    """Test alignvoxels with single processor."""
+    """
+    Test alignvoxels with single processor.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     nvoxels = 10
     ntimepoints = 50
     padtrs = 10
@@ -1156,7 +1433,14 @@ def test_alignvoxels_single_proc(debug=False):
 
 
 def test_alignvoxels_partial_mask(debug=False):
-    """Test that only masked voxels are processed."""
+    """
+    Test that only masked voxels are processed.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     nvoxels = 10
     ntimepoints = 50
     padtrs = 10
@@ -1245,7 +1529,14 @@ def _refineinputs(nvoxels=20, ntimepoints=100, seed=0, noise=0.1):
 
 
 def test_alignvoxels_debug_reporting(debug=False):
-    """Test the debug reporting path through alignvoxels and the per-voxel time shift."""
+    """
+    Test the debug reporting path through alignvoxels and the per-voxel time shift.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("alignvoxels_debug_reporting")
     nvoxels, ntimepoints, padtrs = 6, 40, 8
@@ -1276,10 +1567,16 @@ def test_alignvoxels_debug_reporting(debug=False):
 
 
 def test_makerefinemask_bipolar_negative_ampthresh(debug=False):
-    """Test a percentile ampthresh in bipolar mode thresholds on absolute strength.
+    """
+    Test a percentile ampthresh in bipolar mode thresholds on absolute strength.
 
     A negative ampthresh is interpreted as a percentile; with bipolar set, that percentile
     is taken over the absolute value of the strengths so strong negative correlations count.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("makerefinemask_bipolar_negative_ampthresh")
@@ -1312,7 +1609,14 @@ def test_makerefinemask_bipolar_negative_ampthresh(debug=False):
 
 
 def test_makerefinemask_no_voxels_survive(debug=False):
-    """Test the early return when no voxel passes every threshold."""
+    """
+    Test the early return when no voxel passes every threshold.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makerefinemask_no_voxels_survive")
     shape = (3, 3, 3)
@@ -1340,7 +1644,14 @@ def test_makerefinemask_no_voxels_survive(debug=False):
 
 
 def test_makerefinemask_no_voxels_survive_with_masks(debug=False):
-    """Test the empty-mask message differs when include or exclude masks are in play."""
+    """
+    Test the empty-mask message differs when include or exclude masks are in play.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("makerefinemask_no_voxels_survive_with_masks")
     shape = (3, 3, 3)
@@ -1363,7 +1674,14 @@ def test_makerefinemask_no_voxels_survive_with_masks(debug=False):
 
 
 def test_prenorm_debug_reporting(debug=False):
-    """Test the debug reporting path through prenorm."""
+    """
+    Test the debug reporting path through prenorm.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("prenorm_debug_reporting")
     nvoxels, ntimepoints = 5, 20
@@ -1388,11 +1706,17 @@ def test_prenorm_debug_reporting(debug=False):
 
 
 def test_prenorm_does_not_mutate_weights(debug=False):
-    """Test prenorm leaves the caller's lagstrengths and R2 arrays untouched.
+    """
+    Test prenorm leaves the caller's lagstrengths and R2 arrays untouched.
 
     The weighting array used to be the caller's own array, and the mask was applied to it
     with an in-place multiply - so weighting by "R" zeroed the correlation strengths outside
     the refine mask, and the refinement code reuses that array immediately afterwards.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("prenorm_does_not_mutate_weights")
@@ -1425,7 +1749,14 @@ def test_prenorm_does_not_mutate_weights(debug=False):
 
 
 def test_dorefine_dispersioncalc(debug=False):
-    """Test the dispersion calculation writes its four output files."""
+    """
+    Test the dispersion calculation writes its four output files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dorefine_dispersioncalc")
     nvoxels, ntimepoints = 24, 100
@@ -1462,7 +1793,14 @@ def test_dorefine_dispersioncalc(debug=False):
 
 
 def test_dorefine_pcacomponents_mle(debug=False):
-    """Test a negative pcacomponents selects automatic (mle) component estimation."""
+    """
+    Test a negative pcacomponents selects automatic (mle) component estimation.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dorefine_pcacomponents_mle")
     signal, shiftedtcs, refinemask, weights, lagstrengths, lagtimes = _refineinputs(
@@ -1489,7 +1827,14 @@ def test_dorefine_pcacomponents_mle(debug=False):
 
 
 def test_dorefine_pcacomponents_integer(debug=False):
-    """Test a pcacomponents of one or more is rounded to an integer component count."""
+    """
+    Test a pcacomponents of one or more is rounded to an integer component count.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dorefine_pcacomponents_integer")
     signal, shiftedtcs, refinemask, weights, lagstrengths, lagtimes = _refineinputs(
@@ -1515,7 +1860,14 @@ def test_dorefine_pcacomponents_integer(debug=False):
 
 
 def test_dorefine_pcacomponents_zero_exits(debug=False):
-    """Test a pcacomponents of exactly zero is rejected rather than passed to PCA."""
+    """
+    Test a pcacomponents of exactly zero is rejected rather than passed to PCA.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dorefine_pcacomponents_zero_exits")
     signal, shiftedtcs, refinemask, weights, lagstrengths, lagtimes = _refineinputs(
@@ -1579,13 +1931,50 @@ def _dorefine_with_forced_correlation_sign(refinetype, sign, tmpdir, nvoxels=16,
         """Correlation result reporting a caller-chosen sign."""
 
         def __init__(self, statistic):
+            """
+            Initialize the test double for ``_ForcedResult``.
+
+            Parameters
+            ----------
+            statistic : object
+                Value supplied as ``statistic`` by the test case.
+            """
             self.statistic = statistic
 
     def _forced(a, b):
+        """
+        Provide the ``_forced`` test substitute.
+
+        Parameters
+        ----------
+        a : object
+            Value supplied as ``a`` by the test case.
+        b : object
+            Value supplied as ``b`` by the test case.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         return _ForcedResult(sign * abs(realpearsonr(a, b).statistic))
 
     def _seededfastica(*args, **kwargs):
-        """Fit FastICA with a fixed seed so repeated calls give the same component."""
+        """
+        Fit FastICA with a fixed seed so repeated calls give the same component.
+
+        Parameters
+        ----------
+        *args : object
+            Arguments passed to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         kwargs.setdefault("random_state", 0)
         return realfastica(*args, **kwargs)
 
@@ -1610,7 +1999,14 @@ def _dorefine_with_forced_correlation_sign(refinetype, sign, tmpdir, nvoxels=16,
 
 
 def test_dorefine_ica_sign_branches(debug=False):
-    """Test both ICA sign branches, which FastICA otherwise picks between arbitrarily."""
+    """
+    Test both ICA sign branches, which FastICA otherwise picks between arbitrarily.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("dorefine_ica_sign_branches")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1620,10 +2016,16 @@ def test_dorefine_ica_sign_branches(debug=False):
 
 
 def test_dorefine_pca_too_many_components_exits(debug=False):
-    """Test an impossible explicit component count exits rather than propagating ValueError.
+    """
+    Test an impossible explicit component count exits rather than propagating ValueError.
 
     Only the automatic ("mle") setting has a fallback; an explicit count that PCA cannot
     satisfy is treated as unrecoverable.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("dorefine_pca_too_many_components_exits")
@@ -1654,10 +2056,16 @@ def test_dorefine_pca_too_many_components_exits(debug=False):
 
 
 def test_dorefine_pca_sign_flip(debug=False):
-    """Test the pca output is sign flipped when it anticorrelates with the simple average.
+    """
+    Test the pca output is sign flipped when it anticorrelates with the simple average.
 
     ``dorefine`` correlates the PCA reconstruction against the plain average and negates the
     result if they disagree, so the returned regressor always points the same way.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("dorefine_pca_sign_flip")
@@ -1676,9 +2084,32 @@ def test_dorefine_pca_sign_flip(debug=False):
         """Stand-in correlation result that reports the opposite sign."""
 
         def __init__(self, statistic):
+            """
+            Initialize the test double for ``_FlippedResult``.
+
+            Parameters
+            ----------
+            statistic : object
+                Value supplied as ``statistic`` by the test case.
+            """
             self.statistic = statistic
 
     def _negpearsonr(a, b):
+        """
+        Provide the ``_negpearsonr`` test substitute.
+
+        Parameters
+        ----------
+        a : object
+            Value supplied as ``a`` by the test case.
+        b : object
+            Value supplied as ``b`` by the test case.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         thereal = realpearsonr(a, b)
         captured["called"] = True
         return _FlippedResult(-abs(thereal.statistic))
@@ -1719,6 +2150,14 @@ def test_dorefine_pca_sign_flip(debug=False):
 
 
 def test_refineRegressorFuncs(debug=False):
+    """
+    Verify refineRegressorFuncs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     test_packvoxeldata_basic(debug=debug)
     test_packvoxeldata_second_voxel(debug=debug)
     test_unpackvoxeldata_basic(debug=debug)

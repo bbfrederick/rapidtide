@@ -29,6 +29,19 @@ from rapidtide.tests.utils import get_examples_path, get_test_temp_path
 
 
 def proccolspec(thecolspec):
+    """
+    Set up ``proccolspec`` for the test.
+
+    Parameters
+    ----------
+    thecolspec : object
+        Value supplied as ``thecolspec`` by the test case.
+
+    Returns
+    -------
+    object
+        Value returned to the caller in this test case.
+    """
     if thecolspec is not None:
         # see if this is a numeric or text list
         tokenlist = (thecolspec.split(",")[0]).split("-")
@@ -43,7 +56,12 @@ def proccolspec(thecolspec):
 
 def _get_parser():
     """
-    Argument parser for adjust offset
+    Argument parser for adjust offset.
+
+    Returns
+    -------
+    object
+        The ``parser`` value supplied to the caller.
     """
     parser = argparse.ArgumentParser(
         prog="dummy",
@@ -76,7 +94,14 @@ def _makeparser():
 
 
 def is_int_tests(debug=False):
-    """is_int accepts integers and rejects anything else, with optional bounds."""
+    """
+    Is_int accepts integers and rejects anything else, with optional bounds.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("is_int_tests")
     theparser = _makeparser()
@@ -104,8 +129,15 @@ def is_int_tests(debug=False):
 
 
 def is_float_tests(debug=False):
-    """is_float mirrors is_int: numbers through, "auto" through, anything else
-    reported as a parser error rather than raised as a TypeError."""
+    """
+    Is_float mirrors is_int: numbers through, "auto" through, anything else
+    reported as a parser error rather than raised as a TypeError.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("is_float_tests")
     theparser = _makeparser()
@@ -124,7 +156,14 @@ def is_float_tests(debug=False):
 
 
 def is_range_tests(debug=False):
-    """is_range wants exactly two numbers in ascending order."""
+    """
+    Is_range wants exactly two numbers in ascending order.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("is_range_tests")
     theparser = _makeparser()
@@ -149,8 +188,15 @@ def is_range_tests(debug=False):
 
 
 def is_valid_tag_tests(debug=False):
-    """A tag is a name and a value separated by the first comma; later commas belong
-    to the value, so a value containing commas survives intact."""
+    """
+    A tag is a name and a value separated by the first comma; later commas belong
+    to the value, so a value containing commas survives intact.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("is_valid_tag_tests")
     theparser = _makeparser()
@@ -165,8 +211,15 @@ def is_valid_tag_tests(debug=False):
 
 
 def is_valid_file_or_float_tests(debug=False):
-    """The argument may be a path to an existing file or a number.  Anything else is
-    rejected, so a mistyped filename does not silently become a value."""
+    """
+    The argument may be a path to an existing file or a number.  Anything else is
+    rejected, so a mistyped filename does not silently become a value.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("is_valid_file_or_float_tests")
     theparser = _makeparser()
@@ -185,8 +238,15 @@ def is_valid_file_or_float_tests(debug=False):
 
 
 def parserange_tests(debug=False):
-    """parserange normalizes a (start, end) pair: negatives become the extremes, and
-    an inverted range is an error rather than an empty selection."""
+    """
+    Parserange normalizes a (start, end) pair: negatives become the extremes, and
+    an inverted range is an error rather than an empty selection.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parserange_tests")
 
@@ -211,8 +271,15 @@ def parserange_tests(debug=False):
 
 
 def detailedversion_tests(debug=False):
-    """--detailedversion prints build metadata and exits; it must not raise whatever
-    the version machinery reports, including when everything is UNKNOWN."""
+    """
+    --detailedversion prints build metadata and exits; it must not raise whatever
+    the version machinery reports, including when everything is UNKNOWN.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("detailedversion_tests")
 
@@ -232,7 +299,14 @@ def detailedversion_tests(debug=False):
 
 
 def postprocessfilteropts_tests(debug=False):
-    """postprocessfilteropts turns the filter arguments into a NoncausalFilter."""
+    """
+    Postprocessfilteropts turns the filter arguments into a NoncausalFilter.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("postprocessfilteropts_tests")
 
@@ -273,7 +347,8 @@ def postprocessfilteropts_tests(debug=False):
 
 
 def postprocessfilteropts_padtype_is_not_wired_up(debug=False):
-    """--padtype is silently ignored.
+    """
+    --padtype is silently ignored.
 
     The parser stores the choice in args.ncfiltpadtype, but postprocessfilteropts
     reads args.prefilterpadtype.  That attribute does not exist, so the try/except
@@ -281,6 +356,11 @@ def postprocessfilteropts_padtype_is_not_wired_up(debug=False):
     reaches the filter.  This is recorded as a known gotcha in the project's
     CLAUDE.md; the test pins the CURRENT behaviour so that fixing it is a deliberate,
     visible change rather than a silent one.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     if debug:
         print("postprocessfilteropts_padtype_is_not_wired_up")
@@ -302,8 +382,15 @@ def postprocessfilteropts_padtype_is_not_wired_up(debug=False):
 
 
 def postprocesssearchrangeopts_tests(debug=False):
-    """The search range is stored as a lag_extrema pair, with lagmin and lagmax
-    broken out for the callers that want them separately."""
+    """
+    The search range is stored as a lag_extrema pair, with lagmin and lagmax
+    broken out for the callers that want them separately.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("postprocesssearchrangeopts_tests")
 
@@ -317,9 +404,16 @@ def postprocesssearchrangeopts_tests(debug=False):
 
 
 def postprocesssamplerateopts_tests(debug=False):
-    """A sample rate of "auto" resolves to 1.0 - a sample per point, which is the
+    """
+    A sample rate of "auto" resolves to 1.0 - a sample per point, which is the
     right assumption for a file that carries no timing.  An explicit value is passed
-    through untouched."""
+    through untouched.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("postprocesssamplerateopts_tests")
 
@@ -333,8 +427,15 @@ def postprocesssamplerateopts_tests(debug=False):
 
 
 def postprocesstagopts_tests(debug=False):
-    """--infotag pairs become INFO_ prefixed attributes on the namespace, which is
-    how they reach the options JSON that records how a run was configured."""
+    """
+    --infotag pairs become INFO_ prefixed attributes on the namespace, which is
+    how they reach the options JSON that records how a run was configured.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("postprocesstagopts_tests")
 
@@ -354,6 +455,16 @@ def postprocesstagopts_tests(debug=False):
 
 def test_parserfuncs(debug=False, local=False):
     # set input and output directories
+    """
+    Verify parserfuncs.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     exampleroot = get_examples_path(local)
     testtemproot = get_test_temp_path(local)
 
@@ -393,7 +504,16 @@ if __name__ == "__main__":
 
 
 def test_parserfuncvalidators(debug=False, local=False):
-    """Entry point for the validator and postprocessing tests."""
+    """
+    Entry point for the validator and postprocessing tests.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     is_int_tests(debug=debug)
     is_float_tests(debug=debug)
     is_range_tests(debug=debug)

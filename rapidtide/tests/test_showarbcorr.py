@@ -31,14 +31,52 @@ NPTS = 500
 
 
 def _write_plain_signal_file(tmpdir, signal, name="signal.txt"):
-    """Write a signal to a plain text file (no sidecar)."""
+    """
+    Write a signal to a plain text file (no sidecar).
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    signal : object
+        Value supplied as ``signal`` by the test case.
+    name : str, optional
+        Value supplied as ``name`` by the test case.
+
+    Returns
+    -------
+    str
+        The ``filepath`` value supplied to the caller.
+    """
     filepath = os.path.join(tmpdir, name)
     np.savetxt(filepath, signal)
     return filepath
 
 
 def _make_test_args(tmpdir, file1, file2, Fs1=SAMPLERATE, Fs2=SAMPLERATE, **kwargs):
-    """Create args via parser, override with kwargs."""
+    """
+    Create args via parser, override with kwargs.
+
+    Parameters
+    ----------
+    tmpdir : py.path.local
+        Temporary directory for files created by the test.
+    file1 : object
+        Value supplied as ``file1`` by the test case.
+    file2 : object
+        Value supplied as ``file2`` by the test case.
+    Fs1 : object, optional
+        Value supplied as ``Fs1`` by the test case.
+    Fs2 : object, optional
+        Value supplied as ``Fs2`` by the test case.
+    **kwargs : object
+        Additional keyword arguments accepted by the stub.
+
+    Returns
+    -------
+    object
+        The ``args`` value supplied to the caller.
+    """
     parser = sac._get_parser()
     args = parser.parse_args([file1, file2])
     args.samplerate1 = Fs1
@@ -63,7 +101,14 @@ def _make_test_args(tmpdir, file1, file2, Fs1=SAMPLERATE, Fs2=SAMPLERATE, **kwar
 
 
 def get_parser_returns_parser(debug=False):
-    """Test _get_parser returns an ArgumentParser."""
+    """
+    Test _get_parser returns an ArgumentParser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_returns_parser")
     import argparse
@@ -73,7 +118,14 @@ def get_parser_returns_parser(debug=False):
 
 
 def get_parser_required_args(debug=False):
-    """Test _get_parser requires two input files."""
+    """
+    Test _get_parser requires two input files.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_required_args")
     parser = sac._get_parser()
@@ -85,7 +137,16 @@ def get_parser_required_args(debug=False):
 
 
 def get_parser_defaults(parse_with_temp_inputs, debug=False):
-    """Test _get_parser default values."""
+    """
+    Test _get_parser default values.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_defaults")
     args = parse_with_temp_inputs(sac._get_parser())
@@ -107,7 +168,16 @@ def get_parser_defaults(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_samplerate1(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --samplerate1."""
+    """
+    Test _get_parser accepts --samplerate1.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_samplerate1")
     args = parse_with_temp_inputs(sac._get_parser(), ["--samplerate1", "25.0"])
@@ -115,7 +185,16 @@ def get_parser_samplerate1(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_samplerate2(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --samplerate2."""
+    """
+    Test _get_parser accepts --samplerate2.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_samplerate2")
     args = parse_with_temp_inputs(sac._get_parser(), ["--samplerate2", "50.0"])
@@ -123,7 +202,16 @@ def get_parser_samplerate2(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_nodisplay(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --nodisplay."""
+    """
+    Test _get_parser accepts --nodisplay.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_nodisplay")
     args = parse_with_temp_inputs(sac._get_parser(), ["--nodisplay"])
@@ -131,7 +219,16 @@ def get_parser_nodisplay(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_debug(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --debug."""
+    """
+    Test _get_parser accepts --debug.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_debug")
     args = parse_with_temp_inputs(sac._get_parser(), ["--debug"])
@@ -139,7 +236,16 @@ def get_parser_debug(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_verbose(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --verbose."""
+    """
+    Test _get_parser accepts --verbose.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_verbose")
     args = parse_with_temp_inputs(sac._get_parser(), ["--verbose"])
@@ -147,7 +253,16 @@ def get_parser_verbose(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_detrendorder(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --detrendorder."""
+    """
+    Test _get_parser accepts --detrendorder.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_detrendorder")
     args = parse_with_temp_inputs(sac._get_parser(), ["--detrendorder", "3"])
@@ -155,7 +270,16 @@ def get_parser_detrendorder(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_corrweighting(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --corrweighting."""
+    """
+    Test _get_parser accepts --corrweighting.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_corrweighting")
     for choice in ["None", "phat", "liang", "eckart"]:
@@ -164,7 +288,16 @@ def get_parser_corrweighting(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_invert(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --invert."""
+    """
+    Test _get_parser accepts --invert.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_invert")
     args = parse_with_temp_inputs(sac._get_parser(), ["--invert"])
@@ -172,7 +305,16 @@ def get_parser_invert(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_label(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --label."""
+    """
+    Test _get_parser accepts --label.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_label")
     args = parse_with_temp_inputs(sac._get_parser(), ["--label", "test_label"])
@@ -180,7 +322,16 @@ def get_parser_label(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_bipolar(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --bipolar."""
+    """
+    Test _get_parser accepts --bipolar.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_bipolar")
     args = parse_with_temp_inputs(sac._get_parser(), ["--bipolar"])
@@ -188,7 +339,16 @@ def get_parser_bipolar(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_outputfile(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --outputfile."""
+    """
+    Test _get_parser accepts --outputfile.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_outputfile")
     args = parse_with_temp_inputs(sac._get_parser(), ["--outputfile", "results.txt"])
@@ -196,7 +356,16 @@ def get_parser_outputfile(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_corroutputfile(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --corroutputfile."""
+    """
+    Test _get_parser accepts --corroutputfile.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_corroutputfile")
     args = parse_with_temp_inputs(sac._get_parser(), ["--corroutputfile", "corr.txt"])
@@ -204,7 +373,16 @@ def get_parser_corroutputfile(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_summarymode(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --summarymode."""
+    """
+    Test _get_parser accepts --summarymode.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_summarymode")
     args = parse_with_temp_inputs(sac._get_parser(), ["--summarymode"])
@@ -212,7 +390,16 @@ def get_parser_summarymode(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_labelline(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --labelline."""
+    """
+    Test _get_parser accepts --labelline.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_labelline")
     args = parse_with_temp_inputs(sac._get_parser(), ["--labelline"])
@@ -220,7 +407,16 @@ def get_parser_labelline(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_noprogressbar(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --noprogressbar."""
+    """
+    Test _get_parser accepts --noprogressbar.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_noprogressbar")
     args = parse_with_temp_inputs(sac._get_parser(), ["--noprogressbar"])
@@ -228,7 +424,16 @@ def get_parser_noprogressbar(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_nprocs(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --nprocs."""
+    """
+    Test _get_parser accepts --nprocs.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_nprocs")
     args = parse_with_temp_inputs(sac._get_parser(), ["--nprocs", "4"])
@@ -236,7 +441,16 @@ def get_parser_nprocs(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_trimdata(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --trimdata."""
+    """
+    Test _get_parser accepts --trimdata.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_trimdata")
     args = parse_with_temp_inputs(sac._get_parser(), ["--trimdata"])
@@ -244,7 +458,16 @@ def get_parser_trimdata(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_windowfunc(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --windowfunc."""
+    """
+    Test _get_parser accepts --windowfunc.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_windowfunc")
     args = parse_with_temp_inputs(sac._get_parser(), ["--windowfunc", "hann"])
@@ -252,7 +475,16 @@ def get_parser_windowfunc(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_nonorm(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --nonorm."""
+    """
+    Test _get_parser accepts --nonorm.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_nonorm")
     args = parse_with_temp_inputs(sac._get_parser(), ["--nonorm"])
@@ -260,7 +492,16 @@ def get_parser_nonorm(parse_with_temp_inputs, debug=False):
 
 
 def get_parser_saveres(parse_with_temp_inputs, debug=False):
-    """Test _get_parser accepts --saveres."""
+    """
+    Test _get_parser accepts --saveres.
+
+    Parameters
+    ----------
+    parse_with_temp_inputs : callable
+        Parse arguments using temporary input files.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("get_parser_saveres")
     args = parse_with_temp_inputs(sac._get_parser(), ["--saveres", "300"])
@@ -271,7 +512,16 @@ def get_parser_saveres(parse_with_temp_inputs, debug=False):
 
 
 def printthresholds_basic(capture_stdout, debug=False):
-    """Test printthresholds prints correct output."""
+    """
+    Test printthresholds prints correct output.
+
+    Parameters
+    ----------
+    capture_stdout : callable
+        Run a callable and capture its standard output.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("printthresholds_basic")
     pcts = [1.96, 2.58, 3.29]
@@ -287,7 +537,16 @@ def printthresholds_basic(capture_stdout, debug=False):
 
 
 def printthresholds_single(capture_stdout, debug=False):
-    """Test printthresholds with a single threshold."""
+    """
+    Test printthresholds with a single threshold.
+
+    Parameters
+    ----------
+    capture_stdout : callable
+        Run a callable and capture its standard output.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("printthresholds_single")
     pcts = [0.5]
@@ -298,7 +557,16 @@ def printthresholds_single(capture_stdout, debug=False):
 
 
 def printthresholds_empty(capture_stdout, debug=False):
-    """Test printthresholds with empty lists."""
+    """
+    Test printthresholds with empty lists.
+
+    Parameters
+    ----------
+    capture_stdout : callable
+        Run a callable and capture its standard output.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("printthresholds_empty")
     output = capture_stdout(sac.printthresholds, [], [], "Empty:")
@@ -312,7 +580,16 @@ def printthresholds_empty(capture_stdout, debug=False):
 
 
 def showarbcorr_identical_signals(broadband_signal_factory, debug=False):
-    """Test showarbcorr with identical signals."""
+    """
+    Test showarbcorr with identical signals.
+
+    Parameters
+    ----------
+    broadband_signal_factory : callable
+        Generate a broadband signal for the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showarbcorr_identical_signals")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -334,7 +611,16 @@ def showarbcorr_identical_signals(broadband_signal_factory, debug=False):
 
 
 def showarbcorr_delayed_signals(broadband_signal_factory, debug=False):
-    """Test showarbcorr with delayed signals finds correct delay."""
+    """
+    Test showarbcorr with delayed signals finds correct delay.
+
+    Parameters
+    ----------
+    broadband_signal_factory : callable
+        Generate a broadband signal for the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showarbcorr_delayed_signals")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -368,7 +654,16 @@ def showarbcorr_delayed_signals(broadband_signal_factory, debug=False):
 
 
 def showarbcorr_summarymode_with_label(broadband_signal_factory, debug=False):
-    """Test showarbcorr summary mode with label and labelline."""
+    """
+    Test showarbcorr summary mode with label and labelline.
+
+    Parameters
+    ----------
+    broadband_signal_factory : callable
+        Generate a broadband signal for the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showarbcorr_summarymode_with_label")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -405,7 +700,18 @@ def showarbcorr_summarymode_with_label(broadband_signal_factory, debug=False):
 
 
 def showarbcorr_summarymode_to_stdout(broadband_signal_factory, capture_stdout, debug=False):
-    """Test showarbcorr summary mode printing to stdout."""
+    """
+    Test showarbcorr summary mode printing to stdout.
+
+    Parameters
+    ----------
+    broadband_signal_factory : callable
+        Generate a broadband signal for the test.
+    capture_stdout : callable
+        Run a callable and capture its standard output.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showarbcorr_summarymode_to_stdout")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -424,7 +730,18 @@ def showarbcorr_summarymode_to_stdout(broadband_signal_factory, capture_stdout, 
 
 
 def showarbcorr_normal_mode(broadband_signal_factory, capture_stdout, debug=False):
-    """Test showarbcorr normal (non-summary) mode."""
+    """
+    Test showarbcorr normal (non-summary) mode.
+
+    Parameters
+    ----------
+    broadband_signal_factory : callable
+        Generate a broadband signal for the test.
+    capture_stdout : callable
+        Run a callable and capture its standard output.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showarbcorr_normal_mode")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -444,7 +761,16 @@ def showarbcorr_normal_mode(broadband_signal_factory, capture_stdout, debug=Fals
 
 
 def showarbcorr_invert(broadband_signal_factory, debug=False):
-    """Test showarbcorr with --invert."""
+    """
+    Test showarbcorr with --invert.
+
+    Parameters
+    ----------
+    broadband_signal_factory : callable
+        Generate a broadband signal for the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showarbcorr_invert")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -476,7 +802,16 @@ def showarbcorr_invert(broadband_signal_factory, debug=False):
 
 
 def showarbcorr_corroutputfile(broadband_signal_factory, debug=False):
-    """Test showarbcorr writes correlation function to file."""
+    """
+    Test showarbcorr writes correlation function to file.
+
+    Parameters
+    ----------
+    broadband_signal_factory : callable
+        Generate a broadband signal for the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showarbcorr_corroutputfile")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -500,7 +835,16 @@ def showarbcorr_corroutputfile(broadband_signal_factory, debug=False):
 
 
 def showarbcorr_trimdata(broadband_signal_factory, debug=False):
-    """Test showarbcorr with --trimdata for unequal length signals."""
+    """
+    Test showarbcorr with --trimdata for unequal length signals.
+
+    Parameters
+    ----------
+    broadband_signal_factory : callable
+        Generate a broadband signal for the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showarbcorr_trimdata")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -520,7 +864,16 @@ def showarbcorr_trimdata(broadband_signal_factory, debug=False):
 
 
 def showarbcorr_different_samplerates(broadband_signal_factory, debug=False):
-    """Test showarbcorr with different sample rates."""
+    """
+    Test showarbcorr with different sample rates.
+
+    Parameters
+    ----------
+    broadband_signal_factory : callable
+        Generate a broadband signal for the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showarbcorr_different_samplerates")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -554,7 +907,16 @@ def showarbcorr_different_samplerates(broadband_signal_factory, debug=False):
 
 
 def showarbcorr_bipolar(broadband_signal_factory, debug=False):
-    """Test showarbcorr with --bipolar option."""
+    """
+    Test showarbcorr with --bipolar option.
+
+    Parameters
+    ----------
+    broadband_signal_factory : callable
+        Generate a broadband signal for the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showarbcorr_bipolar")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -582,7 +944,18 @@ def showarbcorr_bipolar(broadband_signal_factory, debug=False):
 
 
 def showarbcorr_with_label_no_summary(broadband_signal_factory, capture_stdout, debug=False):
-    """Test showarbcorr normal mode with a label."""
+    """
+    Test showarbcorr normal mode with a label.
+
+    Parameters
+    ----------
+    broadband_signal_factory : callable
+        Generate a broadband signal for the test.
+    capture_stdout : callable
+        Run a callable and capture its standard output.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("showarbcorr_with_label_no_summary")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -650,18 +1023,48 @@ WORKFLOW_CASES = [
 @pytest.mark.parametrize("case_func", PARSER_CASES, ids=lambda func: func.__name__)
 @pytest.mark.unit
 def test_showarbcorr_parser_cases(case_runner, case_func):
+    """
+    Verify showarbcorr parser cases.
+
+    Parameters
+    ----------
+    case_runner : callable
+        Run the selected test case with the test fixtures.
+    case_func : callable
+        Test case to execute.
+    """
     case_runner(case_func)
 
 
 @pytest.mark.parametrize("case_func", PRINTTHRESHOLD_CASES, ids=lambda func: func.__name__)
 @pytest.mark.unit
 def test_showarbcorr_printthreshold_cases(case_runner, case_func):
+    """
+    Verify showarbcorr printthreshold cases.
+
+    Parameters
+    ----------
+    case_runner : callable
+        Run the selected test case with the test fixtures.
+    case_func : callable
+        Test case to execute.
+    """
     case_runner(case_func)
 
 
 @pytest.mark.parametrize("case_func", WORKFLOW_CASES, ids=lambda func: func.__name__)
 @pytest.mark.slow
 def test_showarbcorr_workflow_cases(case_runner, case_func):
+    """
+    Verify showarbcorr workflow cases.
+
+    Parameters
+    ----------
+    case_runner : callable
+        Run the selected test case with the test fixtures.
+    case_func : callable
+        Test case to execute.
+    """
     case_runner(case_func)
 
 

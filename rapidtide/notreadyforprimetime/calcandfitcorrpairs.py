@@ -45,6 +45,41 @@ def _procOneVoxelCorrelation(
     padding=0,
     debug=False,
 ):
+    """
+    Calculate the cross-correlation for a pair of voxels.
+
+    Parameters
+    ----------
+    thedata : numpy.ndarray
+        Input samples used for the calculation.
+    index : int
+        Index of the first voxel in the correlation pair.
+    neighborindex : int
+        Index of the second voxel in the correlation pair.
+    Fs : float
+        Sampling frequency in Hz.
+    dofit : bool, optional
+        Fit the correlation peak for the voxel pair.
+    lagmin : float, optional
+        Minimum lag to consider in seconds.
+    lagmax : float, optional
+        Maximum lag to consider in seconds.
+    widthmax : float, optional
+        Maximum allowed peak width in seconds.
+    negsearch : float, optional
+        Extent of the negative-lag search in seconds.
+    possearch : float, optional
+        Extent of the positive-lag search in seconds.
+    padding : int, optional
+        Number of samples used for correlation padding.
+    debug : bool, optional
+        Enable diagnostic output.
+
+    Returns
+    -------
+    tuple
+        Voxel indices, peak correlation, peak lag, fit mask, and failure flags.
+    """
     tc1 = thedata[index, :]
     tc2 = thedata[neighborindex, :]
     if np.any(tc1) != 0.0 and np.any(tc2) != 0.0:
@@ -141,29 +176,47 @@ def correlationpass(
     rt_floattype=np.float64,
 ):
     """
+    Calculate pairwise cross-correlations for the selected voxel neighbors.
 
     Parameters
     ----------
-    fmridata
-    referencetc - the reference regressor, already oversampled
-    theCorrelator
-    fmri_x
-    os_fmri_x
-    tr
-    lagmininpts
-    lagmaxinpts
-    corrout
-    meanval
-    nprocs
-    oversampfactor
-    interptype
-    showprogressbar
-    chunksize
-    rt_floattype
+    fmridata : numpy.ndarray
+        Voxel time series to correlate with the reference.
+    referencetc : numpy.ndarray
+        Reference time series used for comparison.
+    theCorrelator : object
+        Correlation calculator initialized with the reference series.
+    fmri_x : numpy.ndarray
+        Time coordinates of the original fMRI samples.
+    os_fmri_x : numpy.ndarray
+        Time coordinates on the oversampled fMRI grid.
+    lagmininpts : int
+        Lower lag limit in samples.
+    lagmaxinpts : int
+        Upper lag limit in samples.
+    corrout : numpy.ndarray
+        Output array for voxelwise correlation functions.
+    meanval : numpy.ndarray
+        Output array for mean voxel intensities.
+    nprocs : int, optional
+        Number of worker processes.
+    alwaysmultiproc : bool, optional
+        Use multiprocessing even when only one worker is requested.
+    oversampfactor : int, optional
+        Ratio of oversampled to original sampling frequency.
+    interptype : str, optional
+        Interpolation method for time-series resampling.
+    showprogressbar : bool, optional
+        Display processing progress.
+    chunksize : int, optional
+        Number of work items to submit to each worker at a time.
+    rt_floattype : type, optional
+        Floating-point data type used for intermediate computations.
 
     Returns
     -------
-
+    tuple
+        Number of processed voxels, peak indices, and correlation scale.
     """
     inputshape = np.shape(fmridata)
     volumetotal = 0
@@ -172,6 +225,16 @@ def correlationpass(
     if nprocs > 1 or alwaysmultiproc:
         # define the consumer function here so it inherits most of the arguments
         def correlation_consumer(inQ, outQ):
+            """
+            Calculate correlations for queued voxel work items.
+
+            Parameters
+            ----------
+            inQ : queue-like
+                Queue supplying work items.
+            outQ : queue-like
+                Queue receiving processed results.
+            """
             while True:
                 try:
                     # get a new message

@@ -119,7 +119,8 @@ def _runlegacy(thedir, thesignal1, thesignal2, thecontrolvariable=None):
 
 
 def _makeconfoundedsignals():
-    """Two signals with a real shared component that a confound is masking.
+    """
+    Two signals with a real shared component that a confound is masking.
 
     The confound enters with OPPOSITE sign in the two signals, so it drags the raw
     correlation negative and hides the relationship underneath.  Only removing it
@@ -130,6 +131,7 @@ def _makeconfoundedsignals():
     Returns
     -------
     theconfound, thesignal1, thesignal2 : NDArray
+        Value supplied to the caller.
     """
     theshared = _broadband(3)
     theconfound = _broadband(9)

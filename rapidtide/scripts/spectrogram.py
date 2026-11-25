@@ -21,6 +21,7 @@ import rapidtide.workflows.spectrogram as theworkflow
 
 
 def entrypoint():
+    """Run the `spectrogram` command."""
     pf.generic_init(theworkflow._get_parser, theworkflow.spectrogram)
 
 

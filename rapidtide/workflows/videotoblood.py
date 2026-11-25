@@ -8,6 +8,19 @@ from rapidtide.video import video_to_blood
 
 
 def _positive_int(value: str) -> int:
+    """
+    Parse a command-line value as a strictly positive integer.
+
+    Parameters
+    ----------
+    value : str
+        Text supplied on the command line.
+
+    Returns
+    -------
+    int
+        Parsed positive integer.
+    """
     number = int(value)
     if number <= 0:
         raise argparse.ArgumentTypeError("must be a positive integer")
@@ -15,6 +28,19 @@ def _positive_int(value: str) -> int:
 
 
 def _nonnegative_float(value: str) -> float:
+    """
+    Parse a command-line value as a nonnegative number.
+
+    Parameters
+    ----------
+    value : str
+        Text supplied on the command line.
+
+    Returns
+    -------
+    float
+        Parsed nonnegative value.
+    """
     number = float(value)
     if not math.isfinite(number) or number < 0:
         raise argparse.ArgumentTypeError("must be finite and nonnegative")
@@ -22,6 +48,14 @@ def _nonnegative_float(value: str) -> float:
 
 
 def _get_parser() -> argparse.ArgumentParser:
+    """
+    Build the command-line argument parser.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Parser configured for this command.
+    """
     parser = argparse.ArgumentParser(
         prog="videotoblood",
         description=(
@@ -92,7 +126,14 @@ def _get_parser() -> argparse.ArgumentParser:
 
 
 def main(args: argparse.Namespace) -> None:
-    """Run the converter with parsed command-line arguments."""
+    """
+    Run the converter with parsed command-line arguments.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed options for the command.
+    """
     try:
         output = video_to_blood(
             args.infilename,

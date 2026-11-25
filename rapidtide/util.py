@@ -153,6 +153,14 @@ def checkimports(optiondict: dict[str, Any]) -> None:
 
 
 def findlibthreads() -> [int, int, int, int]:
+    """
+    Read the thread limits for OpenMP, OpenBLAS, vecLib, and NumExpr.
+
+    Returns
+    -------
+    tuple of str or int
+        Limits for OpenMP, OpenBLAS, vecLib, and NumExpr.
+    """
     return (
         os.environ.get("OMP_NUM_THREADS", 1),
         os.environ.get("OPENBLAS_NUM_THREADS", 1),
@@ -162,6 +170,7 @@ def findlibthreads() -> [int, int, int, int]:
 
 
 def disablelibthreads() -> None:
+    """Set the supported numerical-library thread limits to one."""
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["OPENBLAS_NUM_THREADS"] = "1"
     os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
@@ -175,6 +184,22 @@ def enablelibthreads(
     numexprthreads: int,
     debug: bool = False,
 ) -> None:
+    """
+    Set the thread limits for OpenMP, OpenBLAS, vecLib, and NumExpr.
+
+    Parameters
+    ----------
+    ompthreads : int
+        Thread limit for OpenMP.
+    openblasthreads : int
+        Thread limit for OpenBLAS.
+    veclibthreads : int
+        Thread limit for Apple's vecLib.
+    numexprthreads : int
+        Thread limit for NumExpr.
+    debug : bool, optional
+        Enable diagnostic output.
+    """
     os.environ["OMP_NUM_THREADS"] = str(ompthreads)
     os.environ["OPENBLAS_NUM_THREADS"] = str(openblasthreads)
     os.environ["VECLIB_MAXIMUM_THREADS"] = str(veclibthreads)
@@ -332,10 +357,6 @@ def savewisdom(wisdomfilename: str, debug: bool = False) -> None:
         configured, in which case there is nothing to save and this does nothing.
     debug : bool, optional
         Print the wisdom being saved.  Default is False.
-
-    Returns
-    -------
-    None
     """
     if wisdomfilename is not None:
         thewisdom = pyfftw.export_wisdom()

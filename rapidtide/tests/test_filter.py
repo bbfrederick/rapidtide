@@ -59,6 +59,19 @@ from rapidtide.filter import (
 
 
 def maketestwaves(timeaxis):
+    """
+    Set up ``maketestwaves`` for the test.
+
+    Parameters
+    ----------
+    timeaxis : numpy.ndarray
+        Sample times of the test signal.
+
+    Returns
+    -------
+    list
+        The ``testwaves`` value supplied to the caller.
+    """
     tclen = len(timeaxis)
     testwaves = []
     testwaves.append(
@@ -100,6 +113,23 @@ def maketestwaves(timeaxis):
 
 
 def spectralfilterprops(thefilter, thefiltername, debug=False):
+    """
+    Set up ``spectralfilterprops`` for the test.
+
+    Parameters
+    ----------
+    thefilter : object
+        Value supplied as ``thefilter`` by the test case.
+    thefiltername : object
+        Value supplied as ``thefiltername`` by the test case.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+
+    Returns
+    -------
+    dict
+        The ``response`` value supplied to the caller.
+    """
     lowerstop, lowerpass, upperpass, upperstop = thefilter["filter"].getfreqs()
     freqspace = thefilter["frequencies"][1] - thefilter["frequencies"][0]
     lowerstopindex = int(np.floor(lowerstop / freqspace))
@@ -160,6 +190,22 @@ def spectralfilterprops(thefilter, thefiltername, debug=False):
 def eval_filterprops(
     sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=False, debug=False
 ):
+    """
+    Evaluate filterprops.
+
+    Parameters
+    ----------
+    sampletime : float, optional
+        Time between samples in seconds.
+    tclengthinsecs : float, optional
+        Value supplied as ``tclengthinsecs`` by the test case.
+    numruns : int, optional
+        Value supplied as ``numruns`` by the test case.
+    displayplots : bool, optional
+        Display plots from the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     np.random.seed(12345)
     tclen = int(tclengthinsecs // sampletime)
     print("Testing transfer function:")
@@ -321,6 +367,16 @@ def eval_filterprops(
 
 
 def test_filterprops(displayplots=False, debug=False):
+    """
+    Verify filterprops.
+
+    Parameters
+    ----------
+    displayplots : bool, optional
+        Display plots from the test.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     eval_filterprops(
         sampletime=0.72, tclengthinsecs=300.0, numruns=100, displayplots=displayplots, debug=debug
     )
@@ -337,6 +393,7 @@ def test_filterprops(displayplots=False, debug=False):
 
 
 def test_plethfilter_initializes_coefficients():
+    """Verify plethfilter initializes coefficients."""
     filt = Plethfilter(Fs=100.0, Fl=1.0, Fh=8.0)
 
     assert filt.Fn == 50.0
@@ -347,6 +404,7 @@ def test_plethfilter_initializes_coefficients():
 
 
 def test_plethfilter_apply_returns_finite_output():
+    """Verify plethfilter apply returns finite output."""
     filt = Plethfilter(Fs=100.0, Fl=1.0, Fh=8.0)
     t = np.arange(1000) / 100.0
     signal = np.sin(2.0 * np.pi * 2.0 * t) + 0.5 * np.sin(2.0 * np.pi * 20.0 * t)
@@ -358,6 +416,7 @@ def test_plethfilter_apply_returns_finite_output():
 
 
 def test_padvec_and_unpadvec_round_trip():
+    """Verify padvec and unpadvec round trip."""
     data = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
     padded = padvec(data, padlen=2, avlen=2, padtype="reflect")
     assert padded.shape[0] == data.shape[0] + 4
@@ -366,6 +425,7 @@ def test_padvec_and_unpadvec_round_trip():
 
 
 def test_padvec_padding_modes_and_errors():
+    """Verify padvec padding modes and errors."""
     data = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
     assert np.allclose(padvec(data, padlen=2, padtype="zero"), np.array([0, 0, 1, 2, 3, 4, 0, 0]))
     assert np.allclose(
@@ -385,6 +445,7 @@ def test_padvec_padding_modes_and_errors():
 
 
 def test_getfilterbandfreqs_valid_and_errors():
+    """Verify getfilterbandfreqs valid and errors."""
     lowerpass, upperpass, lowerstop, upperstop = getfilterbandfreqs("lfo")
     assert lowerpass == pytest.approx(0.01)
     assert upperpass == pytest.approx(0.15)
@@ -402,12 +463,21 @@ def test_getfilterbandfreqs_valid_and_errors():
     ["vlf", "lfo_legacy", "lfo_tight", "hrv_ulf", "hrv_vlf", "hrv_lf", "hrv_hf", "hrv_vhf"],
 )
 def test_getfilterbandfreqs_supported_bands(band):
+    """
+    Verify getfilterbandfreqs supported bands.
+
+    Parameters
+    ----------
+    band : object
+        Value supplied as ``band`` by the test case.
+    """
     lowerpass, upperpass, lowerstop, upperstop = getfilterbandfreqs(band)
     assert lowerpass <= upperpass
     assert lowerstop <= upperstop
 
 
 def test_noncausalfilter_accessors_and_setfreq_validation():
+    """Verify noncausalfilter accessors and setfreq validation."""
     filt = NoncausalFilter(filtertype="None")
     filt.settype("lfo")
     assert filt.gettype() == "lfo"
@@ -434,6 +504,7 @@ def test_noncausalfilter_accessors_and_setfreq_validation():
 
 
 def test_fft_polar_round_trip():
+    """Verify FFT polar round trip."""
     x = np.array([0.0, 1.0, 0.5, -0.5, -1.0, 0.25], dtype=np.float64)
     magnitude, phase = polarfft(x)
     reconstructed = ifftfrompolar(magnitude, phase)
@@ -442,6 +513,7 @@ def test_fft_polar_round_trip():
 
 
 def test_ssmooth_and_spectrum_modes():
+    """Verify ssmooth and spectrum modes."""
     vol = np.zeros((9, 9, 9), dtype=np.float64)
     vol[4, 4, 4] = 1.0
     smoothed = ssmooth(1.0, 1.0, 1.0, 1.0, vol)
@@ -457,6 +529,7 @@ def test_ssmooth_and_spectrum_modes():
 
 
 def test_window_functions_and_dispatch():
+    """Verify window functions and dispatch."""
     length = 16
     for wtype in ["hamming", "hann", "blackmanharris", "None"]:
         w = windowfunction(length, type=wtype)
@@ -472,6 +545,7 @@ def test_window_functions_and_dispatch():
 
 
 def test_filtering_helpers_return_valid_outputs():
+    """Verify filtering helpers return valid outputs."""
     fs = 50.0
     t = np.arange(400) / fs
     x = np.sin(2.0 * np.pi * 1.5 * t) + 0.4 * np.sin(2.0 * np.pi * 9.0 * t)
@@ -535,6 +609,7 @@ def test_filtering_helpers_return_valid_outputs():
 
 
 def test_transfer_functions_and_signal_domain_helpers():
+    """Verify transfer functions and signal domain helpers."""
     fs = 50.0
     x = np.linspace(0.0, 1.0, 256, endpoint=False)
     lp_fft = getlpfftfunc(fs, 4.0, x)
@@ -558,6 +633,7 @@ def test_transfer_functions_and_signal_domain_helpers():
 
 
 def test_notch_savgol_csd_wiener_and_spectrum_helpers():
+    """Verify notch savgol csd wiener and spectrum helpers."""
     fs = 100.0
     t = np.arange(6000) / fs
     x = np.sin(2.0 * np.pi * 5.0 * t) + 0.2 * np.sin(2.0 * np.pi * 20.0 * t)

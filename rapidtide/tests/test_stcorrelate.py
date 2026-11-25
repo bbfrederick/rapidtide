@@ -29,6 +29,14 @@ from rapidtide.tests.utils import create_dir, get_test_temp_path
 
 
 def test_stcorrelate(debug=False):
+    """
+    Verify stcorrelate.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     np.random.seed(12345)
     tr = 0.72
     testlen = 800

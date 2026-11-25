@@ -16,6 +16,21 @@ from rapidtide.zarrio import is_zarr
 
 
 def _map_path(root, descriptor):
+    """
+    Find the existing TIFF or Zarr output for a map descriptor.
+
+    Parameters
+    ----------
+    root : str or pathlib.Path
+        Root of the Rapidtide result filenames.
+    descriptor : str
+        Output descriptor used in the result filename.
+
+    Returns
+    -------
+    pathlib.Path or None
+        Path of the first matching output, if present.
+    """
     for suffix in (".tif", ".tiff", ".zarr"):
         path = Path(f"{root}_desc-{descriptor}{suffix}")
         if path.exists():
@@ -24,6 +39,23 @@ def _map_path(root, descriptor):
 
 
 def _open_map(root, descriptor, axes):
+    """
+    Open a map and validate its axes and array dimensions.
+
+    Parameters
+    ----------
+    root : str or pathlib.Path
+        Root of the Rapidtide result filenames.
+    descriptor : str
+        Output descriptor used in the result filename.
+    axes : list of str
+        Required axis names in storage order.
+
+    Returns
+    -------
+    mapping
+        Opened TIFF or Zarr group containing the map data.
+    """
     path = _map_path(root, descriptor)
     if path is None:
         raise FileNotFoundError(
@@ -46,6 +78,19 @@ def _open_map(root, descriptor, axes):
 
 
 def _panels(root):
+    """
+    Load the available result maps and their display masks.
+
+    Parameters
+    ----------
+    root : str or pathlib.Path
+        Root of the Rapidtide result filenames.
+
+    Returns
+    -------
+    tuple
+        Panel specifications and the mask of processed pixels.
+    """
     fit = _open_map(root, "corrfit_mask", ["y", "x"])["data"][:] > 0
     processed = _open_map(root, "processed_mask", ["y", "x"])["data"][:] > 0
     if fit.shape != processed.shape or not processed.any():
@@ -87,6 +132,19 @@ def _panels(root):
 
 
 def _figure(figsize):
+    """
+    Create a figure with a noninteractive Agg canvas.
+
+    Parameters
+    ----------
+    figsize : tuple of float
+        Figure width and height in inches.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure with an attached Agg canvas.
+    """
     figure = Figure(figsize=figsize, dpi=120, facecolor="white")
     FigureCanvasAgg(figure)
     return figure
@@ -103,6 +161,35 @@ def _image(
     mincorr=-1.0,
     maxcorr=1.0,
 ):
+    """
+    Draw a masked map and return the image artist and display limits.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes on which to draw the map.
+    values : numpy.ndarray
+        Map values in native pixel order.
+    valid : numpy.ndarray of bool
+        Mask of pixels to include.
+    imtype : str or None, optional
+        Map kind used to select the display range.
+    minlag : float, optional
+        Lower lag display limit in seconds.
+    maxlag : float | int, optional
+        Upper lag display limit in seconds.
+    input_cmap : str, optional
+        Name of the Matplotlib colormap.
+    mincorr : float, optional
+        Lower correlation display limit.
+    maxcorr : float, optional
+        Upper correlation display limit.
+
+    Returns
+    -------
+    tuple
+        Image artist and the lower and upper display limits.
+    """
     from matplotlib import colormaps
 
     thevaluearray = np.nan_to_num(np.ma.array(values, mask=~valid))
@@ -136,6 +223,18 @@ def _image(
 
 
 def _geometry(ax, shape, ylabel=True):
+    """
+    Label and place ticks on the native-pixel axes.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes on which to draw the map.
+    shape : tuple of int
+        Image height and width in pixels.
+    ylabel : bool, optional
+        Show the y-axis label and tick labels.
+    """
     height, width = shape
     ax.set_xlabel("x (output pixels)")
     ax.set_xticks([0, width // 2, width - 1])
@@ -147,6 +246,31 @@ def _geometry(ax, shape, ylabel=True):
 
 
 def _map_figure(root, panels, options, minlag, maxlag, mincorr=-1.0, maxcorr=1.0):
+    """
+    Build the summary figure for the available result maps.
+
+    Parameters
+    ----------
+    root : str or pathlib.Path
+        Root of the Rapidtide result filenames.
+    panels : list of tuple
+        Map titles, arrays, masks, display kinds, and colormaps.
+    options : dict
+        Analysis settings used to annotate the figure.
+    minlag : float
+        Lower lag display limit in seconds.
+    maxlag : float
+        Upper lag display limit in seconds.
+    mincorr : float, optional
+        Lower correlation display limit.
+    maxcorr : float, optional
+        Upper correlation display limit.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure containing the map panels and colorbars.
+    """
     figure = _figure((4 * len(panels), 9.2))
     axes = figure.subplots(1, len(panels), squeeze=False)[0]
     figure.subplots_adjust(left=0.065, right=0.985, bottom=0.27, top=0.89, wspace=0.18)
@@ -200,6 +324,21 @@ def _map_figure(root, panels, options, minlag, maxlag, mincorr=-1.0, maxcorr=1.0
 
 
 def _corrout(root, shape):
+    """
+    Open correlation output and validate its spatial shape and lag axis.
+
+    Parameters
+    ----------
+    root : str or pathlib.Path
+        Root of the Rapidtide result filenames.
+    shape : tuple of int
+        Required spatial shape of the correlation array.
+
+    Returns
+    -------
+    tuple
+        Opened correlation group and its lag coordinates in seconds.
+    """
     group = _open_map(root, "corrout_info", ["y", "x", "lag"])
     if group["data"].shape[:2] != shape or "lag" not in group:
         raise ValueError("Correlation output must match the maps and contain a lag coordinate")
@@ -258,7 +397,21 @@ def _lag_limits(
 
 
 def _lag_slice(lag, bounds):
-    """Select saved coordinates inclusively, allowing floating-point roundoff."""
+    """
+    Select saved coordinates inclusively, allowing floating-point roundoff.
+
+    Parameters
+    ----------
+    lag : numpy.ndarray
+        Available lag coordinates in seconds.
+    bounds : tuple of float or None
+        Requested lower and upper lags in seconds.
+
+    Returns
+    -------
+    slice
+        Contiguous lag-plane indices covered by the requested bounds.
+    """
     if bounds is None:
         return slice(0, len(lag))
     tolerance = (
@@ -290,6 +443,40 @@ def _movie(
     mincorr=-1.0,
     maxcorr=1.0,
 ):
+    """
+    Render a movie from successive lag planes of the correlation output.
+
+    Parameters
+    ----------
+    root : str or pathlib.Path
+        Root of the Rapidtide result filenames.
+    group : mapping
+        Opened correlation output containing the lag planes.
+    lag : numpy.ndarray
+        Lag coordinates in seconds.
+    mask : numpy.ndarray
+        Mask of valid spatial pixels in the correlation data.
+    directory : pathlib.Path
+        Directory used for generated movie frames.
+    fps : float
+        Movie frame rate in frames per second.
+    showprogress : bool
+        Display movie rendering progress.
+    first_index : int, optional
+        Index of the first lag plane in the movie.
+    minlag : float, optional
+        Lower lag display limit in seconds.
+    maxlag : float, optional
+        Upper lag display limit in seconds.
+    input_cmap : str, optional
+        Name of the Matplotlib colormap.
+    imtype : str or None, optional
+        Map kind used to select the display range.
+    mincorr : float, optional
+        Lower correlation display limit.
+    maxcorr : float, optional
+        Upper correlation display limit.
+    """
     import av
 
     figure = _figure((5.2, 8.4))

@@ -29,7 +29,25 @@ from rapidtide.workflows.atlastool import _get_parser, atlastool
 
 
 def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
-    """Create a mock NIfTI header."""
+    """
+    Create a mock NIfTI header.
+
+    Parameters
+    ----------
+    xsize : int
+        Number of voxels along the x axis.
+    ysize : int
+        Number of voxels along the y axis.
+    numslices : int
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+
+    Returns
+    -------
+    MagicMock
+        Mock object configured for the test case.
+    """
     hdr = MagicMock()
     hdr.__getitem__ = MagicMock(
         side_effect=lambda key: {
@@ -40,6 +58,14 @@ def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
     hdr.__setitem__ = MagicMock()
 
     def copy_fn():
+        """
+        Copy fn.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         h = MagicMock()
         h.__getitem__ = MagicMock(
             side_effect=lambda key: {
@@ -55,7 +81,25 @@ def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
 
 
 def _make_3d_atlas(xsize=6, ysize=6, numslices=4, numregions=3):
-    """Create a 3D integer-labeled atlas and matching header/dims."""
+    """
+    Create a 3D integer-labeled atlas and matching header/dims.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    numregions : int, optional
+        Number of regions in the test atlas.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     data = np.zeros((xsize, ysize, numslices), dtype=np.float64)
     # Assign region labels (1-based) to different spatial areas
     region_size = xsize // numregions
@@ -70,7 +114,25 @@ def _make_3d_atlas(xsize=6, ysize=6, numslices=4, numregions=3):
 
 
 def _make_4d_atlas(xsize=6, ysize=6, numslices=4, numregions=3):
-    """Create a 4D binary atlas (one volume per region)."""
+    """
+    Create a 4D binary atlas (one volume per region).
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    numregions : int, optional
+        Number of regions in the test atlas.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
+    """
     data = np.zeros((xsize, ysize, numslices, numregions), dtype=np.float64)
     region_size = xsize // numregions
     for r in range(numregions):
@@ -84,10 +146,27 @@ def _make_4d_atlas(xsize=6, ysize=6, numslices=4, numregions=3):
 
 
 def _make_splittable_3d_atlas(xsize=8, ysize=6, numslices=4, numregions=2):
-    """Create a 3D atlas where regions span both hemispheres (for split tests).
+    """
+    Create a 3D atlas where regions span both hemispheres (for split tests).
 
     Regions are defined along the y-axis so each covers the full x range,
     ensuring both left and right halves have voxels after splitting.
+
+    Parameters
+    ----------
+    xsize : int, optional
+        Number of voxels along the x axis.
+    ysize : int, optional
+        Number of voxels along the y axis.
+    numslices : int, optional
+        Number of slices in the test image.
+    numregions : int, optional
+        Number of regions in the test atlas.
+
+    Returns
+    -------
+    tuple
+        Values supplied together for the test case.
     """
     data = np.zeros((xsize, ysize, numslices), dtype=np.float64)
     region_size = ysize // numregions
@@ -102,7 +181,21 @@ def _make_splittable_3d_atlas(xsize=8, ysize=6, numslices=4, numregions=2):
 
 
 def _make_base_args(testtemproot, suffix=""):
-    """Create a base Namespace with default arguments."""
+    """
+    Create a base Namespace with default arguments.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    suffix : str, optional
+        Filename extension used for the temporary input files.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     return argparse.Namespace(
         inputtemplatename="input.nii.gz",
         outputtemplatename=os.path.join(testtemproot, f"atlasout{suffix}.nii.gz"),
@@ -149,19 +242,40 @@ def _outputsaves(mock_save):
 
 
 def get_parser_returns_parser(debug=False):
-    """Test that _get_parser returns an ArgumentParser."""
+    """
+    Test that _get_parser returns an ArgumentParser.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert isinstance(parser, argparse.ArgumentParser)
 
 
 def get_parser_prog_name(debug=False):
-    """Test that the parser prog name is correct."""
+    """
+    Test that the parser prog name is correct.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     assert parser.prog == "atlastool"
 
 
 def get_parser_defaults(debug=False):
-    """Test that default values are correct."""
+    """
+    Test that default values are correct.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     parser = _get_parser()
     defaults = {action.dest: action.default for action in parser._actions}
     assert defaults["volumeperregion"] is False
@@ -178,7 +292,16 @@ def get_parser_defaults(debug=False):
 
 
 def get_parser_with_4d_flag(testtemproot, debug=False):
-    """Test parser with --4d flag."""
+    """
+    Test parser with --4d flag.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "parser_atlas_input.nii.gz")
     with open(infile, "w") as f:
         f.write("dummy")
@@ -189,7 +312,16 @@ def get_parser_with_4d_flag(testtemproot, debug=False):
 
 
 def get_parser_with_3d_flag(testtemproot, debug=False):
-    """Test parser with --3d flag."""
+    """
+    Test parser with --3d flag.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "parser_atlas_input2.nii.gz")
     with open(infile, "w") as f:
         f.write("dummy")
@@ -200,7 +332,16 @@ def get_parser_with_3d_flag(testtemproot, debug=False):
 
 
 def get_parser_with_split(testtemproot, debug=False):
-    """Test parser with --split flag."""
+    """
+    Test parser with --split flag.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "parser_atlas_input3.nii.gz")
     with open(infile, "w") as f:
         f.write("dummy")
@@ -211,7 +352,16 @@ def get_parser_with_split(testtemproot, debug=False):
 
 
 def get_parser_with_all_options(testtemproot, debug=False):
-    """Test parser with multiple options combined."""
+    """
+    Test parser with multiple options combined.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     infile = os.path.join(testtemproot, "parser_atlas_input4.nii.gz")
     labelfile = os.path.join(testtemproot, "parser_labels.txt")
     maskfile = os.path.join(testtemproot, "parser_mask.nii.gz")
@@ -254,7 +404,16 @@ def get_parser_with_all_options(testtemproot, debug=False):
 
 
 def atlastool_3d_to_3d(testtemproot, debug=False):
-    """Test converting a 3D atlas to 3D output (integer labels)."""
+    """
+    Test converting a 3D atlas to 3D output (integer labels).
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_3d_atlas()
     args = _make_base_args(testtemproot, suffix="_3dto3d")
     args.volumeperregion = False
@@ -276,7 +435,16 @@ def atlastool_3d_to_3d(testtemproot, debug=False):
 
 
 def atlastool_3d_to_4d(testtemproot, debug=False):
-    """Test converting a 3D atlas to 4D output (one volume per region)."""
+    """
+    Test converting a 3D atlas to 4D output (one volume per region).
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_3d_atlas()
     args = _make_base_args(testtemproot, suffix="_3dto4d")
     args.volumeperregion = True
@@ -298,7 +466,16 @@ def atlastool_3d_to_4d(testtemproot, debug=False):
 
 
 def atlastool_3d_with_maxval(testtemproot, debug=False):
-    """Test 3D atlas with maxval truncation."""
+    """
+    Test 3D atlas with maxval truncation.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices, numregions = 6, 6, 4, 5
     data, hdr, dims, sizes = _make_3d_atlas(xsize, ysize, numslices, numregions)
     args = _make_base_args(testtemproot, suffix="_3dmaxval")
@@ -325,7 +502,16 @@ def atlastool_3d_with_maxval(testtemproot, debug=False):
 
 
 def atlastool_4d_to_3d(testtemproot, debug=False):
-    """Test converting a 4D atlas to 3D output."""
+    """
+    Test converting a 4D atlas to 3D output.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_4d_atlas()
     args = _make_base_args(testtemproot, suffix="_4dto3d")
     args.volumeperregion = False
@@ -346,7 +532,16 @@ def atlastool_4d_to_3d(testtemproot, debug=False):
 
 
 def atlastool_4d_to_4d(testtemproot, debug=False):
-    """Test passing through a 4D atlas to 4D output."""
+    """
+    Test passing through a 4D atlas to 4D output.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_4d_atlas()
     args = _make_base_args(testtemproot, suffix="_4dto4d")
     args.volumeperregion = True
@@ -367,7 +562,16 @@ def atlastool_4d_to_4d(testtemproot, debug=False):
 
 
 def atlastool_4d_with_maxval(testtemproot, debug=False):
-    """Test 4D atlas with maxval truncation (retains only first maxval volumes)."""
+    """
+    Test 4D atlas with maxval truncation (retains only first maxval volumes).
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_4d_atlas(numregions=5)
     args = _make_base_args(testtemproot, suffix="_4dmaxval")
     args.maxval = 2
@@ -390,7 +594,16 @@ def atlastool_4d_with_maxval(testtemproot, debug=False):
 
 
 def atlastool_split_LtoR(testtemproot, debug=False):
-    """Test split with default LtoR labeling."""
+    """
+    Test split with default LtoR labeling.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_splittable_3d_atlas()
     args = _make_base_args(testtemproot, suffix="_splitLR")
     args.dosplit = True
@@ -415,7 +628,16 @@ def atlastool_split_LtoR(testtemproot, debug=False):
 
 
 def atlastool_split_RtoL(testtemproot, debug=False):
-    """Test split with RtoL labeling."""
+    """
+    Test split with RtoL labeling.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_splittable_3d_atlas()
     args = _make_base_args(testtemproot, suffix="_splitRL")
     args.dosplit = True
@@ -438,10 +660,18 @@ def atlastool_split_RtoL(testtemproot, debug=False):
 
 
 def atlastool_split_with_labels(testtemproot, debug=False):
-    """Test split with a label file produces L_/R_ prefixed labels.
+    """
+    Test split with a label file produces L_/R_ prefixed labels.
 
     Note: finallabels is only populated when removeemptyregions=True,
     so we enable it here. All regions have voxels so none are removed.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     data, hdr, dims, sizes = _make_splittable_3d_atlas()
     labelfile = os.path.join(testtemproot, "split_labels.txt")
@@ -483,7 +713,16 @@ def atlastool_split_with_labels(testtemproot, debug=False):
 
 
 def atlastool_with_labels_no_split(testtemproot, debug=False):
-    """Test atlas with labels, no split, and removeemptyregions preserves labels."""
+    """
+    Test atlas with labels, no split, and removeemptyregions preserves labels.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_3d_atlas(xsize=6, numregions=3)
     labelfile = os.path.join(testtemproot, "nosplit_labels.txt")
     with open(labelfile, "w") as f:
@@ -516,13 +755,21 @@ def atlastool_with_labels_no_split(testtemproot, debug=False):
 
 
 def atlastool_label_count_mismatch(testtemproot, debug=False):
-    """A label file that does not match the atlas must raise a real exception.
+    """
+    A label file that does not match the atlas must raise a real exception.
 
     This used to be `raise ("...")`, which raises a string and so produces
     "TypeError: exceptions must derive from BaseException" - a message about
     Python, telling the user nothing about their label file.  The earlier version
     of this test caught TypeError with a note that it would notice if the behavior
     changed, which is what happened.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     data, hdr, dims, sizes = _make_3d_atlas(xsize=6, numregions=3)
     labelfile = os.path.join(testtemproot, "bad_labels.txt")
@@ -560,7 +807,16 @@ def atlastool_label_count_mismatch(testtemproot, debug=False):
 
 
 def atlastool_with_maskfile(testtemproot, debug=False):
-    """Test atlastool with an explicit mask file."""
+    """
+    Test atlastool with an explicit mask file.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices = 6, 6, 4
     data, hdr, dims, sizes = _make_3d_atlas(xsize, ysize, numslices, numregions=3)
 
@@ -596,7 +852,16 @@ def atlastool_with_maskfile(testtemproot, debug=False):
 
 
 def atlastool_mask_dimension_mismatch(testtemproot, debug=False):
-    """Test atlastool raises when mask dimensions don't match."""
+    """
+    Test atlastool raises when mask dimensions don't match.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices = 6, 6, 4
     data, hdr, dims, sizes = _make_3d_atlas(xsize, ysize, numslices, numregions=3)
 
@@ -629,7 +894,16 @@ def atlastool_mask_dimension_mismatch(testtemproot, debug=False):
 
 
 def atlastool_4d_mask_raises(testtemproot, debug=False):
-    """Test atlastool raises when mask is 4D."""
+    """
+    Test atlastool raises when mask is 4D.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices = 6, 6, 4
     data, hdr, dims, sizes = _make_3d_atlas(xsize, ysize, numslices, numregions=3)
 
@@ -660,7 +934,16 @@ def atlastool_4d_mask_raises(testtemproot, debug=False):
 
 
 def atlastool_auto_mask(testtemproot, debug=False):
-    """Test atlastool auto-generates mask from template when no maskfile given."""
+    """
+    Test atlastool auto-generates mask from template when no maskfile given.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_3d_atlas(xsize=6, numregions=3)
     args = _make_base_args(testtemproot, suffix="_automask")
     args.maskfile = None
@@ -684,7 +967,16 @@ def atlastool_auto_mask(testtemproot, debug=False):
 
 
 def atlastool_remove_empty_regions(testtemproot, debug=False):
-    """Test that empty regions are removed when removeemptyregions=True."""
+    """
+    Test that empty regions are removed when removeemptyregions=True.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     xsize, ysize, numslices = 6, 6, 4
     # Create a 4D atlas with one empty region (all zeros)
     numregions = 3
@@ -721,7 +1013,16 @@ def atlastool_remove_empty_regions(testtemproot, debug=False):
 
 
 def atlastool_debug_mode(testtemproot, debug=False):
-    """Test atlastool with debug=True exercises debug print paths."""
+    """
+    Test atlastool with debug=True exercises debug print paths.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_3d_atlas(xsize=6, numregions=2)
     args = _make_base_args(testtemproot, suffix="_debug")
     args.debug = True
@@ -738,7 +1039,16 @@ def atlastool_debug_mode(testtemproot, debug=False):
 
 
 def atlastool_debug_auto_mask(testtemproot, debug=False):
-    """Test debug mode with auto-generated mask saves debug mask files."""
+    """
+    Test debug mode with auto-generated mask saves debug mask files.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_3d_atlas(xsize=6, numregions=2)
     args = _make_base_args(testtemproot, suffix="_debugmask")
     args.debug = True
@@ -763,13 +1073,21 @@ def atlastool_debug_auto_mask(testtemproot, debug=False):
 
 
 def atlastool_targetfile_no_fsl(testtemproot, debug=False):
-    """Test that atlastool exits when targetfile is given but FSLDIR is not set.
+    """
+    Test that atlastool exits when targetfile is given but FSLDIR is not set.
 
     This covers the case where an xfm IS supplied.  The FSLDIR check used to sit
     below the point where the identity transform path was built, so with xfm None
     the run died on a TypeError before ever reaching it, and this test had to pass
     an xfm to get here at all.  The check is hoisted now;
     atlastool_resample_aborts_when_fsldir_is_unset covers the xfm None case.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     data, hdr, dims, sizes = _make_3d_atlas(xsize=6, numregions=2)
     xfmfile = os.path.join(testtemproot, "dummy.mat")
@@ -847,8 +1165,17 @@ def _make_resample_mocks(data, hdr, dims, sizes, numregions=3, emptyregions=()):
 
 
 def atlastool_resample_debug_adds_the_verbose_flag(testtemproot, debug=False):
-    """--debug is not only chatter: it adds -v to the flirt command line, so the
-    aligner's own output ends up in the log alongside everything else."""
+    """
+    --debug is not only chatter: it adds -v to the flirt command line, so the
+    aligner's own output ends up in the log alongside everything else.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_3d_atlas()
     args = _make_base_args(testtemproot, suffix="_flirtverbose")
     args.targetfile = os.path.join(testtemproot, "target.nii.gz")
@@ -873,8 +1200,17 @@ def atlastool_resample_debug_adds_the_verbose_flag(testtemproot, debug=False):
 
 
 def atlastool_resample_debug_runs_the_ants_path(testtemproot, debug=False):
-    """The ANTs branch has its own debug reporting, and antsapply is handed the
-    debug flag so its own commands are logged too."""
+    """
+    The ANTs branch has its own debug reporting, and antsapply is handed the
+    debug flag so its own commands are logged too.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_3d_atlas()
     args = _make_base_args(testtemproot, suffix="_antsverbose")
     args.targetfile = os.path.join(testtemproot, "target.nii.gz")
@@ -901,9 +1237,17 @@ def atlastool_resample_debug_runs_the_ants_path(testtemproot, debug=False):
 
 
 def atlastool_resample_drops_regions_emptied_by_alignment(testtemproot, debug=False):
-    """Alignment can resample a small region out of existence.  With
+    """
+    Alignment can resample a small region out of existence.  With
     --removeemptyregions the second sweep has to notice and drop it, and the label
     list has to shrink with it or labels and regions fall out of step.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     data, hdr, dims, sizes = _make_3d_atlas(numregions=3)
     thelabelfile = os.path.join(testtemproot, "resample_labels.txt")
@@ -950,10 +1294,18 @@ def atlastool_resample_drops_regions_emptied_by_alignment(testtemproot, debug=Fa
 
 
 def atlastool_resample_with_flirt_and_default_xfm(testtemproot, debug=False):
-    """--targetfile with no --xfm must use FSL's identity transform and run flirt.
+    """
+    --targetfile with no --xfm must use FSL's identity transform and run flirt.
 
     This is the default resampling path, and before the alignttype typo was fixed it
     raised UnboundLocalError for every single caller.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     data, hdr, dims, sizes = _make_3d_atlas()
     args = _make_base_args(testtemproot, suffix="_flirtdefault")
@@ -1001,10 +1353,18 @@ def atlastool_resample_with_flirt_and_default_xfm(testtemproot, debug=False):
 
 
 def atlastool_resample_with_flirt_and_explicit_mat(testtemproot, debug=False):
-    """A .mat transform is a FLIRT transform.
+    """
+    A .mat transform is a FLIRT transform.
 
     os.path.splitext returns the extension WITH its dot, so the old comparison
     against "mat" never matched and every .mat file was handed to ANTs.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
     """
     data, hdr, dims, sizes = _make_3d_atlas()
     args = _make_base_args(testtemproot, suffix="_flirtmat")
@@ -1036,7 +1396,16 @@ def atlastool_resample_with_flirt_and_explicit_mat(testtemproot, debug=False):
 
 
 def atlastool_resample_with_ants(testtemproot, debug=False):
-    """A non .mat transform goes to ANTs, one call per region, then a merge."""
+    """
+    A non .mat transform goes to ANTs, one call per region, then a merge.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_3d_atlas()
     numregions = 3
     args = _make_base_args(testtemproot, suffix="_ants")
@@ -1078,9 +1447,18 @@ def atlastool_resample_with_ants(testtemproot, debug=False):
 
 
 def atlastool_resample_aborts_when_fsldir_is_unset(testtemproot, debug=False):
-    """Without FSLDIR there is no aligner and no identity transform to point at, so
+    """
+    Without FSLDIR there is no aligner and no identity transform to point at, so
     the run has to stop with its own message rather than a TypeError from trying to
-    build a path out of None."""
+    build a path out of None.
+
+    Parameters
+    ----------
+    testtemproot : str
+        Path prefix for temporary test outputs.
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     data, hdr, dims, sizes = _make_3d_atlas()
     args = _make_base_args(testtemproot, suffix="_nofsl")
     args.targetfile = os.path.join(testtemproot, "target.nii.gz")
@@ -1112,6 +1490,16 @@ def atlastool_resample_aborts_when_fsldir_is_unset(testtemproot, debug=False):
 
 def test_atlastool(debug=False, local=False):
     # set up temp directory
+    """
+    Verify atlastool.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    local : bool, optional
+        Use the local mode of the test harness.
+    """
     testtemproot = get_test_temp_path(local)
     create_dir(testtemproot)
 

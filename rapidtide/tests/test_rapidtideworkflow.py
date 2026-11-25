@@ -176,11 +176,17 @@ def _makeechoed(thebase, theoffset, thetimestep, thestrength):
 
 
 def test_echocancel_subtracts_the_fitted_echo(tmp_path):
-    """The returned timecourse must be the input minus the fitted echo.
+    """
+    The returned timecourse must be the input minus the fitted echo.
 
     This is the relationship the docstring describes, and it is checked exactly rather
     than approximately: the echo is rebuilt here with the same resampler the routine
     uses, so the arithmetic has to agree to floating point.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
     """
     thetimestep, thenumpoints = 1.0, 256
     theoffset = 4.0
@@ -200,10 +206,16 @@ def test_echocancel_subtracts_the_fitted_echo(tmp_path):
 
 
 def test_echocancel_leaves_a_residual_orthogonal_to_the_echo(tmp_path):
-    """Least squares removal means the leftover signal carries no more of the echo.
+    """
+    Least squares removal means the leftover signal carries no more of the echo.
 
     If the fit used the wrong coefficient - or the wrong sign - some echo would survive
     and this correlation would move away from zero.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
     """
     thetimestep, thenumpoints = 1.0, 256
     theoffset = 4.0
@@ -222,11 +234,17 @@ def test_echocancel_leaves_a_residual_orthogonal_to_the_echo(tmp_path):
 
 
 def test_echocancel_scales_its_estimate_with_the_echo_strength(tmp_path):
-    """A stronger echo has to produce a larger fitted coefficient.
+    """
+    A stronger echo has to produce a larger fitted coefficient.
 
     A routine returning a constant, or ignoring its input entirely, would still satisfy
     a single-value check; requiring the estimate to track the injected strength does
     not let that pass.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
     """
     thetimestep, thenumpoints = 1.0, 256
     theoffset = 4.0
@@ -249,8 +267,15 @@ def test_echocancel_scales_its_estimate_with_the_echo_strength(tmp_path):
 
 
 def test_echocancel_writes_all_three_timecourses(tmp_path):
-    """The output file documents what was removed, so it has to hold the input, the
-    echo that was estimated, and the result - in that order, appended to one file."""
+    """
+    The output file documents what was removed, so it has to hold the input, the
+    echo that was estimated, and the result - in that order, appended to one file.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    """
     thetimestep, thenumpoints = 1.0, 256
     theoffset = 4.0
     theinput = _makeechoed(_makelfo(thenumpoints, 1.0 / thetimestep), theoffset, thetimestep, 0.4)
@@ -275,9 +300,16 @@ def test_echocancel_writes_all_three_timecourses(tmp_path):
 
 
 def test_echocancel_blanks_the_wrapped_in_samples(tmp_path):
-    """The first samples of the shifted copy have no real data behind them, so they are
+    """
+    The first samples of the shifted copy have no real data behind them, so they are
     zeroed before fitting.  Leaving them in would let wrapped-around signal drive the
-    regression."""
+    regression.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    """
     thetimestep, thenumpoints = 1.0, 256
     theoffset = 6.0
     theinput = _makeechoed(_makelfo(thenumpoints, 1.0 / thetimestep), theoffset, thetimestep, 0.4)
@@ -331,11 +363,17 @@ def _savevolume(thepath, thedata, thetr=None):
 
 @pytest.fixture(scope="module")
 def thetinydataset(tmp_path_factory):
-    """Build a small delayed-sinusoid dataset and the masks the guard tests need.
+    """
+    Build a small delayed-sinusoid dataset and the masks the guard tests need.
 
     The volume is deliberately tiny so that a full run takes seconds rather than the
     minute and a half the example dataset needs.  Module scoped because none of the
     tests modify it.
+
+    Parameters
+    ----------
+    tmp_path_factory : pytest.TempPathFactory
+        Create a temporary directory for fixture files.
 
     Returns
     -------
@@ -415,8 +453,15 @@ def _runtiny(thedataset, theoutputname, theextraargs):
 
 
 def test_a_lagmin_longer_than_the_run_is_rejected(thetinydataset):
-    """A search range wider than half the acquisition cannot be satisfied, and saying
-    so beats correlating against lags that do not exist."""
+    """
+    A search range wider than half the acquisition cannot be satisfied, and saying
+    so beats correlating against lags that do not exist.
+
+    Parameters
+    ----------
+    thetinydataset : dict
+        Paths to the small synthetic dataset, masks, and output directory.
+    """
     with pytest.raises(ValueError, match="magnitude of lagmin exceeds"):
         _runtiny(
             thetinydataset,
@@ -426,7 +471,14 @@ def test_a_lagmin_longer_than_the_run_is_rejected(thetinydataset):
 
 
 def test_a_lagmax_longer_than_the_run_is_rejected(thetinydataset):
-    """The upper end of the search range is checked the same way as the lower end."""
+    """
+    The upper end of the search range is checked the same way as the lower end.
+
+    Parameters
+    ----------
+    thetinydataset : dict
+        Paths to the small synthetic dataset, masks, and output directory.
+    """
     with pytest.raises(ValueError, match="magnitude of lagmax exceeds"):
         _runtiny(
             thetinydataset,
@@ -436,18 +488,31 @@ def test_a_lagmax_longer_than_the_run_is_rejected(thetinydataset):
 
 
 def test_an_empty_correlation_mask_is_rejected(thetinydataset):
-    """With no voxels to process there is nothing to compute; the run has to stop
-    rather than produce empty maps."""
+    """
+    With no voxels to process there is nothing to compute; the run has to stop
+    rather than produce empty maps.
+
+    Parameters
+    ----------
+    thetinydataset : dict
+        Paths to the small synthetic dataset, masks, and output directory.
+    """
     with pytest.raises(ValueError, match="no voxels in the correlation mask"):
         _runtiny(thetinydataset, "emptymask", ["--corrmask", thetinydataset["emptymask"]])
 
 
 def test_a_refine_include_mask_disjoint_from_the_corrmask_is_rejected(thetinydataset):
-    """Both masks have voxels, but they do not overlap.
+    """
+    Both masks have voxels, but they do not overlap.
 
     An earlier check in maskutil only rejects a refine mask that is empty outright, so
     this condition - two perfectly valid masks that share no voxels - is caught here or
     not at all.  Refinement would otherwise proceed with nothing to refine from.
+
+    Parameters
+    ----------
+    thetinydataset : dict
+        Paths to the small synthetic dataset, masks, and output directory.
     """
     with pytest.raises(ValueError, match="refine include mask does not leave any voxels"):
         _runtiny(
@@ -463,8 +528,15 @@ def test_a_refine_include_mask_disjoint_from_the_corrmask_is_rejected(thetinydat
 
 
 def test_a_refine_exclude_mask_covering_the_corrmask_is_rejected(thetinydataset):
-    """The exclude mask leaves plenty of voxels in the volume, just none of the ones
-    being processed.  maskutil only complains when the exclude mask covers everything."""
+    """
+    The exclude mask leaves plenty of voxels in the volume, just none of the ones
+    being processed.  maskutil only complains when the exclude mask covers everything.
+
+    Parameters
+    ----------
+    thetinydataset : dict
+        Paths to the small synthetic dataset, masks, and output directory.
+    """
     with pytest.raises(ValueError, match="refine exclude mask does not leave any voxels"):
         _runtiny(
             thetinydataset,
@@ -479,8 +551,15 @@ def test_a_refine_exclude_mask_covering_the_corrmask_is_rejected(thetinydataset)
 
 
 def test_refine_include_and_exclude_masks_are_checked_together(thetinydataset):
-    """When both are supplied it is their combination that has to leave voxels; each
-    one alone is satisfiable here."""
+    """
+    When both are supplied it is their combination that has to leave voxels; each
+    one alone is satisfiable here.
+
+    Parameters
+    ----------
+    thetinydataset : dict
+        Paths to the small synthetic dataset, masks, and output directory.
+    """
     with pytest.raises(ValueError, match="refine include and exclude masks"):
         _runtiny(
             thetinydataset,
@@ -497,8 +576,15 @@ def test_refine_include_and_exclude_masks_are_checked_together(thetinydataset):
 
 
 def test_a_territory_map_on_the_wrong_grid_is_rejected(thetinydataset):
-    """Region averaging indexes the fmri data with the template, so a mismatched grid
-    would silently average the wrong voxels together."""
+    """
+    Region averaging indexes the fmri data with the template, so a mismatched grid
+    would silently average the wrong voxels together.
+
+    Parameters
+    ----------
+    thetinydataset : dict
+        Paths to the small synthetic dataset, masks, and output directory.
+    """
     with pytest.raises(SystemExit):
         _runtiny(
             thetinydataset,
@@ -513,8 +599,15 @@ def test_a_territory_map_on_the_wrong_grid_is_rejected(thetinydataset):
 
 
 def test_a_territory_label_count_mismatch_is_rejected(thetinydataset):
-    """The template here has two regions but the label file names one, so the labels
-    cannot be trusted to identify the columns that would be written."""
+    """
+    The template here has two regions but the label file names one, so the labels
+    cannot be trusted to identify the columns that would be written.
+
+    Parameters
+    ----------
+    thetinydataset : dict
+        Paths to the small synthetic dataset, masks, and output directory.
+    """
     with pytest.raises(SystemExit):
         _runtiny(
             thetinydataset,
@@ -531,11 +624,17 @@ def test_a_territory_label_count_mismatch_is_rejected(thetinydataset):
 
 
 def test_territory_timecourses_are_written_and_named(thetinydataset):
-    """The happy path for the territory option.
+    """
+    The happy path for the territory option.
 
     The two regions are the two halves of the volume, which carry different delays, so
     the extracted timecourses have to differ - averaging the whole volume for both
     regions would produce identical columns and still look like a working feature.
+
+    Parameters
+    ----------
+    thetinydataset : dict
+        Paths to the small synthetic dataset, masks, and output directory.
     """
     theoutputroot = _runtiny(
         thetinydataset,
@@ -566,7 +665,14 @@ def test_territory_timecourses_are_written_and_named(thetinydataset):
 
 
 def test_a_fixed_delay_map_on_the_wrong_grid_is_rejected(thetinydataset):
-    """A delay map is applied voxel by voxel, so its grid has to match the data."""
+    """
+    A delay map is applied voxel by voxel, so its grid has to match the data.
+
+    Parameters
+    ----------
+    thetinydataset : dict
+        Paths to the small synthetic dataset, masks, and output directory.
+    """
     with pytest.raises(ValueError, match="fixed delay map dimensions do not match"):
         _runtiny(
             thetinydataset,
@@ -582,11 +688,17 @@ def test_a_fixed_delay_map_on_the_wrong_grid_is_rejected(thetinydataset):
 
 
 def test_a_fixed_delay_map_is_actually_applied(thetinydataset):
-    """Reading the map is not enough - the delays in it have to end up in the output.
+    """
+    Reading the map is not enough - the delays in it have to end up in the output.
 
     The map here is a constant 1.5 seconds, and with fitting disabled every voxel's
     reported delay must be exactly that.  Without this check the map could be read and
     discarded and the dimension test above would still pass.
+
+    Parameters
+    ----------
+    thetinydataset : dict
+        Paths to the small synthetic dataset, masks, and output directory.
     """
     theoutputroot = _runtiny(
         thetinydataset,
@@ -608,7 +720,8 @@ def test_a_fixed_delay_map_is_actually_applied(thetinydataset):
 
 
 def test_initialdelay_is_discarded_without_nodelayfit(thetinydataset):
-    """--initialdelay on its own is silently dropped by the parser.
+    """
+    --initialdelay on its own is silently dropped by the parser.
 
     rapidtide_parser sets initialdelayvalue back to None whenever fixdelay is false, and
     fixdelay is only set by --nodelayfit.  Nothing in the help for --initialdelay says
@@ -620,6 +733,11 @@ def test_initialdelay_is_discarded_without_nodelayfit(thetinydataset):
     different features.  Note that two of the three configurations in
     test_fullrunrapidtide_v1 pass --initialdelay without --nodelayfit and are therefore
     not testing the delay handling they appear to.
+
+    Parameters
+    ----------
+    thetinydataset : dict
+        Paths to the small synthetic dataset, masks, and output directory.
     """
     thebaseargs = [
         thetinydataset["fmri"],
@@ -642,12 +760,18 @@ def test_initialdelay_is_discarded_without_nodelayfit(thetinydataset):
 
 @pytest.fixture(scope="module")
 def thepreppassdataset(tmp_path_factory):
-    """Build a dataset large enough for the preparation pass to rebuild the regressor.
+    """
+    Build a dataset large enough for the preparation pass to rebuild the regressor.
 
     The rebuild only happens when at least fifty voxels survive selection, so this
     volume is bigger than the one the guard tests use.  The delays are drawn from a
     small set of values so that a modal lag exists, and the noise is low so that the
     fits are good enough to pass the R2 threshold.
+
+    Parameters
+    ----------
+    tmp_path_factory : pytest.TempPathFactory
+        Create a temporary directory for fixture files.
 
     Returns
     -------
@@ -720,13 +844,19 @@ def _readregressorcolumns(theoutputroot):
 
 @pytest.mark.slow
 def test_preppass_rebuilds_the_regressor_from_clean_voxels(thepreppassdataset):
-    """The whole point of --preppass is to replace the starting regressor with one
+    """
+    The whole point of --preppass is to replace the starting regressor with one
     built from voxels that fitted cleanly at a short delay.
 
     The rebuilt regressor is written as an extra entry in the moving regressor file, so
     its presence is what distinguishes a preparation pass that did something from one
     that ran and gave up.  It also has to differ from the regressor it replaced, which
     rules out the rebuild simply copying what was already there.
+
+    Parameters
+    ----------
+    thepreppassdataset : object
+        Value supplied as ``thepreppassdataset`` by the test case.
     """
     theoutputroot = os.path.join(thepreppassdataset["dir"], "prepdone")
     run_rapidtide(
@@ -783,11 +913,17 @@ def _readgoodvoxelcount(theoutputroot):
 
 @pytest.fixture(scope="module")
 def thebimodaldataset(tmp_path_factory):
-    """Build a dataset with two well separated delay populations.
+    """
+    Build a dataset with two well separated delay populations.
 
     Half the voxels carry no delay and half are delayed by six seconds, which is far
     outside the selection window.  This makes the effect of the upper lag bound
     visible: only the early population may be selected.
+
+    Parameters
+    ----------
+    tmp_path_factory : pytest.TempPathFactory
+        Create a temporary directory for fixture files.
 
     Returns
     -------
@@ -840,13 +976,19 @@ def thebimodaldataset(tmp_path_factory):
 
 @pytest.mark.slow
 def test_preppass_excludes_voxels_delayed_past_the_modal_lag(thebimodaldataset):
-    """Selection keeps voxels at or before the modal lag, never after it.
+    """
+    Selection keeps voxels at or before the modal lag, never after it.
 
     That upper bound is what makes the rebuilt regressor an early, arterial one rather
     than an average over the whole vascular tree.  Half of this dataset is delayed six
     seconds, well past the mode, so those voxels must not be counted - with the bound
     removed the count would be the whole volume.  The lag window and R2 threshold are
     opened up so that the upper bound is the only thing doing the rejecting.
+
+    Parameters
+    ----------
+    thebimodaldataset : object
+        Value supplied as ``thebimodaldataset`` by the test case.
     """
     theoutputroot = os.path.join(thebimodaldataset["dir"], "bimodal")
     run_rapidtide(
@@ -880,10 +1022,16 @@ def test_preppass_excludes_voxels_delayed_past_the_modal_lag(thebimodaldataset):
 
 @pytest.mark.slow
 def test_preppass_skips_the_rebuild_when_no_voxels_qualify(thepreppassdataset):
-    """An R2 threshold no voxel can meet leaves nothing to rebuild from.
+    """
+    An R2 threshold no voxel can meet leaves nothing to rebuild from.
 
     The run has to continue with the regressor it already had rather than fail or write
     an empty one, so the extra entry must be absent while the run still completes.
+
+    Parameters
+    ----------
+    thepreppassdataset : object
+        Value supplied as ``thepreppassdataset`` by the test case.
     """
     theoutputroot = os.path.join(thepreppassdataset["dir"], "prepskip")
     run_rapidtide(

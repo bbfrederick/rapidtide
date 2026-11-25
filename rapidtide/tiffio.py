@@ -12,6 +12,14 @@ import numpy as np
 
 
 def _tifffile():
+    """
+    Import the optional TIFF dependency.
+
+    Returns
+    -------
+    module
+        Imported tifffile module.
+    """
     try:
         import tifffile
     except ImportError as exc:
@@ -20,6 +28,19 @@ def _tifffile():
 
 
 def _json_value(value):
+    """
+    Convert metadata to JSON-compatible Python values.
+
+    Parameters
+    ----------
+    value : object
+        Metadata value to convert recursively.
+
+    Returns
+    -------
+    object
+        JSON-compatible representation of the metadata value.
+    """
     if isinstance(value, np.ndarray):
         return value.tolist()
     if isinstance(value, np.generic):
@@ -28,18 +49,51 @@ def _json_value(value):
 
 
 def needs_bigtiff(shape):
-    """Reserve space for float32 pixels and per-page TIFF directories below 4 GiB."""
+    """
+    Reserve space for float32 pixels and per-page TIFF directories below 4 GiB.
+
+    Parameters
+    ----------
+    shape : tuple of int
+        Array dimensions in the order expected by the routine.
+
+    Returns
+    -------
+    bool
+        Whether the estimated image size calls for BigTIFF.
+    """
     pages = shape[0] if len(shape) == 3 else 1
     return int(np.prod(shape, dtype=object)) * 4 + pages * 4096 >= 2**32 - 2**25
 
 
 def save_map(filename, data, header, metadata, sample_axis="time", compression="deflate"):
-    """Write an internal (x, y, 1[, sample]) array as float32 TIFF.
+    """
+    Write an internal (x, y, 1[, sample]) array as float32 TIFF.
 
     Scalar maps use one grayscale page. Sequences use one page per sample,
     with exact coordinates embedded in JSON metadata. DEFLATE is lossless;
     passing None disables compression. Other codecs are rejected. Large stacks
     automatically use BigTIFF. Returns the embedded Rapidtide metadata dictionary.
+
+    Parameters
+    ----------
+    filename : path-like
+        Path to the input or output file.
+    data : array-like
+        Input data to filter.
+    header : object
+        Image header supplying spatial and temporal metadata.
+    metadata : dict
+        Rapidtide metadata to embed in the TIFF header.
+    sample_axis : str, optional
+        Name of the optional sample dimension.
+    compression : str or None, optional
+        Compression codec for the TIFF image.
+
+    Returns
+    -------
+    object
+        The info.
     """
     tifffile = _tifffile()
     if compression not in (None, "deflate"):
@@ -101,6 +155,16 @@ class TiffArray:
     """Present TIFF pages as a native video array, loading only requested samples."""
 
     def __init__(self, path, shape):
+        """
+        Initialize `TiffArray`.
+
+        Parameters
+        ----------
+        path : path-like
+            Path to the file.
+        shape : tuple of int
+            Array dimensions in the order expected by the routine.
+        """
         self.path = path
         self.shape = tuple(shape)
         self.ndim = len(shape)
@@ -108,6 +172,19 @@ class TiffArray:
         self.chunks = self.shape[:2] + ((min(16, self.shape[-1]),) if self.ndim == 3 else ())
 
     def __getitem__(self, key):
+        """
+        Retrieve the requested data.
+
+        Parameters
+        ----------
+        key : object
+            Array index or slice selecting the requested data.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array values at the requested indices.
+        """
         tifffile = _tifffile()
         with tifffile.TiffFile(self.path) as file:
             if self.ndim == 2:
@@ -131,6 +208,14 @@ class TiffMap:
     """Read TIFF analysis metadata without materializing a sequence."""
 
     def __init__(self, filename):
+        """
+        Initialize `TiffMap`.
+
+        Parameters
+        ----------
+        filename : path-like
+            Path to the input or output file.
+        """
         self.path = Path(filename)
         tifffile = _tifffile()
         with tifffile.TiffFile(self.path) as file:
@@ -163,12 +248,50 @@ class TiffMap:
             self.arrays[name] = coordinates
 
     def __getitem__(self, name):
+        """
+        Retrieve the requested data.
+
+        Parameters
+        ----------
+        name : str
+            Name of the requested dataset.
+
+        Returns
+        -------
+        object
+            Requested lazy TIFF array or coordinate dataset.
+        """
         return self.arrays[name]
 
     def __contains__(self, name):
+        """
+        Check whether the named dataset is available.
+
+        Parameters
+        ----------
+        name : str
+            Name of the requested dataset.
+
+        Returns
+        -------
+        bool
+            Whether the named dataset exists.
+        """
         return name in self.arrays
 
 
 def open_map(filename):
-    """Open a Rapidtide TIFF map or sequence, retaining native array conventions."""
+    """
+    Open a Rapidtide TIFF map or sequence, retaining native array conventions.
+
+    Parameters
+    ----------
+    filename : path-like
+        Path to the input or output file.
+
+    Returns
+    -------
+    TiffMap
+        Opened TIFF map with lazy array access.
+    """
     return TiffMap(filename)

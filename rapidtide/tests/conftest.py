@@ -77,9 +77,36 @@ _configure_test_matplotlib_env()
 
 @pytest.fixture
 def case_runner(request):
-    """Run legacy case-style test functions with debug defaults and fixture injection."""
+    """
+    Run legacy case-style test functions with debug defaults and fixture injection.
+
+    Parameters
+    ----------
+    request : pytest.FixtureRequest
+        Pytest request providing access to fixture configuration.
+
+    Returns
+    -------
+    callable
+        Run a case using pytest fixtures and supplied overrides.
+    """
 
     def _run(case_func, **overrides):
+        """
+        Resolve fixtures and run the selected case with any overrides.
+
+        Parameters
+        ----------
+        case_func : callable
+            Test case to execute.
+        **overrides : object
+            Keyword settings that replace the test defaults.
+
+        Returns
+        -------
+        object
+            Value returned to the caller in this test case.
+        """
         kwargs = {"debug": False}
         kwargs.update(overrides)
         accepted_kwargs = {}
@@ -104,9 +131,37 @@ def case_runner(request):
 
 @pytest.fixture
 def parse_with_temp_inputs():
-    """Parse args with temporary input files for parser tests."""
+    """
+    Parse args with temporary input files for parser tests.
+
+    Returns
+    -------
+    callable
+        Parse a command line with temporary input files.
+    """
 
     def _parse(parser, extra_args=None, num_inputs=2, suffix=".txt", include_output=False):
+        """
+        Build an argument list with temporary inputs and parse it.
+
+        Parameters
+        ----------
+        parser : argparse.ArgumentParser
+            Parser under test.
+        extra_args : list of str or None, optional
+            Arguments appended to the generated input filenames.
+        num_inputs : int, optional
+            Number of temporary input files to create.
+        suffix : str, optional
+            Filename extension used for the temporary input files.
+        include_output : bool, optional
+            Add an output name to the generated arguments.
+
+        Returns
+        -------
+        argparse.Namespace
+            Parsed command-line arguments.
+        """
         if extra_args is None:
             extra_args = []
         with ExitStack() as stack:
@@ -125,9 +180,33 @@ def parse_with_temp_inputs():
 
 @pytest.fixture
 def capture_stdout():
-    """Capture stdout from a callable and return it as a string."""
+    """
+    Capture stdout from a callable and return it as a string.
+
+    Returns
+    -------
+    callable
+        Call a function and return its captured standard output.
+    """
 
     def _capture(func, *args, **kwargs):
+        """
+        Call the supplied function and capture its standard output.
+
+        Parameters
+        ----------
+        func : callable
+            Function to call with the supplied arguments.
+        *args : object
+            Arguments passed to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        str
+            Text written to standard output by the callable.
+        """
         stream = io.StringIO()
         old_stdout = sys.stdout
         sys.stdout = stream
@@ -142,9 +221,41 @@ def capture_stdout():
 
 @pytest.fixture
 def broadband_signal_factory():
-    """Create deterministic broadband-like synthetic signals."""
+    """
+    Create deterministic broadband-like synthetic signals.
+
+    Returns
+    -------
+    callable
+        Generate a deterministic broadband test signal.
+    """
 
     def _make(npts, samplerate, delay=0.0, seed=42, freqmin=0.01, freqmax=0.2, nfreqs=30):
+        """
+        Sum reproducible sinusoids over the requested frequency range.
+
+        Parameters
+        ----------
+        npts : int
+            Number of samples.
+        samplerate : float
+            Sampling rate in Hz.
+        delay : float, optional
+            Time shift applied to the test signal in seconds.
+        seed : int, optional
+            Random seed for reproducible test data.
+        freqmin : float, optional
+            Lower frequency limit in Hz.
+        freqmax : float, optional
+            Upper frequency limit in Hz.
+        nfreqs : int, optional
+            Number of sinusoids to sum.
+
+        Returns
+        -------
+        numpy.ndarray
+            The ``signal`` value supplied to the caller.
+        """
         rng = np.random.RandomState(seed)
         t = np.arange(npts) / samplerate
         signal = np.zeros(npts, dtype=float)
@@ -159,9 +270,31 @@ def broadband_signal_factory():
 
 @pytest.fixture
 def mock_nifti_header_factory():
-    """Create a mutable mock NIfTI header with dict-like access and copy()."""
+    """
+    Create a mutable mock NIfTI header with dict-like access and copy().
+
+    Returns
+    -------
+    callable
+        Build a mutable mock NIfTI header.
+    """
 
     def _make(pixdim=None, dim=None):
+        """
+        Create an editable mock header with independent dimension fields.
+
+        Parameters
+        ----------
+        pixdim : sequence of float or None, optional
+            Values for the NIfTI pixel dimension field.
+        dim : sequence of int or None, optional
+            Values for the NIfTI dimension field.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         if pixdim is None:
             pixdim = [0.0, 2.0, 2.0, 2.0, 1.0, 0.0, 0.0, 0.0]
         if dim is None:
@@ -173,6 +306,14 @@ def mock_nifti_header_factory():
         hdr.__setitem__.side_effect = lambda key, val: storage.__setitem__(key, val)
 
         def _copy():
+            """
+            Copy the current mock header fields into an independent header.
+
+            Returns
+            -------
+            MagicMock
+                Independent copy of the header and its fields.
+            """
             return _make(pixdim=list(storage["pixdim"]), dim=list(storage["dim"]))
 
         hdr.copy = _copy
@@ -209,6 +350,7 @@ def nogpu(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     Yields
     ------
     None
+        Control passes to the test while the fixture is active.
 
     Examples
     --------
@@ -230,9 +372,39 @@ def nogpu(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 @pytest.fixture
 def mock_nifti_data_factory():
-    """Create synthetic 4D data with a stable sinusoidal component."""
+    """
+    Create synthetic 4D data with a stable sinusoidal component.
+
+    Returns
+    -------
+    callable
+        Generate synthetic 4D NIfTI sample data.
+    """
 
     def _make(xsize=2, ysize=2, numslices=1, timepoints=10, inputtr=1.0, freq=0.1):
+        """
+        Generate a 4D array with a shared sinusoid.
+
+        Parameters
+        ----------
+        xsize : int, optional
+            Number of voxels along the x axis.
+        ysize : int, optional
+            Number of voxels along the y axis.
+        numslices : int, optional
+            Number of slices in the test image.
+        timepoints : int, optional
+            Number of time samples.
+        inputtr : float, optional
+            Input repetition time in seconds.
+        freq : float, optional
+            Value supplied as ``freq`` by the test case.
+
+        Returns
+        -------
+        numpy.ndarray
+            Output values supplied to the caller.
+        """
         data = np.zeros((xsize, ysize, numslices, timepoints), dtype=np.float64)
         t = np.arange(timepoints) * inputtr
         base = np.sin(2.0 * np.pi * freq * t)

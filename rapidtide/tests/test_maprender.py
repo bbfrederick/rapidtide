@@ -11,6 +11,19 @@ from rapidtide.maprender import _lag_slice, _map_figure, _panels, render_rapidti
 
 @pytest.fixture
 def result_root(tmp_path):
+    """
+    Set up ``result_root`` for the test.
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+
+    Returns
+    -------
+    object
+        The ``root`` value supplied to the caller.
+    """
     zarr = pytest.importorskip("zarr")
     root = tmp_path / "example"
     mask = np.ones((6, 4), dtype=np.int16)
@@ -37,16 +50,13 @@ def result_root(tmp_path):
 
 
 def test_map_colormaps_geometry_and_limits(result_root: Path) -> None:
-    """Check panel colormaps, display limits, native geometry, and gray masking.
+    """
+    Check panel colormaps, display limits, native geometry, and gray masking.
 
     Parameters
     ----------
     result_root : pathlib.Path
         Output prefix of the synthetic legacy Zarr analysis.
-
-    Returns
-    -------
-    None
     """
     panels, mask = _panels(result_root)
     figure = _map_figure(result_root, panels, {}, -0.35, 0.35)
@@ -68,16 +78,13 @@ def test_map_colormaps_geometry_and_limits(result_root: Path) -> None:
 
 
 def test_render_all_and_overwrite(result_root: Path) -> None:
-    """Render every artifact twice, checking the second run replaces the first.
+    """
+    Render every artifact twice, checking the second run replaces the first.
 
     Parameters
     ----------
     result_root : pathlib.Path
         Output prefix of the synthetic legacy Zarr analysis.
-
-    Returns
-    -------
-    None
     """
     av = pytest.importorskip("av")
     for _ in range(2):
@@ -114,6 +121,14 @@ def test_render_all_and_overwrite(result_root: Path) -> None:
 
 
 def test_video_lag_range_selects_matching_frames(result_root):
+    """
+    Verify video lag range selects matching frames.
+
+    Parameters
+    ----------
+    result_root : object
+        Value supplied as ``result_root`` by the test case.
+    """
     av = pytest.importorskip("av")
     full = render_rapidtide(result_root, fps=10, showprogress=False)
     with av.open(str(full["corrout-lag-sweep.mp4"])) as container:
@@ -146,12 +161,34 @@ def test_video_lag_range_selects_matching_frames(result_root):
     ],
 )
 def test_lag_selection_boundaries(bounds, expected):
+    """
+    Verify lag selection boundaries.
+
+    Parameters
+    ----------
+    bounds : object
+        Value supplied as ``bounds`` by the test case.
+    expected : object
+        Expected result used in assertions.
+    """
     lag = np.linspace(-0.2, 0.2, 5)
     np.testing.assert_array_equal(np.arange(len(lag))[_lag_slice(lag, bounds)], expected)
 
 
 @pytest.mark.parametrize("bounds", [(1, 2), (-0.15, -0.14)])
 def test_empty_video_range_preserves_outputs(result_root, tmp_path, bounds):
+    """
+    Verify empty video range preserves outputs.
+
+    Parameters
+    ----------
+    result_root : object
+        Value supplied as ``result_root`` by the test case.
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    bounds : object
+        Value supplied as ``bounds`` by the test case.
+    """
     output = tmp_path / "figures"
     output.mkdir()
     previous = output / "corrout-lag-sweep.mp4"
@@ -164,12 +201,21 @@ def test_empty_video_range_preserves_outputs(result_root, tmp_path, bounds):
 
 @pytest.mark.parametrize("bounds", [(0.1, -0.1), (np.nan, 0.1), (0, np.inf), (0,), (0, 1, 2)])
 def test_invalid_video_range(bounds):
+    """
+    Verify invalid video range.
+
+    Parameters
+    ----------
+    bounds : object
+        Value supplied as ``bounds`` by the test case.
+    """
     with pytest.raises(ValueError, match="videolagrange"):
         render_rapidtide("missing", videolagrange=bounds)
 
 
 def test_missing_optional_outputs(result_root: Path, tmp_path: Path) -> None:
-    """Render only the required maps when refined maps and corrout are absent.
+    """
+    Render only the required maps when refined maps and corrout are absent.
 
     Parameters
     ----------
@@ -177,10 +223,6 @@ def test_missing_optional_outputs(result_root: Path, tmp_path: Path) -> None:
         Output prefix of the synthetic legacy Zarr analysis.
     tmp_path : pathlib.Path
         Pytest temporary directory for the figure output.
-
-    Returns
-    -------
-    None
     """
     import shutil
 
@@ -203,7 +245,8 @@ def test_missing_optional_outputs(result_root: Path, tmp_path: Path) -> None:
 def test_invalid_results_leave_existing_artifacts(
     result_root: Path, tmp_path: Path, failure: str
 ) -> None:
-    """Leave a previous rendering in place when the analysis results are invalid.
+    """
+    Leave a previous rendering in place when the analysis results are invalid.
 
     Parameters
     ----------
@@ -214,10 +257,6 @@ def test_invalid_results_leave_existing_artifacts(
     failure : str
         Which defect to introduce: bad geometry, wrong axes, bad lag
         coordinates, or an unfinished analysis.
-
-    Returns
-    -------
-    None
     """
     import zarr
 
@@ -246,6 +285,14 @@ def test_invalid_results_leave_existing_artifacts(
 
 
 def test_nonfinite_map_pixels_are_excluded(result_root):
+    """
+    Verify nonfinite map pixels are excluded.
+
+    Parameters
+    ----------
+    result_root : object
+        Value supplied as ``result_root`` by the test case.
+    """
     import zarr
 
     group = zarr.open_group(f"{result_root}_desc-maxtime_map.zarr", mode="a")
@@ -258,7 +305,8 @@ def test_nonfinite_map_pixels_are_excluded(result_root):
 def test_encoding_failure_preserves_previous_artifacts(
     result_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Leave previous artifacts untouched when movie encoding fails.
+    """
+    Leave previous artifacts untouched when movie encoding fails.
 
     Parameters
     ----------
@@ -268,10 +316,6 @@ def test_encoding_failure_preserves_previous_artifacts(
         Pytest temporary directory for the figure output.
     monkeypatch : pytest.MonkeyPatch
         Used to make movie encoding fail.
-
-    Returns
-    -------
-    None
     """
     pytest.importorskip("av")
     import rapidtide.maprender as renderer
@@ -282,6 +326,16 @@ def test_encoding_failure_preserves_previous_artifacts(
         (output / name).write_bytes(b"previous artifact")
 
     def fail_encoding(*args, **kwargs):
+        """
+        Raise ``OSError`` to exercise the error path.
+
+        Parameters
+        ----------
+        *args : object
+            Arguments passed to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         raise OSError("encoding failed")
 
     monkeypatch.setattr(renderer, "_movie", fail_encoding)
@@ -292,6 +346,14 @@ def test_encoding_failure_preserves_previous_artifacts(
 
 
 def test_output_directory_cannot_modify_analysis_store(result_root):
+    """
+    Verify output directory cannot modify analysis store.
+
+    Parameters
+    ----------
+    result_root : object
+        Value supplied as ``result_root`` by the test case.
+    """
     output = f"{result_root}_desc-maxtime_map.zarr"
     with pytest.raises(ValueError, match="outside Zarr"):
         render_rapidtide(result_root, outdir=output, movie=False)
@@ -302,7 +364,8 @@ def test_output_directory_cannot_modify_analysis_store(result_root):
     [("fps", 0), ("fps", np.nan), ("minlag", np.nan), ("maxlag", np.inf)],
 )
 def test_invalid_display_options(keyword: str, value: float) -> None:
-    """Reject invalid display options before reading any analysis outputs.
+    """
+    Reject invalid display options before reading any analysis outputs.
 
     Parameters
     ----------
@@ -310,17 +373,14 @@ def test_invalid_display_options(keyword: str, value: float) -> None:
         Name of the ``render_rapidtide`` option to set.
     value : float
         Invalid value for that option.
-
-    Returns
-    -------
-    None
     """
     with pytest.raises(ValueError, match=keyword):
         render_rapidtide("missing", **{keyword: value})
 
 
 def test_cli(result_root: Path, tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
-    """Run the command-line workflow with explicit delay and correlation limits.
+    """
+    Run the command-line workflow with explicit delay and correlation limits.
 
     Parameters
     ----------
@@ -330,10 +390,6 @@ def test_cli(result_root: Path, tmp_path: Path, capsys: pytest.CaptureFixture) -
         Pytest temporary directory for the figure output.
     capsys : pytest.CaptureFixture
         Captures the printed artifact paths.
-
-    Returns
-    -------
-    None
     """
     from rapidtide.workflows import parser_funcs as pf
     from rapidtide.workflows import showrapidtide as workflow
@@ -366,6 +422,18 @@ def test_cli(result_root: Path, tmp_path: Path, capsys: pytest.CaptureFixture) -
 
 
 def test_cli_video_range(result_root, tmp_path, capsys):
+    """
+    Verify CLI video range.
+
+    Parameters
+    ----------
+    result_root : object
+        Value supplied as ``result_root`` by the test case.
+    tmp_path : pathlib.Path
+        Temporary directory for files created by the test.
+    capsys : pytest.CaptureFixture
+        Capture written output for assertions.
+    """
     pytest.importorskip("av")
     from rapidtide.workflows import parser_funcs as pf
     from rapidtide.workflows import showrapidtide as workflow
@@ -398,7 +466,8 @@ def test_cli_video_range(result_root, tmp_path, capsys):
 def test_tiff_maps_and_movie(
     result_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, keep_legacy: bool
 ) -> None:
-    """Prefer new TIFF outputs over legacy stores, and stream selected lag pages.
+    """
+    Prefer new TIFF outputs over legacy stores, and stream selected lag pages.
 
     Parameters
     ----------
@@ -410,10 +479,6 @@ def test_tiff_maps_and_movie(
         Used to capture every image the renderer draws.
     keep_legacy : bool
         Whether the legacy Zarr stores remain beside the new TIFF maps.
-
-    Returns
-    -------
-    None
     """
     pytest.importorskip("av")
     pytest.importorskip("tifffile")
@@ -480,16 +545,13 @@ def test_tiff_maps_and_movie(
 
 
 def test_custom_correlation_limits_leave_delays_and_values_unchanged(result_root: Path) -> None:
-    """Apply correlation limits without changing delay limits or stored values.
+    """
+    Apply correlation limits without changing delay limits or stored values.
 
     Parameters
     ----------
     result_root : pathlib.Path
         Output prefix of the synthetic legacy Zarr analysis.
-
-    Returns
-    -------
-    None
     """
     panels, _ = _panels(result_root)
     figure = _map_figure(result_root, panels, {}, -0.35, 0.35, mincorr=0.1, maxcorr=0.5)
@@ -516,7 +578,8 @@ def test_default_lag_limits(
     maxlag: float | None,
     expected: list[float],
 ) -> None:
-    """Fill any delay limit not given with the symmetric default covering all delays.
+    """
+    Fill any delay limit not given with the symmetric default covering all delays.
 
     Parameters
     ----------
@@ -528,10 +591,6 @@ def test_default_lag_limits(
         Requested delay limits; None selects the default.
     expected : list of float
         Expected ``lag_display_limits_seconds`` in the manifest.
-
-    Returns
-    -------
-    None
     """
     paths = render_rapidtide(
         result_root, outdir=tmp_path / "figures", minlag=minlag, maxlag=maxlag, movie=False
@@ -544,7 +603,8 @@ def test_default_lag_limits(
 def test_one_sided_lag_limit_must_exceed_default(
     result_root: Path, minlag: float | None, maxlag: float | None
 ) -> None:
-    """Reject a single delay limit that crosses the default for the other side.
+    """
+    Reject a single delay limit that crosses the default for the other side.
 
     Parameters
     ----------
@@ -552,10 +612,6 @@ def test_one_sided_lag_limit_must_exceed_default(
         Output prefix of the synthetic legacy Zarr analysis; delays span +/-0.3 s.
     minlag, maxlag : float or None
         One requested delay limit; the other takes the default.
-
-    Returns
-    -------
-    None
     """
     with pytest.raises(ValueError, match="minlag must be less than maxlag"):
         render_rapidtide(result_root, minlag=minlag, maxlag=maxlag, movie=False)
@@ -565,5 +621,15 @@ def test_one_sided_lag_limit_must_exceed_default(
     "minimum,maximum", [(0, 0), (1, -1), (np.nan, 1), (-1, np.inf), (-np.inf, 1), (-1, np.nan)]
 )
 def test_invalid_correlation_limits(minimum, maximum):
+    """
+    Verify invalid correlation limits.
+
+    Parameters
+    ----------
+    minimum : object
+        Value supplied as ``minimum`` by the test case.
+    maximum : object
+        Value supplied as ``maximum`` by the test case.
+    """
     with pytest.raises(ValueError, match="mincorr < maxcorr"):
         render_rapidtide("missing", mincorr=minimum, maxcorr=maximum)

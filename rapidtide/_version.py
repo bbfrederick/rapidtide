@@ -21,7 +21,14 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 
 def get_keywords() -> Dict[str, str]:
-    """Get the keywords needed to look up the version information."""
+    """
+    Get the keywords needed to look up the version information.
+
+    Returns
+    -------
+    Dict[str, str]
+        The keywords.
+    """
     # these strings will be replaced by git during git-archive.
     # setup.py/versioneer.py will grep for the variable names, so they must
     # each be defined on a line of their own. _version.py will just call
@@ -45,7 +52,14 @@ class VersioneerConfig:
 
 
 def get_config() -> VersioneerConfig:
-    """Create, populate and return the VersioneerConfig() object."""
+    """
+    Create, populate and return the VersioneerConfig() object.
+
+    Returns
+    -------
+    VersioneerConfig
+        The cfg.
+    """
     # these strings are filled in when 'setup.py versioneer' creates
     # _version.py
     cfg = VersioneerConfig()
@@ -67,9 +81,35 @@ HANDLERS: Dict[str, Dict[str, Callable]] = {}
 
 
 def register_vcs_handler(vcs: str, method: str) -> Callable:  # decorator
-    """Create decorator to mark a method as the handler of a VCS."""
+    """
+    Create decorator to mark a method as the handler of a VCS.
+
+    Parameters
+    ----------
+    vcs : str
+        Version-control system name.
+    method : str
+        Name of the handler to register.
+
+    Returns
+    -------
+    Callable
+        The decorate.
+    """
     def decorate(f: Callable) -> Callable:
-        """Store f in HANDLERS[vcs][method]."""
+        """
+        Store f in HANDLERS[vcs][method].
+
+        Parameters
+        ----------
+        f : Callable
+            Function to decorate.
+
+        Returns
+        -------
+        Callable
+            The f.
+        """
         if vcs not in HANDLERS:
             HANDLERS[vcs] = {}
         HANDLERS[vcs][method] = f
@@ -85,7 +125,29 @@ def run_command(
     hide_stderr: bool = False,
     env: Optional[Dict[str, str]] = None,
 ) -> Tuple[Optional[str], Optional[int]]:
-    """Call the given command(s)."""
+    """
+    Call the given command(s).
+
+    Parameters
+    ----------
+    commands : List[str]
+        Executable names to try in order.
+    args : List[str]
+        Parsed options for the command.
+    cwd : Optional[str]
+        Working directory for the subprocess.
+    verbose : bool, optional
+        Print progress or diagnostic messages.
+    hide_stderr : bool, optional
+        Discard subprocess standard error.
+    env : Optional[Dict[str, str]]
+        Environment variables for the subprocess.
+
+    Returns
+    -------
+    tuple
+        Decoded standard output and exit status, or None values when unavailable.
+    """
     assert isinstance(commands, list)
     process = None
 
@@ -130,11 +192,26 @@ def versions_from_parentdir(
     root: str,
     verbose: bool,
 ) -> Dict[str, Any]:
-    """Try to determine the version from the parent directory name.
+    """
+    Try to determine the version from the parent directory name.
 
     Source tarballs conventionally unpack into a directory that includes both
     the project name and a version string. We will also support searching up
     two directory levels for an appropriately named parent directory
+
+    Parameters
+    ----------
+    parentdir_prefix : str
+        Prefix preceding the version in the source directory name.
+    root : str
+        Root of the Rapidtide result filenames.
+    verbose : bool
+        Print progress or diagnostic messages.
+
+    Returns
+    -------
+    dict
+        Version metadata inferred from the name of the source directory.
     """
     rootdirs = []
 
@@ -155,7 +232,19 @@ def versions_from_parentdir(
 
 @register_vcs_handler("git", "get_keywords")
 def git_get_keywords(versionfile_abs: str) -> Dict[str, str]:
-    """Extract version information from the given file."""
+    """
+    Extract version information from the given file.
+
+    Parameters
+    ----------
+    versionfile_abs : str
+        Absolute path to the generated version file.
+
+    Returns
+    -------
+    Dict[str, str]
+        The keywords.
+    """
     # the code embedded in _version.py can just fetch the value of these
     # keywords. When used from setup.py, we don't want to import _version.py,
     # so we do it with a regexp instead. This function is not used from
@@ -187,7 +276,23 @@ def git_versions_from_keywords(
     tag_prefix: str,
     verbose: bool,
 ) -> Dict[str, Any]:
-    """Get version information from git keywords."""
+    """
+    Get version information from git keywords.
+
+    Parameters
+    ----------
+    keywords : Dict[str, str]
+        Version-control keywords extracted from the version file.
+    tag_prefix : str
+        Prefix identifying version tags.
+    verbose : bool
+        Print progress or diagnostic messages.
+
+    Returns
+    -------
+    dict
+        Version metadata inferred from expanded Git archive keywords.
+    """
     if "refnames" not in keywords:
         raise NotThisMethod("Short version file found")
     date = keywords.get("date")
@@ -256,11 +361,28 @@ def git_pieces_from_vcs(
     verbose: bool,
     runner: Callable = run_command
 ) -> Dict[str, Any]:
-    """Get version from 'git describe' in the root of the source tree.
+    """
+    Get version from 'git describe' in the root of the source tree.
 
     This only gets called if the git-archive 'subst' keywords were *not*
     expanded, and _version.py hasn't already been rewritten with a short
     version string, meaning we're inside a checked out source tree.
+
+    Parameters
+    ----------
+    tag_prefix : str
+        Prefix identifying version tags.
+    root : str
+        Root of the Rapidtide result filenames.
+    verbose : bool
+        Print progress or diagnostic messages.
+    runner : Callable, optional
+        Function used to invoke version-control commands.
+
+    Returns
+    -------
+    dict
+        Commit, tag, branch, and working-tree information from Git.
     """
     GITS = ["git"]
     if sys.platform == "win32":
@@ -388,20 +510,43 @@ def git_pieces_from_vcs(
 
 
 def plus_or_dot(pieces: Dict[str, Any]) -> str:
-    """Return a + if we don't already have one, else return a ."""
+    """
+    Return a + if we don't already have one, else return a .
+
+    Parameters
+    ----------
+    pieces : Dict[str, Any]
+        Version components extracted from version control.
+
+    Returns
+    -------
+    str
+        Separator used to append a PEP 440 local version segment.
+    """
     if "+" in pieces.get("closest-tag", ""):
         return "."
     return "+"
 
 
 def render_pep440(pieces: Dict[str, Any]) -> str:
-    """Build up version string, with post-release "local version identifier".
+    """
+    Build up version string, with post-release "local version identifier".
 
     Our goal: TAG[+DISTANCE.gHEX[.dirty]] . Note that if you
     get a tagged build and then dirty it, you'll get TAG+0.gHEX.dirty
 
     Exceptions:
     1: no tags. git_describe was just HEX. 0+untagged.DISTANCE.gHEX[.dirty]
+
+    Parameters
+    ----------
+    pieces : Dict[str, Any]
+        Version components extracted from version control.
+
+    Returns
+    -------
+    str
+        The rendered.
     """
     if pieces["closest-tag"]:
         rendered = pieces["closest-tag"]
@@ -420,13 +565,24 @@ def render_pep440(pieces: Dict[str, Any]) -> str:
 
 
 def render_pep440_branch(pieces: Dict[str, Any]) -> str:
-    """TAG[[.dev0]+DISTANCE.gHEX[.dirty]] .
+    """
+    TAG[[.dev0]+DISTANCE.gHEX[.dirty]] .
 
     The ".dev0" means not master branch. Note that .dev0 sorts backwards
     (a feature branch will appear "older" than the master branch).
 
     Exceptions:
     1: no tags. 0[.dev0]+untagged.DISTANCE.gHEX[.dirty]
+
+    Parameters
+    ----------
+    pieces : Dict[str, Any]
+        Version components extracted from version control.
+
+    Returns
+    -------
+    str
+        The rendered.
     """
     if pieces["closest-tag"]:
         rendered = pieces["closest-tag"]
@@ -450,20 +606,42 @@ def render_pep440_branch(pieces: Dict[str, Any]) -> str:
 
 
 def pep440_split_post(ver: str) -> Tuple[str, Optional[int]]:
-    """Split pep440 version string at the post-release segment.
+    """
+    Split pep440 version string at the post-release segment.
 
     Returns the release segments before the post-release and the
     post-release version number (or -1 if no post-release segment is present).
+
+    Parameters
+    ----------
+    ver : str
+        Version string to split.
+
+    Returns
+    -------
+    tuple
+        Base version and the post-release number, if present.
     """
     vc = str.split(ver, ".post")
     return vc[0], int(vc[1] or 0) if len(vc) == 2 else None
 
 
 def render_pep440_pre(pieces: Dict[str, Any]) -> str:
-    """TAG[.postN.devDISTANCE] -- No -dirty.
+    """
+    TAG[.postN.devDISTANCE] -- No -dirty.
 
     Exceptions:
     1: no tags. 0.post0.devDISTANCE
+
+    Parameters
+    ----------
+    pieces : Dict[str, Any]
+        Version components extracted from version control.
+
+    Returns
+    -------
+    str
+        The rendered.
     """
     if pieces["closest-tag"]:
         if pieces["distance"]:
@@ -484,7 +662,8 @@ def render_pep440_pre(pieces: Dict[str, Any]) -> str:
 
 
 def render_pep440_post(pieces: Dict[str, Any]) -> str:
-    """TAG[.postDISTANCE[.dev0]+gHEX] .
+    """
+    TAG[.postDISTANCE[.dev0]+gHEX] .
 
     The ".dev0" means dirty. Note that .dev0 sorts backwards
     (a dirty tree will appear "older" than the corresponding clean one),
@@ -492,6 +671,16 @@ def render_pep440_post(pieces: Dict[str, Any]) -> str:
 
     Exceptions:
     1: no tags. 0.postDISTANCE[.dev0]
+
+    Parameters
+    ----------
+    pieces : Dict[str, Any]
+        Version components extracted from version control.
+
+    Returns
+    -------
+    str
+        The rendered.
     """
     if pieces["closest-tag"]:
         rendered = pieces["closest-tag"]
@@ -511,12 +700,23 @@ def render_pep440_post(pieces: Dict[str, Any]) -> str:
 
 
 def render_pep440_post_branch(pieces: Dict[str, Any]) -> str:
-    """TAG[.postDISTANCE[.dev0]+gHEX[.dirty]] .
+    """
+    TAG[.postDISTANCE[.dev0]+gHEX[.dirty]] .
 
     The ".dev0" means not master branch.
 
     Exceptions:
     1: no tags. 0.postDISTANCE[.dev0]+gHEX[.dirty]
+
+    Parameters
+    ----------
+    pieces : Dict[str, Any]
+        Version components extracted from version control.
+
+    Returns
+    -------
+    str
+        The rendered.
     """
     if pieces["closest-tag"]:
         rendered = pieces["closest-tag"]
@@ -540,12 +740,23 @@ def render_pep440_post_branch(pieces: Dict[str, Any]) -> str:
 
 
 def render_pep440_old(pieces: Dict[str, Any]) -> str:
-    """TAG[.postDISTANCE[.dev0]] .
+    """
+    TAG[.postDISTANCE[.dev0]] .
 
     The ".dev0" means dirty.
 
     Exceptions:
     1: no tags. 0.postDISTANCE[.dev0]
+
+    Parameters
+    ----------
+    pieces : Dict[str, Any]
+        Version components extracted from version control.
+
+    Returns
+    -------
+    str
+        The rendered.
     """
     if pieces["closest-tag"]:
         rendered = pieces["closest-tag"]
@@ -562,12 +773,23 @@ def render_pep440_old(pieces: Dict[str, Any]) -> str:
 
 
 def render_git_describe(pieces: Dict[str, Any]) -> str:
-    """TAG[-DISTANCE-gHEX][-dirty].
+    """
+    TAG[-DISTANCE-gHEX][-dirty].
 
     Like 'git describe --tags --dirty --always'.
 
     Exceptions:
     1: no tags. HEX[-dirty]  (note: no 'g' prefix)
+
+    Parameters
+    ----------
+    pieces : Dict[str, Any]
+        Version components extracted from version control.
+
+    Returns
+    -------
+    str
+        The rendered.
     """
     if pieces["closest-tag"]:
         rendered = pieces["closest-tag"]
@@ -582,13 +804,24 @@ def render_git_describe(pieces: Dict[str, Any]) -> str:
 
 
 def render_git_describe_long(pieces: Dict[str, Any]) -> str:
-    """TAG-DISTANCE-gHEX[-dirty].
+    """
+    TAG-DISTANCE-gHEX[-dirty].
 
     Like 'git describe --tags --dirty --always -long'.
     The distance/hash is unconditional.
 
     Exceptions:
     1: no tags. HEX[-dirty]  (note: no 'g' prefix)
+
+    Parameters
+    ----------
+    pieces : Dict[str, Any]
+        Version components extracted from version control.
+
+    Returns
+    -------
+    str
+        The rendered.
     """
     if pieces["closest-tag"]:
         rendered = pieces["closest-tag"]
@@ -602,7 +835,21 @@ def render_git_describe_long(pieces: Dict[str, Any]) -> str:
 
 
 def render(pieces: Dict[str, Any], style: str) -> Dict[str, Any]:
-    """Render the given version pieces into the requested style."""
+    """
+    Render the given version pieces into the requested style.
+
+    Parameters
+    ----------
+    pieces : Dict[str, Any]
+        Version components extracted from version control.
+    style : str
+        Version string rendering style.
+
+    Returns
+    -------
+    dict
+        Rendered version and associated revision metadata.
+    """
     if pieces["error"]:
         return {"version": "unknown",
                 "full-revisionid": pieces.get("long"),
@@ -638,7 +885,14 @@ def render(pieces: Dict[str, Any], style: str) -> Dict[str, Any]:
 
 
 def get_versions() -> Dict[str, Any]:
-    """Get version information or return default if unable to do so."""
+    """
+    Get version information or return default if unable to do so.
+
+    Returns
+    -------
+    dict
+        Version string, revision, dirty flag, error information, and date.
+    """
     # I am in _version.py, which lives at ROOT/VERSIONFILE_SOURCE. If we have
     # __file__, we can work backwards from there to the root. Some
     # py2exe/bbfreeze/non-CPython implementations don't do __file__, in which

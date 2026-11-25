@@ -29,7 +29,12 @@ import rapidtide.workflows.parser_funcs as pf
 
 def _get_parser():
     """
-    Argument parser for stupidramtricks
+    Argument parser for stupidramtricks.
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        Parser configured for this command.
     """
     parser = argparse.ArgumentParser(
         prog="stupidramtricks",
@@ -91,6 +96,14 @@ def _get_parser():
 
 def stupidramtricks(args):
     # get the pid of the parent process
+    """
+    Run the memory benchmarking workflow.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed options for the command.
+    """
     args.pid = os.getpid()
 
     args.internalprecision = "single"
@@ -225,12 +238,23 @@ def stupidramtricks(args):
 def process_args(inputargs=None):
     """
     Compile arguments for stupidramtrics workflow.
+
+    Parameters
+    ----------
+    inputargs : list of str or None, optional
+        Command-line arguments, or None to read the process arguments.
+
+    Returns
+    -------
+    object
+        The args.
     """
     args, argstowrite = pf.setargs(_get_parser, inputargs=inputargs)
     return args
 
 
 def entrypoint():
+    """Run the `stupidramtricks` command."""
     pf.generic_init(_get_parser, stupidramtricks)
 
 

@@ -29,7 +29,25 @@ from rapidtide.workflows.spatialmi import _get_parser, getMI, getneighborhood, s
 
 
 def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
-    """Create a mock NIfTI header that supports __getitem__ and __setitem__."""
+    """
+    Create a mock NIfTI header that supports __getitem__ and __setitem__.
+
+    Parameters
+    ----------
+    xsize : int
+        Number of voxels along the x axis.
+    ysize : int
+        Number of voxels along the y axis.
+    numslices : int
+        Number of slices in the test image.
+    timepoints : int, optional
+        Number of time samples.
+
+    Returns
+    -------
+    MagicMock
+        Mock object configured for the test case.
+    """
     store = {
         "dim": [4, xsize, ysize, numslices, timepoints, 1, 1, 1],
         "pixdim": [1.0, 2.0, 2.0, 2.0, 1.5, 1.0, 1.0, 1.0],
@@ -39,6 +57,14 @@ def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
     hdr.__setitem__ = MagicMock(side_effect=lambda key, val: store.__setitem__(key, val))
 
     def copy_fn():
+        """
+        Copy fn.
+
+        Returns
+        -------
+        MagicMock
+            Mock object configured for the test case.
+        """
         new_store = {
             "dim": list(store["dim"]),
             "pixdim": list(store["pixdim"]),
@@ -53,10 +79,37 @@ def _make_mock_hdr(xsize, ysize, numslices, timepoints=1):
 
 
 def _make_dims(xsize, ysize, numslices, timepoints):
+    """
+    Create dims.
+
+    Parameters
+    ----------
+    xsize : int
+        Number of voxels along the x axis.
+    ysize : int
+        Number of voxels along the y axis.
+    numslices : int
+        Number of slices in the test image.
+    timepoints : int
+        Number of time samples.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array supplied to the test or its caller.
+    """
     return np.array([4, xsize, ysize, numslices, timepoints, 1, 1, 1])
 
 
 def _make_sizes():
+    """
+    Create sizes.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array supplied to the test or its caller.
+    """
     return np.array([1.0, 2.0, 2.0, 2.0, 1.5, 1.0, 1.0, 1.0])
 
 
@@ -84,7 +137,19 @@ def _reset_getMI_globals():
 
 
 def _make_default_args(outputroot="/tmp/test_spatialmi"):
-    """Create a default Namespace with all required args."""
+    """
+    Create a default Namespace with all required args.
+
+    Parameters
+    ----------
+    outputroot : str, optional
+        Value supplied as ``outputroot`` by the test case.
+
+    Returns
+    -------
+    argparse.Namespace
+        Arguments configured for the test case.
+    """
     return argparse.Namespace(
         inputfilename1="dummy_input1.nii.gz",
         maskfilename1="dummy_mask1.nii.gz",
@@ -107,7 +172,14 @@ def _make_default_args(outputroot="/tmp/test_spatialmi"):
 
 
 def parser_basic(debug=False):
-    """Test that parser creates successfully."""
+    """
+    Test that parser creates successfully.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_basic")
     parser = _get_parser()
@@ -116,7 +188,14 @@ def parser_basic(debug=False):
 
 
 def parser_required_args(debug=False):
-    """Test parser has required positional arguments."""
+    """
+    Test parser has required positional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_required_args")
     parser = _get_parser()
@@ -129,7 +208,14 @@ def parser_required_args(debug=False):
 
 
 def parser_defaults(debug=False):
-    """Test default values for optional arguments."""
+    """
+    Test default values for optional arguments.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_defaults")
     parser = _get_parser()
@@ -146,7 +232,14 @@ def parser_defaults(debug=False):
 
 
 def parser_optional_args(debug=False):
-    """Test optional arguments parsing."""
+    """
+    Test optional arguments parsing.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("parser_optional_args")
     parser = _get_parser()
@@ -188,7 +281,14 @@ def parser_optional_args(debug=False):
 
 
 def getneighborhood_cubic_center(debug=False):
-    """Test cubic neighborhood extraction at center of volume."""
+    """
+    Test cubic neighborhood extraction at center of volume.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getneighborhood_cubic_center")
     _reset_getneighborhood_globals()
@@ -216,7 +316,14 @@ def getneighborhood_cubic_center(debug=False):
 
 
 def getneighborhood_cubic_with_kernel(debug=False):
-    """Test cubic neighborhood with gaussian kernel weighting."""
+    """
+    Test cubic neighborhood with gaussian kernel weighting.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getneighborhood_cubic_with_kernel")
     _reset_getneighborhood_globals()
@@ -247,7 +354,14 @@ def getneighborhood_cubic_with_kernel(debug=False):
 
 
 def getneighborhood_cubic_edge(debug=False):
-    """Test cubic neighborhood at edge of volume (clipped)."""
+    """
+    Test cubic neighborhood at edge of volume (clipped).
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getneighborhood_cubic_edge")
     _reset_getneighborhood_globals()
@@ -275,7 +389,14 @@ def getneighborhood_cubic_edge(debug=False):
 
 
 def getneighborhood_cubic_values(debug=False):
-    """Test that cubic neighborhood extracts correct values."""
+    """
+    Test that cubic neighborhood extracts correct values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getneighborhood_cubic_values")
     _reset_getneighborhood_globals()
@@ -303,7 +424,14 @@ def getneighborhood_cubic_values(debug=False):
 
 
 def getneighborhood_spherical_center(debug=False):
-    """Test spherical neighborhood extraction at center of volume."""
+    """
+    Test spherical neighborhood extraction at center of volume.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getneighborhood_spherical_center")
     _reset_getneighborhood_globals()
@@ -332,7 +460,14 @@ def getneighborhood_spherical_center(debug=False):
 
 
 def getneighborhood_spherical_edge(debug=False):
-    """Test spherical neighborhood at edge is clipped to valid indices."""
+    """
+    Test spherical neighborhood at edge is clipped to valid indices.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getneighborhood_spherical_edge")
     _reset_getneighborhood_globals()
@@ -369,7 +504,14 @@ def getneighborhood_spherical_edge(debug=False):
 
 
 def getneighborhood_spherical_values(debug=False):
-    """Test spherical neighborhood returns correct data values."""
+    """
+    Test spherical neighborhood returns correct data values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getneighborhood_spherical_values")
     _reset_getneighborhood_globals()
@@ -397,7 +539,14 @@ def getneighborhood_spherical_values(debug=False):
 
 
 def getneighborhood_radius_size_increases(debug=False):
-    """Test that larger radius produces larger neighborhood."""
+    """
+    Test that larger radius produces larger neighborhood.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getneighborhood_radius_size_increases")
     xsize, ysize, zsize = 15, 15, 15
@@ -446,7 +595,14 @@ def getneighborhood_radius_size_increases(debug=False):
 
 
 def getMI_identical_signals(debug=False):
-    """Test getMI with identical signals gives high MI."""
+    """
+    Test getMI with identical signals gives high MI.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getMI_identical_signals")
     _reset_getMI_globals()
@@ -461,7 +617,14 @@ def getMI_identical_signals(debug=False):
 
 
 def getMI_independent_signals(debug=False):
-    """Test getMI with independent signals gives lower MI than identical."""
+    """
+    Test getMI with independent signals gives lower MI than identical.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getMI_independent_signals")
     _reset_getMI_globals()
@@ -481,7 +644,14 @@ def getMI_independent_signals(debug=False):
 
 
 def getMI_correlated_signals(debug=False):
-    """Test getMI with correlated signals gives higher MI than independent."""
+    """
+    Test getMI with correlated signals gives higher MI than independent.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getMI_correlated_signals")
     _reset_getMI_globals()
@@ -502,7 +672,14 @@ def getMI_correlated_signals(debug=False):
 
 
 def getMI_no_norm(debug=False):
-    """Test getMI without normalization."""
+    """
+    Test getMI without normalization.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getMI_no_norm")
     _reset_getMI_globals()
@@ -517,7 +694,14 @@ def getMI_no_norm(debug=False):
 
 
 def getMI_no_prebin(debug=False):
-    """Test getMI with prebin=False uses slow path."""
+    """
+    Test getMI with prebin=False uses slow path.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getMI_no_prebin")
     _reset_getMI_globals()
@@ -532,7 +716,14 @@ def getMI_no_prebin(debug=False):
 
 
 def getMI_auto_bins(debug=False):
-    """Test getMI with bins=-1 auto-selects bin count."""
+    """
+    Test getMI with bins=-1 auto-selects bin count.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getMI_auto_bins")
     _reset_getMI_globals()
@@ -547,7 +738,14 @@ def getMI_auto_bins(debug=False):
 
 
 def getMI_nonnegative(debug=False):
-    """Test getMI always returns non-negative values."""
+    """
+    Test getMI always returns non-negative values.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("getMI_nonnegative")
     _reset_getMI_globals()
@@ -565,7 +763,31 @@ def getMI_nonnegative(debug=False):
 
 
 def _run_spatialmi(image1, image2, mask1, mask2, args, image1_4d=False, image2_4d=False):
-    """Helper to run spatialmi with mocked IO and CLI parsing. Returns saved files dict."""
+    """
+    Helper to run spatialmi with mocked IO and CLI parsing. Returns saved files dict.
+
+    Parameters
+    ----------
+    image1 : object
+        Value supplied as ``image1`` by the test case.
+    image2 : object
+        Value supplied as ``image2`` by the test case.
+    mask1 : object
+        Value supplied as ``mask1`` by the test case.
+    mask2 : object
+        Value supplied as ``mask2`` by the test case.
+    args : object
+        Arguments passed to the test helper.
+    image1_4d : bool, optional
+        Setting for ``image1_4d`` in the test case.
+    image2_4d : bool, optional
+        Setting for ``image2_4d`` in the test case.
+
+    Returns
+    -------
+    dict
+        The ``saved_nifti`` value supplied to the caller.
+    """
     xsize, ysize, numslices = image1.shape[:3]
 
     if image1_4d:
@@ -597,6 +819,21 @@ def _run_spatialmi(image1, image2, mask1, mask2, args, image1_4d=False, image2_4
     read_count = {"n": 0}
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         read_count["n"] += 1
         if read_count["n"] == 1:
             return (MagicMock(), data1, hdr1, dims1, sizes)
@@ -608,6 +845,20 @@ def _run_spatialmi(image1, image2, mask1, mask2, args, image1_4d=False, image2_4
             return (MagicMock(), mask2, mask_hdr2, mask_dims, sizes)
 
     def mock_savetonifti(arr, hdr_arg, fname, **kwargs):
+        """
+        Simulate ``savetonifti`` for the test.
+
+        Parameters
+        ----------
+        arr : array-like
+            Array passed to the test helper.
+        hdr_arg : object
+            Image header passed to the stub.
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+        """
         saved_nifti[fname] = arr.copy()
 
     _reset_getneighborhood_globals()
@@ -627,7 +878,14 @@ def _run_spatialmi(image1, image2, mask1, mask2, args, image1_4d=False, image2_4
 
 
 def spatialmi_basic_3d(debug=False):
-    """Test basic spatialmi workflow with 3D inputs produces output."""
+    """
+    Test basic spatialmi workflow with 3D inputs produces output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spatialmi_basic_3d")
     xsize, ysize, numslices = 7, 7, 5
@@ -647,7 +905,14 @@ def spatialmi_basic_3d(debug=False):
 
 
 def spatialmi_identical_images(debug=False):
-    """Test that identical images produce higher MI than different images."""
+    """
+    Test that identical images produce higher MI than different images.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spatialmi_identical_images")
     xsize, ysize, numslices = 7, 7, 5
@@ -677,7 +942,14 @@ def spatialmi_identical_images(debug=False):
 
 
 def spatialmi_output_nonnegative(debug=False):
-    """Test that output MI values are non-negative after nan_to_num."""
+    """
+    Test that output MI values are non-negative after nan_to_num.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spatialmi_output_nonnegative")
     xsize, ysize, numslices = 7, 7, 5
@@ -699,7 +971,14 @@ def spatialmi_output_nonnegative(debug=False):
 
 
 def spatialmi_with_mask(debug=False):
-    """Test that masked-out voxels have zero MI in output."""
+    """
+    Test that masked-out voxels have zero MI in output.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spatialmi_with_mask")
     xsize, ysize, numslices = 7, 7, 5
@@ -722,7 +1001,14 @@ def spatialmi_with_mask(debug=False):
 
 
 def spatialmi_radius_check(debug=False):
-    """Test that radius < 1.0 causes exit."""
+    """
+    Test that radius < 1.0 causes exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spatialmi_radius_check")
     args = _make_default_args()
@@ -733,7 +1019,14 @@ def spatialmi_radius_check(debug=False):
 
 
 def spatialmi_dim_mismatch_input_mask(debug=False):
-    """Test that dimension mismatch between input and mask causes exit."""
+    """
+    Test that dimension mismatch between input and mask causes exit.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spatialmi_dim_mismatch_input_mask")
     xsize, ysize, numslices = 7, 7, 5
@@ -744,11 +1037,43 @@ def spatialmi_dim_mismatch_input_mask(debug=False):
     hdr = _make_mock_hdr(xsize, ysize, numslices, 1)
 
     def mock_readfromnifti(fname, **kwargs):
+        """
+        Simulate ``readfromnifti`` for the test.
+
+        Parameters
+        ----------
+        fname : path-like
+            Filename supplied to the test helper.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        tuple
+            Values supplied together for the test case.
+        """
         return (MagicMock(), image1, hdr, dims, sizes)
 
     call_count = {"n": 0}
 
     def mock_checkspacedimmatch(d1, d2, **kwargs):
+        """
+        Simulate ``checkspacedimmatch`` for the test.
+
+        Parameters
+        ----------
+        d1 : object
+            Value supplied as ``d1`` by the test case.
+        d2 : object
+            Value supplied as ``d2`` by the test case.
+        **kwargs : object
+            Additional keyword arguments accepted by the stub.
+
+        Returns
+        -------
+        bool
+            Boolean result supplied by the test substitute.
+        """
         call_count["n"] += 1
         if call_count["n"] == 1:
             return False  # input1 vs mask1 mismatch
@@ -770,7 +1095,14 @@ def spatialmi_dim_mismatch_input_mask(debug=False):
 
 
 def spatialmi_4d_input(debug=False):
-    """Test spatialmi with 4D input selects correct timepoint."""
+    """
+    Test spatialmi with 4D input selects correct timepoint.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spatialmi_4d_input")
     xsize, ysize, numslices = 7, 7, 5
@@ -792,7 +1124,14 @@ def spatialmi_4d_input(debug=False):
 
 
 def spatialmi_spherical_neighborhood(debug=False):
-    """Test spatialmi with spherical neighborhood option."""
+    """
+    Test spatialmi with spherical neighborhood option.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("spatialmi_spherical_neighborhood")
     xsize, ysize, numslices = 7, 7, 5
@@ -817,6 +1156,14 @@ def spatialmi_spherical_neighborhood(debug=False):
 
 def test_spatialmi(debug=False):
     # _get_parser tests
+    """
+    Verify spatialmi.
+
+    Parameters
+    ----------
+    debug : bool, optional
+        Enable diagnostic output for the test.
+    """
     if debug:
         print("Running parser tests")
     parser_basic(debug=debug)
