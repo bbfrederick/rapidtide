@@ -1742,7 +1742,7 @@ class RapidtideDataset:
         if self.verbose > 1:
             print(self.loadedfuncmasks)
 
-    def _loadgeommask(self) -> bool:
+    def _loadgeommask(self) -> bool | None:
         """
         Load a geometric mask based on configuration settings and available files.
 
@@ -1752,8 +1752,9 @@ class RapidtideDataset:
 
         Returns
         -------
-        bool
-            True if a geometric mask was successfully loaded, False otherwise.
+        bool or None
+            True if a geometric mask was loaded. None if the explicitly specified
+            file does not exist. False if no default mask was loaded.
 
         Notes
         -----
@@ -1835,7 +1836,9 @@ class RapidtideDataset:
                 print("no geometric mask loaded")
             return False
 
-    def _loadanatomics(self) -> bool:
+        return None
+
+    def _loadanatomics(self) -> bool | None:
         """
         Load anatomic image data based on available files and coordinate space settings.
 
@@ -1845,8 +1848,9 @@ class RapidtideDataset:
 
         Returns
         -------
-        bool
-            True if anatomic image was successfully loaded, False otherwise.
+        bool or None
+            True if an anatomic image was loaded. None if the MNI template was
+            unavailable. False if the specified image or other fallback was unavailable.
 
         Notes
         -----
@@ -2051,19 +2055,20 @@ class RapidtideDataset:
                 print("no anatomic image loaded")
             return False
 
-    def _loadgraymask(self) -> bool:
+        return None
+
+    def _loadgraymask(self) -> bool | None:
         """
         Load gray matter mask from specification.
 
         Load a gray matter mask from the file specification stored in `self.graymaskspec`.
-        If successful, the mask is stored in `self.overlays["graymask"]` and the function
-        returns True. If no mask specification is provided or the file doesn't exist,
-        the function returns False.
+        If successful, the mask is stored in `self.overlays["graymask"]`.
 
         Returns
         -------
-        bool
-            True if gray matter mask was successfully loaded, False otherwise.
+        bool or None
+            True if the mask was loaded. False if no mask was specified.
+            None if the specified file does not exist.
 
         Notes
         -----
@@ -2099,7 +2104,9 @@ class RapidtideDataset:
                 print("no gray mask loaded")
             return False
 
-    def _loadwhitemask(self) -> bool:
+        return None
+
+    def _loadwhitemask(self) -> bool | None:
         """
         Load white matter mask from specification if available.
 
@@ -2110,8 +2117,9 @@ class RapidtideDataset:
 
         Returns
         -------
-        bool
-            True if white matter mask was successfully loaded, False otherwise.
+        bool or None
+            True if the mask was loaded. False if no mask was specified.
+            None if the specified file does not exist.
 
         Notes
         -----
@@ -2146,6 +2154,8 @@ class RapidtideDataset:
             if self.verbose > 1:
                 print("no white mask loaded")
             return False
+
+        return None
 
     def setupregressors(self) -> None:
         """

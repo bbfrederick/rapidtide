@@ -152,14 +152,15 @@ def checkimports(optiondict: dict[str, Any]) -> None:
     optiondict["donotusenumba"] = donotusenumba
 
 
-def findlibthreads() -> [int, int, int, int]:
+def findlibthreads() -> tuple[str | int, str | int, str | int, str | int]:
     """
     Read the thread limits for OpenMP, OpenBLAS, vecLib, and NumExpr.
 
     Returns
     -------
     tuple of str or int
-        Limits for OpenMP, OpenBLAS, vecLib, and NumExpr.
+        Limits for OpenMP, OpenBLAS, vecLib, and NumExpr in that order.
+        Each value is the environment variable's text or the integer default of 1.
     """
     return (
         os.environ.get("OMP_NUM_THREADS", 1),
@@ -178,10 +179,10 @@ def disablelibthreads() -> None:
 
 
 def enablelibthreads(
-    ompthreads: int,
-    openblasthreads: int,
-    veclibthreads: int,
-    numexprthreads: int,
+    ompthreads: str | int,
+    openblasthreads: str | int,
+    veclibthreads: str | int,
+    numexprthreads: str | int,
     debug: bool = False,
 ) -> None:
     """
@@ -189,13 +190,13 @@ def enablelibthreads(
 
     Parameters
     ----------
-    ompthreads : int
+    ompthreads : str or int
         Thread limit for OpenMP.
-    openblasthreads : int
+    openblasthreads : str or int
         Thread limit for OpenBLAS.
-    veclibthreads : int
+    veclibthreads : str or int
         Thread limit for Apple's vecLib.
-    numexprthreads : int
+    numexprthreads : str or int
         Thread limit for NumExpr.
     debug : bool, optional
         Enable diagnostic output.

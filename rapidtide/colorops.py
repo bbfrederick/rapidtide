@@ -136,7 +136,7 @@ def plot_sd(thespectrum: colour.SpectralDistribution, modulate=True) -> None:
     )
 
 
-def spectorgb(thespectrum: colour.SpectralDistribution) -> NDArray[np.float64]:
+def spectorgb(thespectrum: colour.SpectralDistribution) -> NDArray[np.floating]:
     """
     Convert a spectral distribution to an sRGB triplet.
 
@@ -156,28 +156,32 @@ def spectorgb(thespectrum: colour.SpectralDistribution) -> NDArray[np.float64]:
     return RGB
 
 
-def normalizergb(RGB: NDArray[np.float64], factor: float = 1.0) -> NDArray[np.float64]:
+def normalizergb(
+    RGB: NDArray[np.floating], factor: float = 1.0
+) -> tuple[NDArray[np.floating], str]:
     """
     Normalize an sRGB triplet.
 
     Parameters
     ----------
-    RGB : A 3-element array containing sRGB values.
-        Image or samples with red, green, and blue channels.
+    RGB : numpy.ndarray
+        Three-element array containing sRGB values.
     factor : float, optional
         Scaling factor for the RGB values.
 
     Returns
     -------
-    numpy.ndarray
-        A 3-element array containing normalized RGB values.
+    normcolor : numpy.ndarray
+        Three-element array containing normalized RGB values.
+    colorstring : str
+        Hexadecimal color string in ``#rrggbb`` form.
     """
     normcolor = colour.algebra.normalise_maximum(RGB, factor=factor)
     colorstring = f"#{int(255.0 * normcolor[0]):02x}{int(255.0 * normcolor[1]):02x}{int(255.0 * normcolor[2]):02x}"
     return normcolor, colorstring
 
 
-def plot_swatch(rgb: NDArray[np.float64], factor: float = 1.0, label: str = "sLFO color") -> None:
+def plot_swatch(rgb: NDArray[np.floating], factor: float = 1.0, label: str = "sLFO color") -> None:
     """
     Display an RGB swatch for a color sample.
 
