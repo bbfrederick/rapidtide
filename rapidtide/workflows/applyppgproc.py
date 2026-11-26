@@ -140,8 +140,8 @@ def procppg(
 ) -> Tuple[
     dict,
     NDArray,
-    NDArray,
-    NDArray,
+    NDArray | None,
+    NDArray | None,
     NDArray,
     NDArray,
     NDArray,
@@ -191,10 +191,10 @@ def procppg(
             Dictionary with various performance metrics and computed features
         - peak_indices : NDArray
             Indices of detected peaks in the filtered signal
-        - rri : NDArray
-            Inter-beat intervals (RRIs) derived from peak detection
-        - hr_waveform_from_peaks : NDArray
-            Heart rate waveform computed from peaks
+        - rri : NDArray or None
+            Inter-beat intervals (RRIs) derived from peak detection, if available.
+        - hr_waveform_from_peaks : NDArray or None
+            Heart rate waveform computed from peaks, if available.
         - hr_times : NDArray
             Time points for heart rate estimates
         - hr_values : NDArray

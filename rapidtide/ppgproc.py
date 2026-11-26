@@ -16,7 +16,8 @@
 #   limitations under the License.
 #
 #
-from typing import Any, Callable
+from collections.abc import Container
+from typing import Any, Callable, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -138,7 +139,9 @@ class PPGKalmanFilter:
         I = np.eye(self.P.shape[0])
         self.P = (I - K @ self.H) @ self.P
 
-    def filter_signal(self, signal_data: NDArray, missing_indices: list | None = None) -> NDArray:
+    def filter_signal(
+        self, signal_data: NDArray, missing_indices: Container[int] | None = None
+    ) -> NDArray:
         """
         Filter entire signal and interpolate missing data using a Kalman filter approach.
 
@@ -151,7 +154,7 @@ class PPGKalmanFilter:
         ----------
         signal_data : array-like
             Input signal data where missing values are represented as np.nan
-        missing_indices : array-like, optional
+        missing_indices : Container of int, optional
             Indices of missing data points in the signal. If None, no indices are
             considered missing. Default is None.
 
@@ -409,7 +412,9 @@ class AdaptivePPGKalmanFilter:
 
         return is_motion
 
-    def filter_signal(self, signal_data: NDArray, missing_indices: list | None = None) -> NDArray:
+    def filter_signal(
+        self, signal_data: NDArray, missing_indices: Container[int] | None = None
+    ) -> tuple[NDArray, NDArray]:
         """
         Apply filtering to signal data using a Kalman filter approach.
 
@@ -421,7 +426,7 @@ class AdaptivePPGKalmanFilter:
         ----------
         signal_data : NDArray
             Array containing the signal measurements to be filtered.
-        missing_indices : list of int, optional
+        missing_indices : Container of int, optional
             List of indices where measurements are missing. If None, no special
             handling is performed for missing data. Default is None.
 
@@ -746,7 +751,9 @@ class ExtendedPPGKalmanFilter:
         I = np.eye(4)
         self.P = (I - K @ H) @ self.P
 
-    def filter_signal(self, signal_data: NDArray, missing_indices: list | None = None) -> NDArray:
+    def filter_signal(
+        self, signal_data: NDArray, missing_indices: Container[int] | None = None
+    ) -> tuple[NDArray, NDArray]:
         """
         Apply filtering to signal data using a Kalman filter approach.
 
@@ -757,7 +764,7 @@ class ExtendedPPGKalmanFilter:
         ----------
         signal_data : NDArray
             Array containing the raw signal measurements to be filtered.
-        missing_indices : list of int, optional
+        missing_indices : Container of int, optional
             List of indices where measurements are missing. If None, no special handling
             is applied for missing data. Default is None.
 
@@ -1165,7 +1172,9 @@ class HarmonicPPGKalmanFilter:
         I = np.eye(6)
         self.P = (I - K @ H) @ self.P
 
-    def filter_signal(self, signal_data: NDArray, missing_indices: list | None = None) -> NDArray:
+    def filter_signal(
+        self, signal_data: NDArray, missing_indices: Container[int] | None = None
+    ) -> tuple[NDArray, NDArray, NDArray]:
         """
         Filter entire signal and track heart rate.
 
@@ -1177,7 +1186,7 @@ class HarmonicPPGKalmanFilter:
         ----------
         signal_data : array-like
             Input signal data. Use `np.nan` to indicate missing values.
-        missing_indices : array-like, optional
+        missing_indices : Container of int, optional
             Indices of missing data points in `signal_data`. If not provided, all data points
             are assumed to be valid.
 
@@ -1780,7 +1789,7 @@ class RobustPPGProcessor:
     def process(
         self,
         signal_data: NDArray,
-        missing_indices: list | None = None,
+        missing_indices: Container[int] | None = None,
         quality_threshold: float = 0.5,
     ) -> dict:
         """
@@ -1790,7 +1799,7 @@ class RobustPPGProcessor:
         ----------
         signal_data : array
             Raw PPG signal
-        missing_indices : array, optional
+        missing_indices : Container of int, optional
             Indices of missing data
         quality_threshold : float
             Minimum quality score (0-1) for accepting segments
@@ -1812,7 +1821,9 @@ class RobustPPGProcessor:
         elif self.method == "raw":
             filtered = signal_data
         else:
-            filtered = self.filter.filter_signal(signal_data, missing_indices)
+            filtered = cast(PPGKalmanFilter, self.filter).filter_signal(
+                signal_data, missing_indices
+            )
 
         results["filtered_signal"] = filtered
 
@@ -2042,7 +2053,7 @@ class PPGFeatureExtractor:
 
 def read_happy_ppg(
     filenameroot: str, debug: bool = False
-) -> tuple[NDArray, float, NDArray, NDArray, NDArray | None, list]:
+) -> tuple[NDArray, float, NDArray, NDArray, NDArray | None, NDArray[np.intp] | list[int]]:
     """
     Read cardiac waveforms and metadata from a HAPPY BIDS sidecar.
 

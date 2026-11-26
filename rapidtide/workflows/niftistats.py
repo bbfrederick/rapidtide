@@ -201,7 +201,9 @@ def _get_parser(calctype: str = "icc") -> Any:
     return parser
 
 
-def parsemeasurementlist(measlist: Any, numfiles: Any, debug: bool = False) -> None:
+def parsemeasurementlist(
+    measlist: Any, numfiles: Any, debug: bool = False
+) -> tuple[NDArray, NDArray]:
     """
     Parse a measurement list to extract file and volume indices from string components.
 
@@ -279,7 +281,7 @@ def parsemeasurementlist(measlist: Any, numfiles: Any, debug: bool = False) -> N
 
 def makdcommandlinelist(
     arglist: Any, starttime: Any, endtime: Any, extra: Optional[Any] = None
-) -> None:
+) -> list[str]:
     """
     Create a list of command line information for processing logs.
 

@@ -107,7 +107,7 @@ def calcASL(
     pld: float = 1.8,
     TI: float = 1.8,
     bloodT1: float = 1.841,
-) -> None:
+) -> tuple[NDArray, NDArray, NDArray, NDArray, NDArray, NDArray]:
     """
     Calculate ASL (Arterial Spin Labeling) signal based on lags, strengths, and timing parameters.
 

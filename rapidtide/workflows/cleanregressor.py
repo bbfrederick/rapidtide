@@ -20,7 +20,7 @@ import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 
 import rapidtide.correlate as tide_corr
 import rapidtide.filter as tide_filt
@@ -319,7 +319,7 @@ def cleanregressor(
     respdelete: bool = False,
     displayplots: bool = False,
     debug: bool = False,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
 ) -> Tuple[
     NDArray,
     NDArray,
@@ -399,7 +399,7 @@ def cleanregressor(
         If True, display plots during processing. Default is False.
     debug : bool, optional
         If True, print debugging information. Default is False.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Float type setting for rapidtide processing. Default is np.float64.
 
     Returns

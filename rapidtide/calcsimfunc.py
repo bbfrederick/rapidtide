@@ -23,7 +23,7 @@ import warnings
 from typing import Any
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 
 import rapidtide.genericmultiproc as tide_genericmultiproc
 import rapidtide.resample as tide_resample
@@ -289,7 +289,7 @@ def correlationpass_cpu(
     interptype: str = "univariate",
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
     debug: bool = False,
 ) -> tuple[int, list[float], NDArray]:
     """
@@ -331,7 +331,7 @@ def correlationpass_cpu(
         Whether to display a progress bar. Default is True.
     chunksize : int, optional
         Size of chunks for multiprocessing. Default is 1000.
-    rt_floattype : str, optional
+    rt_floattype : DTypeLike, optional
         String representation of floating-point type. Default is 'float64'.
     debug : bool, optional
         If True, enable debug logging. Default is False.
@@ -420,7 +420,7 @@ def correlationpass(
     interptype: str = "univariate",
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
     debug: bool = False,
     usegpu: bool = False,
     device: str = "auto",
@@ -462,7 +462,7 @@ def correlationpass(
         Display processing progress.
     chunksize : int, optional
         Number of work items to submit to each worker at a time.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Floating-point data type used for intermediate computations.
     debug : bool, optional
         Enable diagnostic output.
@@ -544,7 +544,7 @@ def correlationpass_gpu(
     interptype: str = "univariate",
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
     debug: bool = False,
     device: str = "auto",
     batchsize: int = 1024,
@@ -589,7 +589,7 @@ def correlationpass_gpu(
         Display processing progress.
     chunksize : int, optional
         Number of work items to submit to each worker at a time.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Floating-point data type used for intermediate computations.
     debug : bool, optional
         Enable diagnostic output.

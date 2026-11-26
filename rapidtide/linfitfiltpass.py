@@ -19,7 +19,7 @@
 from typing import Any
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 from scipy.special import factorial
 from tqdm import tqdm
 
@@ -33,7 +33,7 @@ def _procOneRegressionFitItem(
     vox: int,
     theevs: NDArray,
     thedata: NDArray,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
 ) -> tuple[int, float, float, float, float | NDArray, Any, NDArray, NDArray]:
     """
     Perform single regression fit on voxel data and return fit results.
@@ -51,7 +51,7 @@ def _procOneRegressionFitItem(
         dimension 1 is number of evs.
     thedata : NDArray
         Dependent variable data corresponding to the evs.
-    rt_floattype : str, optional
+    rt_floattype : DTypeLike, optional
         String representation of the floating-point type, default is ``np.float64``.
 
     Returns
@@ -201,7 +201,7 @@ def linfitfiltpass(
     procbyvoxel: bool = True,
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floattype: np.dtype = np.dtype(np.float64),
+    rt_floattype: DTypeLike = np.dtype(np.float64),
     verbose: bool = True,
     debug: bool = False,
 ) -> int:
@@ -254,7 +254,7 @@ def linfitfiltpass(
         If True, display a progress bar during processing.
     chunksize : int, default: 1000, optional
         Size of chunks for multiprocessing.
-    rt_floattype : str, default: np.float64, optional
+    rt_floattype : DTypeLike, default: np.float64, optional
         Data type for internal floating-point calculations.
     verbose : bool, default: True, optional
         If True, print verbose output.

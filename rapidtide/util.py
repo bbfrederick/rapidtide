@@ -35,7 +35,7 @@ import numpy as np
 import pandas as pd
 import pyfftw
 import scipy as sp
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 
 import rapidtide._version as tide_versioneer
 import rapidtide.io as tide_io
@@ -2194,7 +2194,7 @@ def comparehappyruns(root1: str, root2: str, debug: bool = False) -> dict[str, A
 
 # shared memory routines
 def numpy2shared(
-    inarray: NDArray, theouttype: np.dtype, name: str | None = None
+    inarray: NDArray, theouttype: DTypeLike, name: str | None = None
 ) -> tuple[NDArray, shared_memory.SharedMemory]:
     """
     Convert a numpy array to a shared memory array.
@@ -2207,7 +2207,7 @@ def numpy2shared(
     ----------
     inarray : NDArray
         Input numpy array to be converted to shared memory.
-    theouttype : dtype
+    theouttype : DTypeLike
         Data type of the output shared memory array.
     name : str, optional
         Name of the shared memory block. If None, an anonymous shared memory
@@ -2250,7 +2250,7 @@ def numpy2shared(
 
 
 def allocshared(
-    theshape: tuple[int, ...], thetype: np.dtype, name: str | None = None
+    theshape: tuple[int, ...], thetype: DTypeLike, name: str | None = None
 ) -> tuple[NDArray, shared_memory.SharedMemory]:
     """
     Allocate shared memory for a numpy array.
@@ -2264,7 +2264,7 @@ def allocshared(
     ----------
     theshape : tuple of int
         The shape of the array to be created. Must be a tuple of integers.
-    thetype : type
+    thetype : DTypeLike
         The data type of the array elements. Can be any numpy-compatible dtype.
     name : str, optional
         Name of existing shared memory object. If None, a new shared memory
@@ -2309,7 +2309,7 @@ def allocshared(
 
 
 def allocarray(
-    theshape: tuple[int, ...], thetype: np.dtype, shared: bool = False, name: str | None = None
+    theshape: tuple[int, ...], thetype: DTypeLike, shared: bool = False, name: str | None = None
 ) -> tuple[NDArray, shared_memory.SharedMemory | None]:
     """
     Allocate and return a numpy array with specified shape and type.
@@ -2318,7 +2318,7 @@ def allocarray(
     ----------
     theshape : tuple[int, ...]
         Shape of the array to be allocated.
-    thetype : type
+    thetype : DTypeLike
         Data type of the array elements.
     shared : bool, optional
         If True, allocate the array in shared memory. Default is False.

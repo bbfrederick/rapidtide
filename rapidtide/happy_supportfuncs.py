@@ -90,7 +90,7 @@ def calc_3d_optical_flow(
     outputroot: str,
     window_size: int = 3,
     debug: bool = False,
-) -> tuple[NDArray, NDArray]:
+) -> NDArray:
     """
     Compute 3D optical flow for a video volume using the Lucas-Kanade method.
 
@@ -120,12 +120,8 @@ def calc_3d_optical_flow(
 
     Returns
     -------
-    tuple[NDArray, NDArray]
-        A tuple containing:
-        - `flow_vectors`: 5D array of shape (xsize, ysize, zsize, num_frames, 3)
-          representing the computed optical flow vectors for each frame.
-        - `None`: Placeholder return value; function currently returns only
-          `flow_vectors` and saves outputs to disk.
+    numpy.ndarray
+        Optical flow vectors of shape (xsize, ysize, zsize, num_frames, 3).
 
     Notes
     -----
@@ -2519,7 +2515,7 @@ def cardiaccycleaverage(
     centric: bool,
     cache: bool = True,
     cyclic: bool = True,
-) -> NDArray:
+) -> tuple[NDArray, NDArray]:
     """
     Compute the average waveform over a cardiac cycle using phase-based resampling.
 
@@ -2607,7 +2603,7 @@ def cardiaccycleaverage(
     return rawapp_bypoint, weight_bypoint
 
 
-def circularderivs(timecourse: NDArray) -> tuple[NDArray, float, float]:
+def circularderivs(timecourse: NDArray) -> tuple[np.floating, np.intp, np.floating, np.intp]:
     """
     Compute circular first derivatives and their extremal values.
 

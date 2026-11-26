@@ -201,7 +201,7 @@ def _get_parser_spatial() -> Any:
     return _get_parser("spatial")
 
 
-def transposeifspatial(data: Any, decompaxis: str = "temporal") -> None:
+def transposeifspatial(data: Any, decompaxis: str = "temporal") -> NDArray:
     """
     Transpose data if decomposition axis is spatial.
 
@@ -256,7 +256,7 @@ def niftidecomp_workflow(
     varnorm: bool = True,
     demean: bool = True,
     sigma: float = 0.0,
-) -> None:
+) -> tuple[NDArray, NDArray, NDArray, NDArray, NDArray, Any, NDArray, NDArray]:
     """
     Perform PCA or ICA decomposition on 4D NIfTI data along a specified axis.
 

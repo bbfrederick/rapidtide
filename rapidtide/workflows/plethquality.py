@@ -81,7 +81,7 @@ def _get_parser() -> Any:
 
 def plethquality_waveform(
     waveform: Any, Fs: Any, S_windowsecs: float = 5.0, debug: bool = False
-) -> None:
+) -> tuple[float | np.floating, float | np.floating, NDArray]:
     """
     Calculate the windowed skewness quality metrics for a photoplethysmogram (PPG) signal.
 

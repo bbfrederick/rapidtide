@@ -22,24 +22,49 @@ import operator as op
 import os
 import platform
 import sys
-from typing import Any, Dict, List, Optional, Tuple, Union
+from collections.abc import Iterable
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union, overload
 
 import nibabel as nib
 import numpy as np
 import pandas as pd
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 
 
 # ---------------------------------------- NIFTI file manipulation ---------------------------
+@overload
 def readfromnifti(
-    inputfile: str, headeronly: bool = False
+    inputfile: str | os.PathLike[str], headeronly: Literal[False] = False
+) -> tuple[Any, NDArray, Any, NDArray, NDArray]:
+    """Read image data along with its NIfTI header and dimensions."""
+    ...
+
+
+@overload
+def readfromnifti(
+    inputfile: str | os.PathLike[str], headeronly: Literal[True]
+) -> tuple[Any, None, Any, NDArray, NDArray]:
+    """Read the NIfTI header and dimensions without loading the image data."""
+    ...
+
+
+@overload
+def readfromnifti(
+    inputfile: str | os.PathLike[str], headeronly: bool
+) -> tuple[Any, NDArray | None, Any, NDArray, NDArray]:
+    """Read NIfTI data conditionally when header-only mode is set at runtime."""
+    ...
+
+
+def readfromnifti(
+    inputfile: str | os.PathLike[str], headeronly: bool = False
 ) -> Tuple[Any, Optional[NDArray], Any, NDArray, NDArray]:
     """
     Open a nifti file and read in the various important parts
 
     Parameters
     ----------
-    inputfile : str
+    inputfile : str or path-like
         The name of the nifti file. Can be provided with or without file extension
         (.nii or .nii.gz).
     headeronly : bool, optional
@@ -605,7 +630,7 @@ def niftihdrfromarray(data: NDArray) -> nib.Nifti1Header:
 def makedestarray(
     destshape: Union[Tuple, NDArray],
     filetype: str = "nifti",
-    rt_floattype: np.dtype = np.dtype(np.float64),
+    rt_floattype: DTypeLike = np.dtype(np.float64),
 ) -> Tuple[NDArray, int]:
     """
     Create a destination array for output data based on file type and shape.
@@ -619,7 +644,7 @@ def makedestarray(
         to time; for 'text', it is expected to be a 1D or 2D shape.
     filetype : str, optional
         Type of output file. Must be one of 'nifti', 'cifti', or 'text'. Default is 'nifti'.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Data type for the output array. Default is 'np.float64'.
 
     Returns
@@ -771,7 +796,7 @@ def savemaplist(
     theheader: Any,
     bidsbasedict: Dict[str, Any],
     filetype: str = "nifti",
-    rt_floattype: np.dtype = np.dtype(np.float64),
+    rt_floattype: DTypeLike = np.dtype(np.float64),
     cifti_hdr: Optional[Any] = None,
     savejson: bool = True,
     debug: bool = False,
@@ -802,7 +827,7 @@ def savemaplist(
     filetype : str, optional
         Output file type ('nifti', 'cifti', 'text', or 'tiff'). Default is 'nifti'.
         Video input type 'zarr' also writes float32 TIFF maps and stacks.
-    rt_floattype : str, optional
+    rt_floattype : DTypeLike, optional
         Data type for output arrays. Default is 'float64'.
     cifti_hdr : cifti header or None, optional
         CIFTI header if filetype is 'cifti'. Default is None.
@@ -4350,14 +4375,14 @@ def readdict(inputfilename: str) -> Dict[str, Any]:
         return {}
 
 
-def writevec(thevec: NDArray, outputfile: str, lineend: str = "") -> None:
+def writevec(thevec: Iterable[object], outputfile: str, lineend: str = "") -> None:
     r"""
     Write a vector to a text file, one value per line.
 
     Parameters
     ----------
-    thevec : 1D numpy or python array
-        The array to write. Must be a 1D array-like object.
+    thevec : iterable
+        Values to write in iteration order.
     outputfile : str
         The name of the output file to write to.
     lineend : {'', 'mac', 'win', 'linux'}, optional

@@ -22,7 +22,7 @@ import warnings
 from typing import Any
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
@@ -114,7 +114,7 @@ def peakevalpass(
     interptype: str = "univariate",
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
 ) -> tuple[int, dict]:
     """
     Evaluate candidate similarity peaks across voxels.
@@ -149,7 +149,7 @@ def peakevalpass(
         Display processing progress.
     chunksize : int, optional
         Number of work items to submit to each worker at a time.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Floating-point data type used for intermediate computations.
 
     Returns

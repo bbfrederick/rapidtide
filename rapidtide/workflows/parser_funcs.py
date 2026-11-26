@@ -2366,7 +2366,7 @@ def setargs(
 
 def generic_init(
     theparser: Callable[[], argparse.ArgumentParser],
-    themain: Callable[[Namespace], None],
+    themain: Callable[[Namespace], object],
     inputargs: Optional[List[str]] = None,
 ) -> None:
     """
@@ -2382,9 +2382,8 @@ def generic_init(
     theparser : Callable[[], argparse.ArgumentParser]
         A callable that returns an argparse.ArgumentParser instance
         configured with the desired command-line arguments.
-    themain : Callable[[Namespace], None]
-        A callable that takes a parsed arguments Namespace object
-        and performs the main application logic.
+    themain : Callable[[Namespace], object]
+        The workflow to call with the parsed arguments. Its return value is discarded.
     inputargs : List[str], optional
         List of argument strings to parse. If None, arguments are parsed
         from sys.argv. Default is None.

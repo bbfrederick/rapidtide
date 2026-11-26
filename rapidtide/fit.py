@@ -26,7 +26,7 @@ import scipy as sp
 import scipy.special as sps
 import statsmodels.api as sm
 from numpy.polynomial import Polynomial
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import ArrayLike, DTypeLike, NDArray
 from scipy import signal
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks, hilbert
@@ -2391,7 +2391,7 @@ def olsregress(
 
 # @conditionaljit()
 def mlregress(
-    X: NDArray[np.floating[Any]],
+    X: ArrayLike,
     y: NDArray[np.floating[Any]],
     intercept: bool = True,
     debug: bool = False,
@@ -2405,7 +2405,7 @@ def mlregress(
 
     Parameters
     ----------
-    X : NDArray[np.floating[Any]]
+    X : array-like
         Input feature matrix of shape (n_samples, n_features) or (n_samples,)
         If 1D array is provided, it will be treated as a single feature.
     y : NDArray[np.floating[Any]]
@@ -2444,31 +2444,31 @@ def mlregress(
     >>> print(f"R-squared: {r2}")
     """
     if debug:
-        print(f"mlregress initial: {X.shape=}, {y.shape=}")
+        print(f"mlregress initial: X.shape={np.shape(X)}, {y.shape=}")
     y = np.atleast_1d(y)
     n = y.shape[0]
 
-    X = np.atleast_2d(X)
-    nx, p = X.shape
+    features = np.atleast_2d(np.asarray(X))
+    nx, p = features.shape
 
     if debug:
         print(f"mlregress: {n=}, {p=}, {nx=}")
 
     if nx != n:
-        X = X.transpose()
-        nx, p = X.shape
+        features = features.transpose()
+        nx, p = features.shape
         if nx != n:
             raise AttributeError(
                 "X and y must have have the same number of samples (%d and %d)" % (nx, n)
             )
     if debug:
-        print(f"mlregress final: {X.shape=}, {y.shape=}")
+        print(f"mlregress final: X.shape={features.shape}, {y.shape=}")
 
     reg = LinearRegression(fit_intercept=intercept)
-    reg.fit(X, y)
+    reg.fit(features, y)
     coffs = reg.coef_
     theintercept = reg.intercept_
-    R2 = reg.score(X, y)
+    R2 = reg.score(features, y)
     coffs = np.insert(coffs, 0, theintercept, axis=0)
     return np.atleast_2d(coffs), R2
 
@@ -2864,7 +2864,7 @@ def confoundregress(
     regressors: NDArray,
     debug: bool = False,
     showprogressbar: bool = True,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
 ) -> Tuple[NDArray, NDArray]:
     """
     Filters multiple regressors out of an array of data using linear regression.
@@ -2884,7 +2884,7 @@ def confoundregress(
         Print additional diagnostic information if True. Default is False.
     showprogressbar : bool, optional
         Show progress bar during processing. Default is True.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         The data type used for floating-point calculations. Default is np.float64.
 
     Returns

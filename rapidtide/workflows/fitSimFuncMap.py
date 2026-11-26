@@ -19,7 +19,7 @@
 from typing import Any, Optional
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 from scipy import ndimage
 
 import rapidtide.io as tide_io
@@ -453,7 +453,7 @@ def fitSimFunc(
     TimingLGR: Any,
     simplefit: bool = False,
     upsampfac: int = 8,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
 ) -> NDArray | None:
     """
     Perform similarity function fitting and time lag estimation for fMRI data.
@@ -542,7 +542,7 @@ def fitSimFunc(
         If True, perform simple fitting using upsampling. Default is False.
     upsampfac : int, optional
         Upsampling factor for simple fitting. Default is 8.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Real-time floating-point data type. Default is np.float64.
 
     Returns

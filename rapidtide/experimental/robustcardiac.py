@@ -38,7 +38,7 @@ def main():  # Example usage
 
     # read in some real data
     filenameroot = "/Users/frederic/code/rapidtide/rapidtide/data/examples/dst/happy_desc-slicerescardfromfmri_timeseries"
-    t, Fs, clean_ppg, corrupted_ppg, missing_indices = tide_ppg.read_happy_ppg(
+    t, Fs, clean_ppg, corrupted_ppg, _, missing_indices = tide_ppg.read_happy_ppg(
         filenameroot, debug=True
     )
     print(f"{t.shape=}")

@@ -23,7 +23,7 @@ from typing import Any
 
 import numpy as np
 import statsmodels as sm
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 from scipy.stats import pearsonr
 from sklearn.decomposition import PCA, FastICA
 
@@ -255,7 +255,7 @@ def alignvoxels(
     chunksize: int = 1000,
     padtrs: int = 60,
     debug: bool = False,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
 ) -> int:
     """
     Apply temporal alignment (timeshift) to all voxels in fMRI data based on correlation peaks.
@@ -298,7 +298,7 @@ def alignvoxels(
         Number of timepoints to pad on each end of the timecourses (default is 60)
     debug : bool, optional
         If True, enable additional debugging output (default is False)
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Function to coerce variable types (default is np.float64)
 
     Returns
@@ -382,7 +382,7 @@ def makerefinemask(
     excludemask: NDArray | None = None,
     fixdelay: bool = False,
     debug: bool = False,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
 ) -> tuple[int, NDArray | None, int, int, int, int, int]:
     """
     Determine which voxels should be used for regressor refinement based on correlation strength,
@@ -429,7 +429,7 @@ def makerefinemask(
         If True, uses the raw `lagmask` without applying delay thresholds. Default is False.
     debug : bool, optional
         Enable additional debugging output. Default is False.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Data type for internal arrays. Default is `np.float64`.
 
     Returns
@@ -696,7 +696,7 @@ def dorefine(
     cleanrefined: bool = False,
     bipolar: bool = False,
     debug: bool = False,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
 ) -> tuple[int, NDArray]:
     """
     Refine timecourses using specified method (ICA, PCA, weighted average, or unweighted average).
@@ -750,7 +750,7 @@ def dorefine(
         If True, flip sign of negative lag strengths (default is False).
     debug : bool, optional
         If True, print debug information (default is False).
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Data type for floating-point numbers (default is np.float64).
 
     Returns

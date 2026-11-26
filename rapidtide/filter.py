@@ -1955,7 +1955,7 @@ def spectralflatness(spectrum: NDArray) -> float:
 
 def spectrum(
     inputdata: NDArray, Fs: float = 1.0, mode: str = "power", trim: bool = True
-) -> Tuple[NDArray, Union[NDArray, None]]:
+) -> tuple[NDArray[np.float64], NDArray]:
     """
     Calculate the frequency axis and spectrum of a sampled signal.
 
@@ -1972,8 +1972,10 @@ def spectrum(
 
     Returns
     -------
-    tuple
-        Frequency axis and spectral values in the requested representation.
+    specaxis : numpy.ndarray
+        Frequency coordinates in Hz.
+    specvals : numpy.ndarray
+        Spectral values in the requested representation.
     """
     if trim:
         specvals = fft.fft(inputdata)[0 : len(inputdata) // 2]

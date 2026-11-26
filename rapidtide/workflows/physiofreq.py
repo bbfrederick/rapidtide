@@ -111,14 +111,13 @@ def getwavefreq(
     smoothlen: int = 101,
     debug: bool = False,
     displayplots: bool = False,
-) -> None:
+) -> np.float64:
     """
     Compute the fundamental frequency of a waveform using Welch's method and spectral analysis.
 
     This function estimates the fundamental frequency of a given waveform by computing
     its power spectrum using Welch's method, applying filtering and smoothing, and
-    identifying the peak within a specified frequency range. The result is returned in
-    beats per minute (BPM).
+    identifying the peak within a specified frequency range.
 
     Parameters
     ----------
@@ -141,8 +140,8 @@ def getwavefreq(
 
     Returns
     -------
-    float
-        Estimated fundamental frequency in BPM.
+    numpy.float64
+        Estimated fundamental frequency in Hz.
 
     Notes
     -----

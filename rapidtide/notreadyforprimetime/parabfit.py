@@ -1,4 +1,9 @@
-def parabfit(x_axis: NDArray, y_axis: NDArray, peakloc: int, points: int) -> Tuple[float, float]:
+import numpy as np
+from numpy.typing import NDArray
+from scipy.optimize import curve_fit
+
+
+def parabfit(x_axis: NDArray, y_axis: NDArray, peakloc: int, points: int) -> tuple[float, float]:
     """
     Fit a parabola to a localized region around a peak and return the peak coordinates.
 

@@ -349,7 +349,7 @@ def bland_altman_plot(
         ylim(yrange)
 
 
-def stringtorange(thestring: Any) -> None:
+def stringtorange(thestring: Any) -> tuple[float, float]:
     """
     Convert a comma-separated string to a tuple of floats representing a range.
 

@@ -21,7 +21,7 @@ import logging
 from typing import Any
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 
 import rapidtide.genericmultiproc as tide_genericmultiproc
 
@@ -189,7 +189,7 @@ def makelaggedtcs(
     alwaysmultiproc: bool = False,
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floattype: np.dtype = np.dtype(np.float64),
+    rt_floattype: DTypeLike = np.dtype(np.float64),
     debug: bool = False,
 ) -> int:
     """
@@ -225,7 +225,7 @@ def makelaggedtcs(
     chunksize : int, optional
         Size of chunks to process in each step when using multiprocessing.
         Default is 1000.
-    rt_floattype : str, optional
+    rt_floattype : DTypeLike, optional
         String representation of the floating-point type.
         Default is `np.float64`.
     debug : bool, optional

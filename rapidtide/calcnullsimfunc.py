@@ -21,7 +21,7 @@ import sys
 from typing import Any
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 
 import rapidtide.filter as tide_filt
 import rapidtide.genericmultiproc as tide_genericmultiproc
@@ -217,7 +217,7 @@ def getNullDistributionData(
     showprogressbar: bool = True,
     chunksize: int = 1000,
     permutationmethod: str = "shuffle",
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
     debug: bool = False,
 ) -> NDArray:
     """
@@ -249,7 +249,7 @@ def getNullDistributionData(
         Size of chunks for multiprocessing. Default is 1000.
     permutationmethod : str, optional
         Permutation method to use ('shuffle' or other supported methods). Default is 'shuffle'.
-    rt_floattype : str, optional
+    rt_floattype : DTypeLike, optional
         String representation of the floating-point type. Default is np.float64.
     debug : bool, optional
         If True, enable debug output. Default is False.

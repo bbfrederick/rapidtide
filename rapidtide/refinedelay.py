@@ -20,7 +20,7 @@ from typing import Any, Callable, Optional, Tuple, Union
 
 import numpy as np
 import numpy.polynomial.polynomial as poly
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 from scipy.interpolate import CubicSpline, UnivariateSpline
 from scipy.ndimage import median_filter
 from statsmodels.robust import mad
@@ -735,7 +735,7 @@ def filterderivratios(
     patchthresh: float = 3.0,
     gausssigma: float = 0,
     filetype: str = "nifti",
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
     verbose: bool = True,
     debug: bool = False,
 ) -> Tuple[NDArray, NDArray, float]:
@@ -765,7 +765,7 @@ def filterderivratios(
     filetype : str, optional
         File type for output mapping. If not "nifti", no median filtering is applied.
         Default is "nifti".
-    rt_floattype : str, optional
+    rt_floattype : DTypeLike, optional
         Data type for the output arrays. Default is "float64".
     verbose : bool, optional
         If True, print diagnostic information. Default is True.

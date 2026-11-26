@@ -319,7 +319,7 @@ def getMI(
     prebin: bool = True,
     sigma: float = 0.25,
     debug: bool = False,
-) -> None:
+) -> float:
     """
     Compute the mutual information between two variables using binned estimation.
 

@@ -19,7 +19,7 @@
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 
 import rapidtide.calcsimfunc as tide_calcsimfunc
 import rapidtide.io as tide_io
@@ -41,7 +41,7 @@ def makeRIPTiDeRegressors(
     chunksize: int = 1000,
     targetstep: float = 2.5,
     edgepad: int = 0,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
     debug: bool = False,
 ) -> Tuple[NDArray, NDArray]:
     """
@@ -76,7 +76,7 @@ def makeRIPTiDeRegressors(
         Target step size (in seconds) between lags (default is 2.5).
     edgepad : int, optional
         Number of padding steps at the beginning and end of the lag range (default is 0).
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Data type for the regressor matrix (default is np.float64).
     debug : bool, optional
         If True, print debug information during execution (default is False).
@@ -196,7 +196,7 @@ def calcSimFunc(
     interptype: str = "univariate",
     showprogressbar: bool = True,
     chunksize: int = 1000,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
     mklthreads: int = 1,
     threaddebug: bool = False,
     debug: bool = False,
@@ -295,7 +295,7 @@ def calcSimFunc(
         Whether to show a progress bar. Default is True.
     chunksize : int, optional
         Size of chunks for processing. Default is 1000.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Rapidtide floating-point data type. Default is np.float64.
     mklthreads : int, optional
         Number of threads for Intel MKL. Default is 1.

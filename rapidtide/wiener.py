@@ -17,7 +17,7 @@
 #
 #
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
@@ -28,7 +28,7 @@ def _procOneVoxelWiener(
     vox: int,
     lagtc: NDArray,
     inittc: NDArray,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
 ) -> tuple[int, float, float, float, float, NDArray, NDArray, NDArray]:
     """
     Perform Wiener filter processing on a single voxel time series.
@@ -45,7 +45,7 @@ def _procOneVoxelWiener(
         Lagged time course data (input signal)
     inittc : NDArray
         Initial time course data (target signal)
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Rapidtide float type for output arrays, default is np.float64
 
     Returns
@@ -102,7 +102,7 @@ def wienerpass(
     wienerdeconv: NDArray,
     wpeak: NDArray,
     resampref_y: NDArray,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
 ) -> int:
     """
     Perform Wiener deconvolution on fMRI data voxels.
@@ -133,7 +133,7 @@ def wienerpass(
         Peak values associated with the Wiener deconvolution.
     resampref_y : NDArray
         Resampled reference signal for filtering.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Data type for floating-point numbers, default is `np.float64`.
 
     Returns

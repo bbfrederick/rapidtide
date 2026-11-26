@@ -20,7 +20,7 @@ import sys
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 
 import rapidtide.fit as tide_fit
 import rapidtide.io as tide_io
@@ -86,7 +86,7 @@ class RegressorRefiner:
         prewhitenregressor: bool = False,
         prewhitenlags: int = 10,
         debug: bool = False,
-        rt_floattype: np.dtype = np.float64,
+        rt_floattype: DTypeLike = np.float64,
     ) -> None:
         """
         Initialize the object with configuration parameters for fMRI data processing.
@@ -186,7 +186,7 @@ class RegressorRefiner:
             Number of lags for pre-whitening (default is 10).
         debug : bool, optional
             Enable debug mode (default is False).
-        rt_floattype : np.dtype, optional
+        rt_floattype : DTypeLike, optional
             Rapidtide floating-point data type (default is np.float64).
 
         Returns
@@ -741,6 +741,11 @@ class RegressorRefiner:
             - genlagtc : FastResampler
                 Generator for lag time courses.
 
+        Raises
+        ------
+        ValueError
+            If temporal masking is requested and either sampling grid lacks a mask.
+
         Notes
         -----
         This function modifies internal attributes of the class, such as `paddedoutputdata`,
@@ -877,6 +882,8 @@ class RegressorRefiner:
                 method=self.interptype,
             )
         if self.usetmask:
+            if self.tmask_y is None or self.tmaskos_y is None:
+                raise ValueError("Temporal masking requires masks on both sampling grids")
             resampnonosref_y *= self.tmask_y
             thefit, R2val = tide_fit.mlregress(self.tmask_y, resampnonosref_y)
             resampnonosref_y -= thefit[0, 1] * self.tmask_y
@@ -969,7 +976,7 @@ def refineRegressor(
     outputname: Any,
     nativefmrishape: Any,
     bidsbasedict: Any,
-    rt_floattype: np.dtype = np.dtype(np.float64),
+    rt_floattype: DTypeLike = np.dtype(np.float64),
     debug: bool = False,
 ) -> Tuple[NDArray, NDArray, bool, str, Any]:
     """

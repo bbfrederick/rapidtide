@@ -117,7 +117,7 @@ def _get_parser() -> Any:
 
 def makecommandlinelist(
     arglist: Any, starttime: Any, endtime: Any, extra: Optional[Any] = None
-) -> None:
+) -> list[str]:
     """
     Create a list of command line information for logging purposes.
 

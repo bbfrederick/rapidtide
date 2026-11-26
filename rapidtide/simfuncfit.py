@@ -22,7 +22,7 @@ import logging
 from typing import Any, Callable, Optional, Tuple, Union
 
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import DTypeLike, ArrayLike, NDArray
 from tqdm import tqdm
 
 import rapidtide.fit as tide_fit
@@ -43,7 +43,7 @@ def onesimfuncfit(
     lthreshval: float = 0.0,
     fixdelay: bool = False,
     initialdelayvalue: float = 0.0,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
 ) -> Tuple[int, float, float, float, int, int, int, int]:
     """
     Perform a single fit on a correlation function using the provided fitter.
@@ -72,7 +72,7 @@ def onesimfuncfit(
         Default is False.
     initialdelayvalue : float, optional
         The fixed delay value to use when `fixdelay=True`. Default is 0.0.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         The data type to use for floating-point values. Default is `np.float64`.
 
     Returns
@@ -147,7 +147,7 @@ def _procOneVoxelFitcorr(
     initiallag: Optional[float] = None,
     fixdelay: bool = False,
     initialdelayvalue: float = 0.0,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
 ) -> Tuple[int, int, float, float, float, NDArray, NDArray, float, int, int]:
     """
     Process a single voxel for correlation fitting.
@@ -174,7 +174,7 @@ def _procOneVoxelFitcorr(
         If True, fixes the delay during fitting. Default is False.
     initialdelayvalue : float, optional
         Initial delay value if `fixdelay` is True. Default is 0.0.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Type to use for real-valued floating-point arrays. Default is `np.float64`.
 
     Returns
@@ -293,7 +293,7 @@ def fitcorr(
     chunksize: int = 1000,
     despeckle_thresh: float = 5.0,
     initiallags: Optional[NDArray] = None,
-    rt_floattype: np.dtype = np.float64,
+    rt_floattype: DTypeLike = np.float64,
 ) -> int:
     """
     Fit correlation data to extract lag parameters and related statistics for each voxel.
@@ -344,7 +344,7 @@ def fitcorr(
         Threshold for despeckling, by default 5.0.
     initiallags : NDArray, optional
         Initial lag values for each voxel, by default None.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Floating-point type for runtime, by default np.float64.
 
     Returns

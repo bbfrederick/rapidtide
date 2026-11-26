@@ -26,7 +26,7 @@ import rapidtide.io as tide_io
 
 class fMRIData:
     header = None
-    data = None
+    data: NDArray | None = None
     data_byvoxel = None
     data_valid = None
     nativeshape = None

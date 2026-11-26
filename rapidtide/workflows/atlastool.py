@@ -300,7 +300,7 @@ def atlastool(args: Any) -> None:
         validvoxels = np.where(rs_template > 0)[0]
         print(f"{len(validvoxels)} valid voxels")
         for thevoxel in validvoxels:
-            templatevoxels[thevoxel, int(round(rs_template[thevoxel], 0)) - 1] = 1
+            templatevoxels[thevoxel, int(round(rs_template.item(thevoxel), 0)) - 1] = 1
         print(f"{templatevoxels.shape=}")
 
     # read in the label file, if there is one

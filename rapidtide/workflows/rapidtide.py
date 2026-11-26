@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, Tuple
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 from scipy.stats import rankdata
 
 import rapidtide.calccoherence as tide_calccoherence
@@ -70,7 +70,7 @@ ErrorLGR = logging.getLogger("ERROR")
 TimingLGR = logging.getLogger("TIMING")
 
 global rt_floattype
-rt_floattype: np.dtype = np.float64
+rt_floattype: DTypeLike = np.float64
 
 
 def checkforzeromean(thedataset: Any) -> bool:

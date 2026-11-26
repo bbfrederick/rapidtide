@@ -19,7 +19,7 @@
 from typing import Any, Tuple
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import DTypeLike, NDArray
 
 import rapidtide.refinedelay as tide_refinedelay
 import rapidtide.stats as tide_stats
@@ -56,7 +56,7 @@ def refineDelay(
     maxdelay: float = 5.0,
     numpoints: int = 501,
     histlen: int = 101,
-    rt_floattype: np.dtype = np.dtype(np.float64),
+    rt_floattype: DTypeLike = np.dtype(np.float64),
     debug: bool = False,
 ) -> Tuple[NDArray, NDArray, NDArray, NDArray, float]:
     """
@@ -128,7 +128,7 @@ def refineDelay(
         Number of points for delay interpolation, default is 501.
     histlen : int, optional
         Length of histogram bins, default is 101.
-    rt_floattype : np.dtype, optional
+    rt_floattype : DTypeLike, optional
         Data type for rapidtide float operations, default is np.float64.
     debug : bool, optional
         Enable debug mode, default is False.

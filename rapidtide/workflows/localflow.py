@@ -191,7 +191,7 @@ def preprocdata(
     windowfunc: str = "hamming",
     padseconds: int = 0,
     showprogressbar: bool = True,
-) -> None:
+) -> tuple[NDArray, int, float, int]:
     """
     Preprocess fMRI data by resampling, filtering, and normalizing voxel time series.
 
@@ -309,7 +309,7 @@ def getcorrloc(
     possearch: float = 15.0,
     padding: int = 0,
     debug: bool = False,
-) -> None:
+) -> tuple[float | np.floating, float | np.floating, int | np.integer, int | np.integer]:
     """
     Compute the cross-correlation peak between two time series and optionally fit it.
 
@@ -448,7 +448,7 @@ def getcorrloc(
         return 0.0, 0.0, 0, 0
 
 
-def xyz2index(x: Any, y: Any, z: Any, xsize: Any, ysize: Any, zsize: Any) -> None:
+def xyz2index(x: Any, y: Any, z: Any, xsize: Any, ysize: Any, zsize: Any) -> int:
     """
     Convert 3D coordinates to a linear index for a 3D array.
 
@@ -492,7 +492,7 @@ def xyz2index(x: Any, y: Any, z: Any, xsize: Any, ysize: Any, zsize: Any) -> Non
         return -1
 
 
-def index2xyz(theindex: Any, ysize: Any, zsize: Any) -> None:
+def index2xyz(theindex: Any, ysize: Any, zsize: Any) -> tuple[int, int, int]:
     """
     Convert a linear index to 3D coordinates (x, y, z).
 

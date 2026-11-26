@@ -22,6 +22,8 @@ import glob
 import os
 from argparse import RawTextHelpFormatter
 
+import numpy as np
+
 import rapidtide.externaltools as tide_exttools
 import rapidtide.filter as tide_filt
 import rapidtide.io as tide_io

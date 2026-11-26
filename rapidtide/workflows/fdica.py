@@ -84,7 +84,7 @@ def P2R(radii: Any, angles: Any) -> None:
     return radii * np.exp(1j * angles)
 
 
-def R2P(x: Any) -> None:
+def R2P(x: Any) -> tuple[NDArray, NDArray]:
     """
     Convert rectangular coordinates to polar coordinates.
 
